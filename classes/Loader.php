@@ -1,0 +1,198 @@
+<?php
+namespace Accessibility_Auditor;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
+
+/**
+ * Loader - bootstraps plugin modules and assets
+ */
+class Loader {
+    public static function init() {
+        require_once AA_PLUGIN_DIR . 'classes/ScanManager.php';
+        require_once AA_PLUGIN_DIR . 'classes/Pages_Column.php';
+        require_once AA_PLUGIN_DIR . 'classes/Report.php';
+        require_once AA_PLUGIN_DIR . 'classes/Revisions.php';
+        require_once AA_PLUGIN_DIR . 'classes/Settings.php';
+        require_once AA_PLUGIN_DIR . 'classes/Admin/Admin.php';
+        require_once AA_PLUGIN_DIR . 'classes/AI.php';
+        new \Accessibility_Auditor\AI();
+
+
+
+        // Bricks "Save Draft"
+        // add_action( 'wp_ajax_bricks_save_post', function() {
+        //     if ( empty($_REQUEST['post_id']) ) {
+        //         return;
+        //     }
+        //     $post_id = intval($_REQUEST['post_id']);
+        //     update_post_meta( $post_id, '_aa_needs_scan', 1 );
+        // }, 20 );
+
+        // // Bricks "Publish/Update"
+        // add_action( 'wp_ajax_bricks_publish_post', function() {
+        //     if ( empty($_REQUEST['post_id']) ) {
+        //         return;
+        //     }
+        //     $post_id = intval($_REQUEST['post_id']);
+        //     update_post_meta( $post_id, '_aa_needs_scan', 1 );
+        // }, 20 );
+
+        // // WP core save (covers Classic, Gutenberg, API, etc.)
+        // add_action( 'save_post', function( $post_id, $post, $update ) {
+        //     if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) return;
+        //     if ( wp_is_post_revision( $post_id ) ) return;
+        //     if ( get_post_type( $post_id ) !== 'page' ) return;
+
+        //     update_post_meta( $post_id, '_aa_needs_scan', 1 );
+        // }, 20, 3 );
+
+        
+
+
+
+        
+
+
+
+        // Hooks
+        // add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_assets' ] );
+        // add_action( 'admin_footer', [ __CLASS__, 'inject_dashboard_component' ] );
+
+        add_action( 'wp_enqueue_scripts', [ __CLASS__, 'enqueue_assets' ] ); 
+        //add_action( 'wp_footer', [ __CLASS__, 'inject_dashboard_component' ] );
+
+        // AJAX
+        add_action( 'wp_ajax_run_scan', [ __CLASS__, 'save_scan_results' ] );
+        //add_action( 'wp_ajax_aa_guided_fix', [__CLASS__, 'ajax_guided_fix' ] );
+
+        // add_action( 'wp_ajax_guided_fix', [ __CLASS__, 'ajax_guided_fix' ] );
+        // add_action( 'wp_ajax_auto_fix', [ __CLASS__, 'ajax_auto_fix' ] );
+        // add_action( 'wp_ajax_aa_get_autofix_history', [ __CLASS__, 'ajax_get_autofix_history' ] );
+
+        // Pages column and report
+        Pages_Column::init();
+        Report::init();
+
+        // settings
+
+        Settings::init();
+        Admin::init(); // 👈 Add this line to register the dashboard widget
+
+
+        // DB install on activation
+        register_activation_hook( AA_PLUGIN_DIR . 'accessibility-auditor.php', [ '\\Accessibility_Auditor\\ScanManager', 'install' ] );
+    }
+
+    public static function enqueue_assets() {
+    // Only load in Bricks editor frontend
+        if ( isset($_GET['bricks']) && $_GET['bricks'] === 'run' ) {
+            wp_enqueue_script( 'axe-core', AA_PLUGIN_URL . 'assets/js/axe.min.js', [], '4.10.0', true );
+            wp_enqueue_script( 'aa-editor-wc', AA_PLUGIN_URL . 'assets/js/editor-wc.js', [ 'axe-core' ], '0.1.0', true );
+            wp_enqueue_style( 'aa-editor', AA_PLUGIN_URL . 'assets/css/editor.css', [], '0.1.0' );
+
+            $post_id   = get_the_ID();
+            $results   = get_post_meta( $post_id, '_aa_scan_results', true );
+            $status    = get_post_meta( $post_id, '_acss_scan_status', true );
+            $summary   = get_post_meta( $post_id, '_acss_scan_summary', true );
+            $score     = get_post_meta( $post_id, '_acss_scan_score', true ); // <-- add this in save_scan()
+
+            wp_localize_script( 'aa-editor-wc', 'aaEditor', [
+                'nonce'     => wp_create_nonce( 'aa_scan_nonce' ),
+                'ajaxurl'   => admin_url( 'admin-ajax.php' ),
+                'needsScan' => 1, //( get_post_meta( $post_id, '_aa_needs_scan', true ) === '1' ) ? 1 : 0,
+                'root'  => esc_url_raw( rest_url('aa/v1/') ),
+                'restNonce' => wp_create_nonce('wp_rest'),
+                'postId'    => $post_id,
+                'results'   => $results,
+                'status'    => $status,
+                'summary'   => $summary,
+                'score'     => $score,
+                
+            ] );
+        }
+    }
+
+    public static function inject_dashboard_component() {
+        if ( isset($_GET['bricks']) && $_GET['bricks'] === 'run' ) {
+            echo '<aa-dashboard></aa-dashboard>';
+        }
+    }
+
+    public static function save_scan_results() {
+        check_ajax_referer( 'aa_scan_nonce', 'nonce' );
+
+        $post_id = intval( $_POST['postId'] ?? 0 );
+        $raw     = wp_unslash( $_POST['results'] ?? '' );
+        $results = json_decode( $raw, true );
+
+        if ( ! $post_id || ! is_array( $results ) ) {
+            wp_send_json_error( [ 'message' => 'Invalid request' ], 400 );
+        }
+
+        $scan_id = ScanManager::save_scan( $post_id, $results );
+
+        // delete flag
+        delete_post_meta( $post_id, '_aa_needs_scan' );
+
+        wp_send_json_success( [
+            'scan_id' => $scan_id,
+            'status'  => get_post_meta( $post_id, '_acss_scan_status', true ),
+            'summary' => get_post_meta( $post_id, '_acss_scan_summary', true ),
+            'score' => get_post_meta( $post_id, '_acss_scan_score', true ),
+        ] );
+    }
+
+    /**
+     * AJAX endpoint: aa_guided_fix
+     * Expect POST:
+     *  - nonce
+     *  - postId
+     *  - issue (JSON string)  (the single issue object from axe results)
+     */
+    // public static function ajax_guided_fix() {
+
+    //     // nonce + capability
+    //     if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'aa_scan_nonce' ) ) {
+    //         wp_send_json_error( [ 'message' => 'Invalid nonce' ], 403 );
+    //     }
+    //     if ( ! current_user_can( 'edit_posts' ) ) {
+    //         wp_send_json_error( [ 'message' => 'Unauthorized' ], 403 );
+    //     }
+
+    //     $post_id = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : 0;
+    //     if ( ! $post_id ) {
+    //         wp_send_json_error( [ 'message' => 'Missing postId' ], 400 );
+    //     }
+
+    //     $raw_issue = isset( $_POST['issue'] ) ? wp_unslash( $_POST['issue'] ) : '';
+    //     if ( empty( $raw_issue ) ) {
+    //         wp_send_json_error( [ 'message' => 'Missing issue data' ], 400 );
+    //     }
+
+    //     $issue = json_decode( $raw_issue, true );
+    //     if ( null === $issue || ! is_array( $issue ) ) {
+    //         wp_send_json_error( [ 'message' => 'Invalid issue JSON' ], 400 );
+    //     }
+
+    //     $ai = new \Accessibility_Auditor\AI();
+    //     $result = $ai->guided_fix( $post_id, $issue );
+
+    //     if ( is_wp_error( $result ) ) {
+    //         wp_send_json_error( [ 'message' => $result->get_error_message() ], 500 );
+    //     }
+
+    //     // $result is array( 'steps' => [ ... ] )
+    //     wp_send_json_success( $result );
+    // }
+
+
+    // public static function ajax_auto_fix() {
+    //     wp_send_json_success( [ 'fixed' => [ 'Added alt to 1 image' ], 'skipped' => [ 'Contrast requires manual' ] ] );
+    // }
+
+    // public static function ajax_get_autofix_history() {
+    //     $post_id = intval( $_POST['post_id'] ?? 0 );
+    //     $history = Revisions::get_history( $post_id );
+    //     wp_send_json_success( $history );
+    // }
+}
