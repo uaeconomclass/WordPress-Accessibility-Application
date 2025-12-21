@@ -353,12 +353,12 @@ renderResults(violations = []) {
                                                 </svg>
                                           </span>
             </button>
-            <button class="aa-action-btn aa-btn-ai-fix" data-issue-id="${issue.id}">
+            <!--<button class="aa-action-btn aa-btn-ai-fix" data-issue-id="${issue.id}">
               Fix with AI <span><svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                                  <path d="M8.25002 0.374981V1.8749H9.75001C9.95626 1.8749 10.125 2.04364 10.125 2.24988C10.125 2.45612 9.95626 2.62486 9.75001 2.62486H8.25002V4.12479C8.25002 4.33103 8.08127 4.49977 7.87502 4.49977C7.66877 4.49977 7.50002 4.33103 7.50002 4.12479V2.62486H6.00003C5.79378 2.62486 5.62503 2.45612 5.62503 2.24988C5.62503 2.04364 5.79378 1.8749 6.00003 1.8749H7.50002V0.374981C7.50002 0.168741 7.66877 0 7.87502 0C8.08127 0 8.25002 0.168741 8.25002 0.374981ZM3.58129 6.22233C3.47113 6.44498 3.2602 6.59731 3.01645 6.63247L0.965678 6.93011L2.45161 8.38081C2.62739 8.5519 2.70942 8.80032 2.66723 9.04406L2.31567 11.09L4.14848 10.1245C4.36644 10.0096 4.62894 10.0096 4.84691 10.1245L6.67971 11.09L6.32815 9.04406C6.28596 8.80032 6.368 8.55424 6.54378 8.38081L8.02971 6.93011L5.97894 6.63247C5.73519 6.59731 5.52425 6.44263 5.41409 6.22233L4.49769 4.36149L3.58129 6.22233ZM3.99379 3.68887C4.20004 3.26936 4.79769 3.26936 5.00394 3.68887L6.08909 5.89188L8.51486 6.24577C8.97658 6.31373 9.15939 6.87855 8.82658 7.20431L7.07112 8.91985L7.48596 11.3408C7.56565 11.8002 7.08284 12.1517 6.67034 11.9338L4.50004 10.7901L2.32973 11.9338C1.91724 12.1517 1.43443 11.8002 1.51411 11.3408L1.92661 8.91985L0.17115 7.20431C-0.164004 6.87855 0.0211509 6.31139 0.482867 6.24577L2.90864 5.89188L3.99379 3.68887ZM10.5 3.7498C10.7063 3.7498 10.875 3.91855 10.875 4.12479V4.87475H11.625C11.8313 4.87475 12 5.04349 12 5.24973C12 5.45597 11.8313 5.62471 11.625 5.62471H10.875V6.37467C10.875 6.58091 10.7063 6.74965 10.5 6.74965C10.2938 6.74965 10.125 6.58091 10.125 6.37467V5.62471H9.37501C9.16876 5.62471 9.00001 5.45597 9.00001 5.24973C9.00001 5.04349 9.16876 4.87475 9.37501 4.87475H10.125V4.12479C10.125 3.91855 10.2938 3.7498 10.5 3.7498Z" fill="#DEE2E6"/>
                                  </svg>
                            </span>
-            </button>
+            </button>-->
           </div>
 
           <!-- resolution steps section -->
@@ -372,12 +372,11 @@ renderResults(violations = []) {
 
           <!-- ai success section -->
           <div id="ai-success-${issue.id}" class="aa-ai-success" style="display:none;">
-            <strong>AI CHANGE MADE SUCCESSFULLY</strong>
-            <span>Validate changes and confirm or reject.</span>
+            <div class="aa-ai-text"></div>
             <div class="aa-ai-actions">
-                <button class="aa-accept-btn" data-issue-id="${issue.id}">ACCEPT CHANGES</button>
-                <button class="aa-reject-btn" data-issue-id="${issue.id}">REJECT CHANGES AND REVERT</button>
-            </div>
+                 <button class="aa-accept-btn" data-issue-id="${issue.id}">ACCEPT CHANGES</button>
+                 <button class="aa-reject-btn" data-issue-id="${issue.id}">REJECT CHANGES AND REVERT</button>
+             </div>
           </div>
         </div>
       </li>
@@ -402,10 +401,11 @@ this._resultsClickHandler = async (e) => {
   const btn       = e.target.closest(".aa-accordion-btn");
   const stepsBtn  = e.target.closest(".aa-btn-steps");
   const aiBtn     = e.target.closest(".aa-btn-ai-fix");
+  const nodeLink  = e.target.closest(".aa-node-link");
+
   const saveBtn   = e.target.closest(".aa-save-reload-btn");
   const acceptBtn = e.target.closest(".aa-accept-btn");
   const rejectBtn = e.target.closest(".aa-reject-btn");
-  const nodeLink  = e.target.closest(".aa-node-link");
 
   // Accordion open/close
   if (btn) {
@@ -464,6 +464,8 @@ this._resultsClickHandler = async (e) => {
     const aiPanel = this.shadowRoot.querySelector(`#ai-success-${issueId}`);
     const stepsPanel = this.shadowRoot.querySelector(`#resolution-steps-${issueId}`);
 
+
+
     // 🔹 Toggle selected class
     aiBtn.classList.add("aa-selected");
     const stepsButton = this.shadowRoot.querySelector(`.aa-btn-steps[data-issue-id="${issueId}"]`);
@@ -471,52 +473,106 @@ this._resultsClickHandler = async (e) => {
 
     stepsPanel.style.display = "none";
     aiPanel.style.display = "block";
-    return;
-  }
+    const aiTextDiv = aiPanel?.querySelector('.aa-ai-text');
 
-  // Save & Reload
-  if (saveBtn) {
-    const issueId = saveBtn.dataset.issueId;
+    // 🔹 Get the issue data
     const issue = this._violations.find(v => v.id === issueId);
-    await this._saveFix(issue);
-    location.reload();
-    return;
-  }
+    if (!issue) return;
 
-  // Accept AI fix
-  if (acceptBtn) {
-    const issueId = acceptBtn.dataset.issueId;
-    const issue = this._violations.find(v => v.id === issueId);
-    await this._saveFix(issue);
-    location.reload();
-    return;
-  }
 
-  // Reject AI fix
-  if (rejectBtn) {
-    const issueId = rejectBtn.dataset.issueId;
-    const aiPanel = this.shadowRoot.querySelector(`#ai-success-${issueId}`);
-    aiPanel.style.display = "none";
-    return;
-  }
+    aiTextDiv.innerHTML = `
+    <div class="aa-loading" style="padding:10px;">
+      <strong>Fixing with AI…</strong><br>
+      <small>This may take a few seconds.</small>
+    </div>
+  `;
 
-  // 🔹 Node link clicked (affected elements)
-  if (nodeLink) {
-    e.preventDefault(); // prevent scrolling to top
-    const issueId = nodeLink.dataset.issueId;
-    const nodeIndex = parseInt(nodeLink.dataset.nodeIndex, 10);
-    const issue = this._violations.find(v => v.id === issueId);
-    const node = issue?.nodes?.[nodeIndex];
-    if (node) {
-      this._highlightNode(node);
+    // 🔹 Show loading state
+    // aiPanel.innerHTML = `
+    //   <div class="aa-loading" style="padding:10px;">
+    //     <strong>Fixing with AI…</strong><br>
+    //     <small>This may take a few seconds.</small>
+    //   </div>
+    // `;
 
-      // Mark this node as active
-      this.shadowRoot
-        .querySelectorAll(`.aa-node-link[data-issue-id="${issueId}"]`)
-        .forEach(l => l.classList.remove("aa-node-selected"));
-      nodeLink.classList.add("aa-node-selected");
+    // 🔹 Update button text temporarily
+    const originalText = aiBtn.textContent;
+    aiBtn.textContent = "Fixing with AI…";
+    aiBtn.disabled = true;
+
+    try {
+      // 🔹 Call API
+      const result = await this._applyAutoFix(issue);
+
+      if (result?.error) {
+        aiTextDiv.innerHTML = `<p class="aa-error">AI Fix failed: ${result.error}</p>`;
+      } else if (result?.changelog?.length) {
+        // 🔹 Show changelog summary
+        const logHtml = result.changelog
+          .map(item => `<li>${this.escapeHTML(item)}</li>`)
+          .join("");
+        aiTextDiv.innerHTML = `
+           <strong>AI CHANGE MADE SUCCESSFULLY</strong>
+           <span>Validate changes and confirm or reject.</span>
+        `;
+      } else {
+        aiTextDiv.innerHTML = `<p>No automatic changes were necessary or detected.</p>`;
+      }
+    } catch (err) {
+      aiTextDiv.innerHTML = `<p class="aa-error">Error running AI Fix: ${err.message}</p>`;
+      console.error("AI Fix error:", err);
+    } finally {
+      // 🔹 Reset button
+      aiBtn.textContent = originalText;
+      aiBtn.disabled = false;
     }
+
     return;
+    }
+
+    // Save & Reload
+    if (saveBtn) {
+      const issueId = saveBtn.dataset.issueId;
+      const issue = this._violations.find(v => v.id === issueId);
+      await this._saveFix(issue);
+      location.reload();
+      return;
+    }
+
+    // Accept AI fix
+    if (acceptBtn) {
+      const issueId = acceptBtn.dataset.issueId;
+      const issue = this._violations.find(v => v.id === issueId);
+      await this._saveFix(issue);
+      location.reload();
+      return;
+    }
+
+    // Reject AI fix
+    if (rejectBtn) {
+      const issueId = rejectBtn.dataset.issueId;
+      const aiPanel = this.shadowRoot.querySelector(`#ai-success-${issueId}`);
+      aiPanel.style.display = "none";
+      return;
+    }
+
+    // 🔹 Node link clicked (affected elements)
+    if (nodeLink) {
+      e.preventDefault(); // prevent scrolling to top
+      const issueId = nodeLink.dataset.issueId;
+      const nodeIndex = parseInt(nodeLink.dataset.nodeIndex, 10);
+      const issue = this._violations.find(v => v.id === issueId);
+      const node = issue?.nodes?.[nodeIndex];
+      if (node) {
+        this._highlightNode(node);
+
+        // Mark this node as active
+        this.shadowRoot
+          .querySelectorAll(`.aa-node-link[data-issue-id="${issueId}"]`)
+          .forEach(l => l.classList.remove("aa-node-selected"));
+        nodeLink.classList.add("aa-node-selected");
+      }
+      return;
   }
 };
 
@@ -722,6 +778,9 @@ async _generateGuidedFix(issue) {
  * Apply Auto-Fix (Claude → JSON patch, Bricks API → apply changes)
  *****************************************************************/
 async _applyAutoFix(issue) {
+
+  console.log(issue);
+
   try {
     // const resp = await fetch("/wp-json/aa/v1/auto-fix", {
     //   method: "POST",
@@ -730,16 +789,22 @@ async _applyAutoFix(issue) {
     // });
 
 
+    
+
     const resp = await fetch(`${aaEditor.root}auto-fix`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-WP-Nonce": aaEditor.restNonce,
       },
+      
        body: JSON.stringify({ issue })
     });
 
     if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
+      refreshBricksCanvas().then(res => console.log('refresh result', res));
+
+
     const data = await resp.json();
 
     // Expect JSON describing Bricks element changes:
@@ -754,7 +819,7 @@ async _applyAutoFix(issue) {
     // Apply each change via Bricks API/REST
     if (data.changes && Array.isArray(data.changes)) {
       for (const change of data.changes) {
-        await this._applyBricksChange(change);
+        //await this._applyBricksChange(change);
       }
     }
 
@@ -764,6 +829,9 @@ async _applyAutoFix(issue) {
     return { error: err.message };
   }
 }
+
+
+
 
 /*****************************************************************
  * Save Fix (commit via Bricks API + revision entry)
@@ -967,6 +1035,9 @@ async _highlightNode(node) {
 
 
 
+
+
+
   /*****************************************************************
    * runScan: inject axe into preview iframe if needed, run scan,
    * then render results and optionally post to server
@@ -994,7 +1065,14 @@ async _highlightNode(node) {
       // helper to run axe inside preview window
       const runAxeInPreview = async () => {
         // runOnly filter to cover WCAG criteria
-        const opts = { runOnly: ["wcag2a", "wcag2aa", "wcag21aa"] };
+        //const opts = { runOnly: ["wcag2a", "wcag2aa", "wcag21aa"] };
+
+        const opts = {
+          type: "tag",
+          runOnly: ["wcag2a", "wcag2aa", "wcag21aa"],
+          
+        };
+
         // axe.run returns { violations, incomplete, passes, etc. }
         return await previewWin.axe.run(previewDoc, opts);
       };
@@ -1054,6 +1132,120 @@ async _highlightNode(node) {
   }
 }
 
+  /**
+ * Refresh Bricks Builder canvas (tries several strategies) and optionally focus/select element.
+ * @param {Object} opts
+ *   - selectElementId {string} optional element id (e.g. "brxe-e3aaf7" or "e3aaf7")
+ *   - forceReload {boolean} optional: if true will force iframe src reload as fallback
+ * @returns {Promise<{ok:boolean, method:string}>}
+ */
+async function  refreshBricksCanvas(opts = {}) {
+  const { selectElementId, forceReload = true } = opts;
+
+  // helper to normalise id (allow "e3aaf7" or "brxe-e3aaf7")
+  const normalize = id => id ? (id.startsWith('brxe-') ? id : `brxe-${id}`) : null;
+
+  const iframe = document.getElementById('bricks-builder-iframe') || document.querySelector('iframe#bricks-builder-iframe');
+
+  // 1) If global BRICKS builder API exists in parent (most reliable)
+  try {
+    if (window.BRICKS && window.BRICKS.builder) {
+      console.log( "tell bricks data changed (keeps hooks happy");
+      // tell bricks data changed (keeps hooks happy)
+      try { window.BRICKS.hooks.doAction && window.BRICKS.hooks.doAction('bricks.data.updated'); } catch(e){/*ignore*/}
+
+      // If element selection requested and builder exposes update/select helpers
+      if (selectElementId) {
+        const sel = normalize(selectElementId);
+        try {
+          // prefer a builder method if available
+          if (typeof window.BRICKS.builder.updateElement === 'function') {
+            window.BRICKS.builder.updateElement(sel);
+          }
+          if (typeof window.BRICKS.builder.selectElement === 'function') {
+            window.BRICKS.builder.selectElement(sel);
+          }
+        } catch (e) { /* ignore */ }
+      }
+
+      // reload iframe via builder API (does a proper refresh)
+      if (typeof window.BRICKS.builder.reloadIframe === 'function') {
+        await window.BRICKS.builder.reloadIframe();
+        return { ok: true, method: 'BRICKS.builder.reloadIframe' };
+      }
+
+      // reload through builder.save? sometimes builder has other helpers
+      if (typeof window.BRICKS.builder.refresh === 'function') {
+        await window.BRICKS.builder.refresh();
+        return { ok: true, method: 'BRICKS.builder.refresh' };
+      }
+    }
+  } catch (err) {
+    console.warn('BRICKS builder API attempt failed', err);
+  }
+
+  // 2) Try to call functions inside the iframe (if same-origin)
+  if (iframe && iframe.contentWindow) {
+    try {
+      // If iframe exposes BRICKS in its window, call reload/select there
+      const iw = iframe.contentWindow;
+
+      if (iw.BRICKS && iw.BRICKS.builder) {
+        
+        try { iw.BRICKS.hooks.doAction && iw.BRICKS.hooks.doAction('bricks.data.updated'); } catch(e){/*ignore*/}
+
+        if (selectElementId) {
+          const sel = normalize(selectElementId);
+          try {
+            if (typeof iw.BRICKS.builder.updateElement === 'function') {
+              iw.BRICKS.builder.updateElement(sel);
+            }
+            if (typeof iw.BRICKS.builder.selectElement === 'function') {
+              iw.BRICKS.builder.selectElement(sel);
+            }
+          } catch (e) { /*ignore*/ }
+        }
+
+        if (typeof iw.BRICKS.builder.reloadIframe === 'function') {
+          iw.BRICKS.builder.reloadIframe();
+          return { ok: true, method: 'iframe.BRICKS.builder.reloadIframe' };
+        }
+      }
+
+      // 2b) Send a postMessage the iframe might listen for (Bricks listens to some msg types)
+      try {
+        const sel = normalize(selectElementId);
+        if (sel) {
+          iw.postMessage({ type: 'bricks.selectElement', id: sel }, '*');
+        }
+        // generic reload message (some integrations may respond)
+        iw.postMessage({ type: 'bricks.reload' }, '*');
+
+        return { ok: true, method: 'iframe.postMessage' };
+      } catch (err) {
+        // fall through to last resort
+      }
+    } catch (err) {
+      console.warn('iframe invocation failed (maybe cross-origin)', err);
+    }
+  }
+
+  // 3) Last resort: force iframe src reload (works even without builder hooks)
+  if (iframe && iframe.src) {
+    try {
+      // add a cache-busting param so the browser fetches fresh data
+      const src = iframe.getAttribute('src') || iframe.src;
+      const base = src.split('?')[0];
+      iframe.src = base + '?_aa_refresh=' + Date.now();
+      return { ok: true, method: 'iframe.src_reload' };
+    } catch (err) {
+      console.warn('iframe.src reload failed', err);
+    }
+  }
+
+  // nothing worked
+  return { ok: false, method: 'none' };
+}
 
 
 
