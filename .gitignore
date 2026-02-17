@@ -1,0 +1,15 @@
+.DS_Store
+assets/.DS_Store
+classes/.DS_Store
+
+# wp-env local files
+.wp-env/
+
+# local zips (commercial/theme packages)
+local/zips/
+
+# local https proxy config/state
+local/https/
+
+# local AI assistant state
+.serena/
