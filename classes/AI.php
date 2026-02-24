@@ -222,10 +222,10 @@ public function apply_auto_fix(WP_REST_Request $request)
             - Images → ensure descriptive alt text; set settings.image.alt.
             - Iframes/videos → add a title or aria-label; remove redundant attributes.
             - Text/headings → fix tag hierarchy (settings.tag), remove unnecessary roles.
-            - Color contrast → use `settings._cssCustom` with Bricks %%root%% syntax.
-              Example: {\"added_keys\": {\"settings\": {\"_cssCustom\": \"%%root%% { color: #1a1a1a; }\"}}}
-              %%root%% is replaced by Bricks with the element scoped ID selector, overriding theme/ACSS styles.
-              Calculate a new foreground color that achieves at least 4.5:1 ratio against the background.
+            - Color contrast → use `settings._cssCustom` with the LITERAL element selector (NOT %%root%%).
+              The element ID is in the Bricks Element JSON as \"id\". Prefix it with \"#brxe-\".
+              Example for element id \"abc123\": {\"added_keys\": {\"settings\": {\"_cssCustom\": \"#brxe-abc123 { color: #1a1a1a; }\"}}}
+              Target at least 5:1 contrast ratio against the background to have margin above the 4.5:1 threshold.
               If _cssCustom already exists, use \"changes\" not \"added_keys\".
             - Images → for alt text use settings.altText (NOT settings.image.alt). Example: {\"added_keys\": {\"settings\": {\"altText\": \"Descriptive text\"}}}
 
