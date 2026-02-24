@@ -35,6 +35,7 @@ class AADashboard extends HTMLElement {
 
     // store currently highlighted preview element for cleanup
     this._previewHighlight = null;
+    this._isScanning = false;
 
 
     // render initial floating button
@@ -1014,6 +1015,16 @@ async _highlightNode(node) {
   async runScan(auto = false) {
     const resultsEl = this.shadowRoot.querySelector("#aa-scan-results");
     if (!resultsEl) return;
+    if (this._isScanning) {
+      return;
+    }
+    this._isScanning = true;
+    const runScanBtn = this.shadowRoot.querySelector("#aa-run-scan");
+    if (runScanBtn) {
+      runScanBtn.disabled = true;
+      runScanBtn.style.opacity = "0.65";
+      runScanBtn.style.cursor = "not-allowed";
+    }
     const traceId = this._makeTraceId("scan");
     const startedAt = Date.now();
     await this._postDebugLog("scan.start", traceId, { auto: !!auto, wcagLevel: window.aaEditor?.wcagLevel || "AA" });
@@ -1125,6 +1136,14 @@ async _highlightNode(node) {
       console.error(err);
       const resultsElInner = this.shadowRoot.querySelector("#aa-scan-results");
       if (resultsElInner) resultsElInner.innerHTML = `<p class="aa-no-issues"><strong>Error:</strong> ${this.escapeHTML(err.message || String(err))}</p>`;
+    } finally {
+      this._isScanning = false;
+      const runScanBtnFinally = this.shadowRoot.querySelector("#aa-run-scan");
+      if (runScanBtnFinally) {
+        runScanBtnFinally.disabled = false;
+        runScanBtnFinally.style.opacity = "";
+        runScanBtnFinally.style.cursor = "";
+      }
     }
   }
 }

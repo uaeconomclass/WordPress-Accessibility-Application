@@ -127,36 +127,26 @@ function aa_seed_bricks_fixtures(): array {
             'title'     => 'AA Fixture - Button Name',
             'post_html' => '<p>Fixture page for button-name rule.</p>',
             'bricks'    => [
-                [
-                    'id'       => 'btn_name_01',
-                    'name'     => 'button',
-                    'settings' => [
-                        'text' => '',
-                        'url'  => [ 'url' => '#' ],
-                    ],
-                    'children' => [],
-                ],
+                aa_seed_text_basic(
+                    'txt_btn_01',
+                    '<button type="button"></button>'
+                ),
             ],
             'rule_ids'  => [ 'button-name' ],
-            'notes'     => 'Button element with missing accessible name for button-name auto-fix scenarios.',
+            'notes'     => 'Inline empty button inside text-basic for deterministic button-name detection in Bricks preview.',
         ],
         [
             'slug'      => 'aa-fixture-aria-label',
             'title'     => 'AA Fixture - Aria Label',
             'post_html' => '<p>Fixture page for aria-label rule.</p>',
             'bricks'    => [
-                [
-                    'id'       => 'icon_link_01',
-                    'name'     => 'icon',
-                    'settings' => [
-                        'icon'       => 'ti-star',
-                        'attributes' => [],
-                    ],
-                    'children' => [],
-                ],
+                aa_seed_text_basic(
+                    'txt_aria_01',
+                    '<div role="img" aria-label=""></div>'
+                ),
             ],
             'rule_ids'  => [ 'aria-label' ],
-            'notes'     => 'Generic aria-label fixture for icon/link-like elements.',
+            'notes'     => 'Inline element with empty aria-label to trigger axe aria-label rule deterministically.',
         ],
     ];
 }
@@ -164,6 +154,34 @@ function aa_seed_bricks_fixtures(): array {
 /**
  * Create or update a page and attach Bricks fixture data.
  */
+function aa_seed_detect_bricks_content_meta_key(): string {
+    if ( defined( 'BRICKS_DB_PAGE_CONTENT' ) && is_string( BRICKS_DB_PAGE_CONTENT ) && BRICKS_DB_PAGE_CONTENT !== '' ) {
+        return BRICKS_DB_PAGE_CONTENT;
+    }
+
+    // Try to infer from an existing Bricks page on this site (e.g. `_bricks_page_content_2`).
+    $bricks_pages = get_posts( [
+        'post_type'      => 'any',
+        'post_status'    => 'any',
+        'posts_per_page' => 20,
+        'meta_key'       => '_bricks_editor_mode',
+        'meta_value'     => 'bricks',
+        'fields'         => 'ids',
+    ] );
+
+    foreach ( $bricks_pages as $pid ) {
+        $meta = get_post_meta( (int) $pid );
+        foreach ( array_keys( $meta ) as $meta_key ) {
+            if ( preg_match( '/^_bricks_page_content(_\d+)?$/', (string) $meta_key ) ) {
+                return (string) $meta_key;
+            }
+        }
+    }
+
+    // Conservative fallback for this lab setup (observed on current Bricks install).
+    return '_bricks_page_content_2';
+}
+
 function aa_seed_upsert_fixture_page( array $fixture ): array {
     $existing = get_page_by_path( $fixture['slug'], OBJECT, 'page' );
 
@@ -192,7 +210,15 @@ function aa_seed_upsert_fixture_page( array $fixture ): array {
         ];
     }
 
-    // Bricks uses `bricks_data` (BRICKS_DB_PAGE_CONTENT) for page element tree storage.
+    // Mark the page as Bricks-managed content so the builder opens a real canvas.
+    update_post_meta( (int) $post_id, '_bricks_editor_mode', 'bricks' );
+    update_post_meta( (int) $post_id, '_bricks_template_type', 'content' );
+
+    // Store Bricks element tree in both legacy/test key and the active Bricks content key.
+    $bricks_content_key = aa_seed_detect_bricks_content_meta_key();
+    update_post_meta( (int) $post_id, $bricks_content_key, $fixture['bricks'] );
+
+    // Bricks uses `bricks_data` in some contexts / test utilities.
     update_post_meta( (int) $post_id, 'bricks_data', $fixture['bricks'] );
     update_post_meta( (int) $post_id, '_aa_fixture_rule_ids', $fixture['rule_ids'] );
     update_post_meta( (int) $post_id, '_aa_fixture_notes', $fixture['notes'] );
@@ -205,6 +231,7 @@ function aa_seed_upsert_fixture_page( array $fixture ): array {
         'title'     => $fixture['title'],
         'rule_ids'  => $fixture['rule_ids'],
         'bricks_ct' => count( $fixture['bricks'] ),
+        'bricks_key'=> $bricks_content_key,
     ];
 }
 
@@ -234,6 +261,7 @@ foreach ( $results as $row ) {
         implode( ', ', $row['rule_ids'] ),
         $row['bricks_ct']
     );
+    $msg .= sprintf( ' - key: %s', $row['bricks_key'] ?? 'n/a' );
 
     if ( class_exists( 'WP_CLI' ) ) {
         WP_CLI::success( $msg );

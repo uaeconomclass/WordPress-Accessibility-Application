@@ -140,17 +140,39 @@ class AI {
         Loader::aa_log( 'auto_fix.start', [ 'trace_id' => $trace_id, 'post_id' => $post_id, 'rule_id' => $rule_id, 'nodes' => count( $issue['nodes'] ?? [] ) ] );
         error_log( sprintf( '[AA:auto-fix] START post_id=%d issue_id=%s nodes=%d', $post_id, $issue['id'] ?? '?', count( $issue['nodes'] ?? [] ) ) );
 
-        // 3. Load Bricks content.
-        if ( ! defined( 'BRICKS_DB_PAGE_CONTENT' ) ) {
-            return new WP_Error( 'bricks_unavailable', 'Bricks Builder is not active on this installation.', [ 'status' => 503 ] );
+        // 3. Load Bricks content. Bricks constant may be unavailable (or point to a different key)
+        // in some contexts, so fall back to the common `bricks_data` meta key used by fixtures.
+        $content_key_candidates = [];
+        if ( defined( 'BRICKS_DB_PAGE_CONTENT' ) && is_string( BRICKS_DB_PAGE_CONTENT ) && BRICKS_DB_PAGE_CONTENT !== '' ) {
+            $content_key_candidates[] = BRICKS_DB_PAGE_CONTENT;
         }
+        $content_key_candidates[] = 'bricks_data';
+        $content_key_candidates = array_values( array_unique( $content_key_candidates ) );
 
-        $content  = get_post_meta( $post_id, BRICKS_DB_PAGE_CONTENT, true );
-        $elements = is_array( $content ) ? $content : json_decode( $content, true );
+        $content          = null;
+        $elements         = null;
+        $content_meta_key = null;
+        foreach ( $content_key_candidates as $candidate_key ) {
+            $candidate_content  = get_post_meta( $post_id, $candidate_key, true );
+            $candidate_elements = is_array( $candidate_content ) ? $candidate_content : json_decode( $candidate_content, true );
+            if ( ! empty( $candidate_elements ) && is_array( $candidate_elements ) ) {
+                $content          = $candidate_content;
+                $elements         = $candidate_elements;
+                $content_meta_key = $candidate_key;
+                break;
+            }
+        }
 
         if ( empty( $elements ) || ! is_array( $elements ) ) {
+            Loader::aa_log( 'auto_fix.invalid_content', [
+                'trace_id'    => $trace_id,
+                'post_id'     => $post_id,
+                'tried_keys'  => $content_key_candidates,
+                'bricks_const' => defined( 'BRICKS_DB_PAGE_CONTENT' ) ? BRICKS_DB_PAGE_CONTENT : 'UNDEF',
+            ] );
             return new WP_Error( 'invalid_content', 'Invalid or empty Bricks content.' );
         }
+        Loader::aa_log( 'auto_fix.content_loaded', [ 'trace_id' => $trace_id, 'post_id' => $post_id, 'meta_key' => $content_meta_key ] );
 
         // 4. Map issue to affected Bricks elements.
         $target_elements = BricksElementFinder::from_issue( $elements, $issue );
@@ -294,7 +316,7 @@ Output only the JSON patch.',
 
         // 7. Persist, flush caches, return.
         try {
-            update_post_meta( $post_id, BRICKS_DB_PAGE_CONTENT, $elements );
+            update_post_meta( $post_id, $content_meta_key ?: 'bricks_data', $elements );
 
             if ( function_exists( 'bricks_flush_post_css' ) ) {
                 bricks_flush_post_css( $post_id );
@@ -387,7 +409,14 @@ Output only the JSON patch.',
             return new WP_Error( 'invalid_revision', 'Revision data is invalid.', [ 'status' => 500 ] );
         }
 
-        update_post_meta( $post_id, BRICKS_DB_PAGE_CONTENT, $elements );
+        $content_meta_key = ( defined( 'BRICKS_DB_PAGE_CONTENT' ) && is_string( BRICKS_DB_PAGE_CONTENT ) && BRICKS_DB_PAGE_CONTENT !== '' )
+            ? BRICKS_DB_PAGE_CONTENT
+            : 'bricks_data';
+        if ( empty( get_post_meta( $post_id, $content_meta_key, true ) ) && ! empty( get_post_meta( $post_id, 'bricks_data', true ) ) ) {
+            $content_meta_key = 'bricks_data';
+        }
+
+        update_post_meta( $post_id, $content_meta_key, $elements );
 
         if ( function_exists( 'bricks_flush_post_css' ) ) {
             bricks_flush_post_css( $post_id );
