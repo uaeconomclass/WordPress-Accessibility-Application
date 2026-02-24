@@ -55,9 +55,9 @@ class Loader {
 
 
         // Hooks
-        // add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_assets' ] );
-        // add_action( 'admin_footer', [ __CLASS__, 'inject_dashboard_component' ] );
-
+        // Bricks can render UI in admin context while preview runs on frontend.
+        // Enqueue on both so the dashboard script is available in the top editor window.
+        add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_assets' ] );
         add_action( 'wp_enqueue_scripts', [ __CLASS__, 'enqueue_assets' ] ); 
         //add_action( 'wp_footer', [ __CLASS__, 'inject_dashboard_component' ] );
 
@@ -84,13 +84,25 @@ class Loader {
     }
 
     public static function enqueue_assets() {
-    // Only load in Bricks editor frontend
-        if ( isset($_GET['bricks']) && $_GET['bricks'] === 'run' ) {
+        $is_bricks_frontend = isset( $_GET['bricks'] ) && $_GET['bricks'] === 'run';
+        $is_bricks_admin    = isset( $_GET['action'] ) && $_GET['action'] === 'bricks';
+
+        if ( ! $is_bricks_frontend && ! $is_bricks_admin ) {
+            return;
+        }
+
+        if ( ! current_user_can( 'edit_posts' ) ) {
+            return;
+        }
+
             wp_enqueue_script( 'axe-core', AA_PLUGIN_URL . 'assets/js/axe.min.js', [], '4.10.0', true );
             wp_enqueue_script( 'aa-editor-wc', AA_PLUGIN_URL . 'assets/js/editor-wc.js', [ 'axe-core' ], '0.1.0', true );
             wp_enqueue_style( 'aa-editor', AA_PLUGIN_URL . 'assets/css/editor.css', [], '0.1.0' );
 
             $post_id   = get_the_ID();
+            if ( ! $post_id && isset( $_GET['post'] ) ) {
+                $post_id = absint( $_GET['post'] );
+            }
             $results   = get_post_meta( $post_id, '_aa_scan_results', true );
             $status    = get_post_meta( $post_id, '_acss_scan_status', true );
             $summary   = get_post_meta( $post_id, '_acss_scan_summary', true );
@@ -109,7 +121,6 @@ class Loader {
                 'score'     => $score,
                 
             ] );
-        }
     }
 
     public static function inject_dashboard_component() {
