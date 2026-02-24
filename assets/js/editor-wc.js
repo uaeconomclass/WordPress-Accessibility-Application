@@ -214,6 +214,8 @@ class AADashboard extends HTMLElement {
         .aa-accept-btn:hover { background:#ffb300; }
         .aa-reject-btn { background:none; color:#8A9199; border:1px solid #8A9199; border-radius:6px; padding:9px 0; font-size:9px; font-weight:700; cursor:pointer; transition:background 0.2s, color 0.2s; line-height:130%; }
         .aa-reject-btn:hover { background:#232527; color:#ff3b3b; }
+        .aa-rescan-btn { background:none; border:1px solid #363E48; border-radius:5px; color:#8A9199; cursor:pointer; font-size:11px; padding:3px 7px; transition:background 0.2s, color 0.2s; }
+        .aa-rescan-btn:hover { background:#363E48; color:#DEE2E6; }
         a { color:#7D8B9B; text-decoration:underline; }
         @media (max-width:400px) { body, .aa-panel { max-width:100vw; } }
 
@@ -229,6 +231,7 @@ class AADashboard extends HTMLElement {
 			<div class="aa-panel-score">
 				<span class="aa-score-label">Page score:</span>
 				<span class="aa-score-badge" style="color:${badgeColor}; border:1px solid ${badgeColor}">${grade}</span>
+				<button class="aa-rescan-btn" id="aa-rescan-btn" title="Re-run scan">↺</button>
 				<button class="aa-close-btn" id="aa-close-btn" title="Close">
                   <svg width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M1.28094 0.221983C0.988091 -0.070871 0.512495 -0.070871 0.219641 0.221983C-0.0732136 0.514838 -0.0732136 0.990433 0.219641 1.28329L3.4387 4.5L0.221983 7.71905C-0.070871 8.01191 -0.070871 8.4875 0.221983 8.78036C0.514838 9.07321 0.990433 9.07321 1.28329 8.78036L4.5 5.5613L7.71905 8.77802C8.01191 9.07087 8.4875 9.07087 8.78036 8.77802C9.07321 8.48516 9.07321 8.00957 8.78036 7.71671L5.5613 4.5L8.77802 1.28094C9.07087 0.988091 9.07087 0.512495 8.77802 0.219641C8.48516 -0.0732136 8.00957 -0.0732136 7.71671 0.219641L4.5 3.4387L1.28094 0.221983Z" fill="#DCE0E4"/>
@@ -249,6 +252,7 @@ class AADashboard extends HTMLElement {
 
     // events
     this.shadowRoot.querySelector("#aa-close-btn").addEventListener("click", () => this.renderButton());
+    this.shadowRoot.querySelector("#aa-rescan-btn").addEventListener("click", () => this.runScan());
     this.shadowRoot.querySelector("#aa-run-scan").addEventListener("click", () => this.runScan());
 
     // preload saved results if present
