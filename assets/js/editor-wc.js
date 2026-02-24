@@ -711,7 +711,13 @@ async _applyAutoFix(issue) {
 
     this._lastRevisionKey = data.revision_key || null;
 
-    refreshBricksCanvas().then(res => console.log('[AA] Canvas refresh:', res));
+    const iframe = document.getElementById('bricks-builder-iframe') || document.querySelector('iframe#bricks-builder-iframe');
+    refreshBricksCanvas().then(res => {
+      console.log('[AA] Canvas refresh:', res);
+      // re-scan after iframe reloads so violations panel reflects the fix
+      const delay = iframe ? 2500 : 500;
+      setTimeout(() => this.runScan(), delay);
+    });
 
     console.groupEnd();
     return data;
@@ -1107,10 +1113,10 @@ async function  refreshBricksCanvas(opts = {}) {
   // 3) Last resort: force iframe src reload (works even without builder hooks)
   if (iframe && iframe.src) {
     try {
-      // add a cache-busting param so the browser fetches fresh data
-      const src = iframe.getAttribute('src') || iframe.src;
-      const base = src.split('?')[0];
-      iframe.src = base + '?_aa_refresh=' + Date.now();
+      // preserve all original params, just add cache-busting
+      const url = new URL(iframe.getAttribute('src') || iframe.src, window.location.origin);
+      url.searchParams.set('_aa_refresh', Date.now());
+      iframe.src = url.toString();
       return { ok: true, method: 'iframe.src_reload' };
     } catch (err) {
       console.warn('iframe.src reload failed', err);

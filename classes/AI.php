@@ -222,9 +222,9 @@ public function apply_auto_fix(WP_REST_Request $request)
             - Images → ensure descriptive alt text; set settings.image.alt.
             - Iframes/videos → add a title or aria-label; remove redundant attributes.
             - Text/headings → fix tag hierarchy (settings.tag), remove unnecessary roles.
-            - Color contrast → use `settings._cssCustom` with Bricks %root% syntax.
-              Example: {\"added_keys\": {\"settings\": {\"_cssCustom\": \"%root% { color: #1a1a1a; }\"}}}
-              %root% is replaced by Bricks with the element scoped ID selector, overriding theme/ACSS styles.
+            - Color contrast → use `settings._cssCustom` with Bricks %%root%% syntax.
+              Example: {\"added_keys\": {\"settings\": {\"_cssCustom\": \"%%root%% { color: #1a1a1a; }\"}}}
+              %%root%% is replaced by Bricks with the element scoped ID selector, overriding theme/ACSS styles.
               Calculate a new foreground color that achieves at least 4.5:1 ratio against the background.
               If _cssCustom already exists, use \"changes\" not \"added_keys\".
             - Images → for alt text use settings.altText (NOT settings.image.alt). Example: {\"added_keys\": {\"settings\": {\"altText\": \"Descriptive text\"}}}
@@ -629,14 +629,20 @@ private function extract_bricks_elements_from_issue($elements, $issue)
     // Fallback: no #brxe- ID in selectors (e.g. bare <a> inside a text-basic element).
     // Search all elements whose settings.text contains the axe node HTML snippet.
     if (empty($result)) {
+        $node_count = count($issue['nodes'] ?? []);
+        $first_html  = ($issue['nodes'][0] ?? [])['html'] ?? '(no html field)';
+        error_log( sprintf( '[AA:fallback] issue=%s nodes=%d first_html=%s', $issue['id'] ?? '?', $node_count, substr($first_html, 0, 200) ) );
+
         $html_needles = [];
         foreach ($issue['nodes'] ?? [] as $node) {
             if (!empty($node['html'])) {
                 // axe injects style="outline:..." on nodes during scanning — strip before matching
                 $clean = preg_replace('/\s+style="[^"]*"/', '', $node['html']);
                 $html_needles[] = trim($clean);
+                error_log( '[AA:fallback] needle after strip: ' . substr($clean, 0, 200) );
             }
         }
+        error_log( '[AA:fallback] needle count=' . count($html_needles) );
         if (!empty($html_needles)) {
             foreach ($elements as $el) {
                 $text = trim($el['settings']['text'] ?? '');
