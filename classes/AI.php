@@ -107,6 +107,15 @@ class AI {
         ];
         $rule_id = $issue['id'] ?? '';
         if ( ! in_array( $rule_id, $supported_rules, true ) ) {
+            // Log so unsupported rules can be identified and promoted to the whitelist later.
+            error_log( sprintf(
+                '[AA:auto-fix] UNSUPPORTED_RULE rule_id="%s" impact="%s" nodes=%d description="%s" — falling back to guided fix',
+                $rule_id,
+                $issue['impact'] ?? 'unknown',
+                count( $issue['nodes'] ?? [] ),
+                substr( $issue['description'] ?? '', 0, 120 )
+            ) );
+
             // Unsupported rule — fall back to guided instructions instead of an error.
             $steps = ClaudeClient::request( $this->build_guided_prompt( $issue ) );
             if ( is_wp_error( $steps ) ) {
