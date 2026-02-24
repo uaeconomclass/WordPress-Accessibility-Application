@@ -102,7 +102,7 @@ class Loader {
         }
 
             wp_enqueue_script( 'axe-core', AA_PLUGIN_URL . 'assets/js/axe.min.js', [], '4.10.0', true );
-            wp_enqueue_script( 'aa-editor-wc', AA_PLUGIN_URL . 'assets/js/editor-wc.js', [ 'axe-core' ], '0.2.0', true );
+            wp_enqueue_script( 'aa-editor-wc', AA_PLUGIN_URL . 'assets/js/editor-wc.js', [ 'axe-core' ], '0.2.3', true );
             wp_enqueue_style( 'aa-editor', AA_PLUGIN_URL . 'assets/css/editor.css', [], '0.1.0' );
 
             $post_id   = get_the_ID();

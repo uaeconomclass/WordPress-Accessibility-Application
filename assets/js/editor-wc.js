@@ -324,7 +324,36 @@ renderResults(violations = [], incomplete = []) {
 
   if (!Array.isArray(violations) || violations.length === 0) {
     if (this._incomplete.length > 0) {
-      container.innerHTML = `<p class="aa-no-issues"><em>Needs review: ${this._incomplete.length} item(s) require manual verification.</em></p>`;
+      const reviewItemsHtml = this._incomplete.map((item) => {
+        const title = this.escapeHTML(item?.help || item?.id || "Manual review item");
+        const desc = this.escapeHTML(item?.description || "Manual verification required.");
+        const selectors = (Array.isArray(item?.nodes) ? item.nodes : [])
+          .flatMap((n) => Array.isArray(n?.target) ? n.target : [])
+          .filter(Boolean)
+          .slice(0, 3)
+          .map((s) => `<li><code>${this.escapeHTML(s)}</code></li>`)
+          .join("");
+        const learnMore = item?.helpUrl
+          ? `<a href="${this.escapeHTML(item.helpUrl)}" target="_blank" rel="noopener noreferrer">Learn more</a>`
+          : "";
+
+        return `
+          <li class="aa-manual-review-item" style="padding:8px 10px;border:1px solid rgba(255,255,255,.08);border-radius:8px;margin-bottom:8px;">
+            <div style="font-weight:700;color:#DCE0E6;font-size:12px;">${title}</div>
+            <div class="aa-small" style="margin-top:4px;">${desc}</div>
+            ${selectors ? `<ul class="aa-manual-review-selectors" style="margin:6px 0 0 16px;">${selectors}</ul>` : ""}
+            ${learnMore ? `<div class="aa-small" style="margin-top:6px;">${learnMore}</div>` : ""}
+          </li>
+        `;
+      }).join("");
+
+      container.innerHTML = `
+        <div class="aa-manual-review-wrap">
+          <p class="aa-no-issues"><em>Needs review: ${this._incomplete.length} item(s) require manual verification.</em></p>
+          <div class="aa-small" style="padding:0 30px; margin-top:6px;">Axe could not confirm these automatically. Review the item(s) below in Bricks preview.</div>
+          <ul class="aa-accordion-list" style="list-style:none;">${reviewItemsHtml}</ul>
+        </div>
+      `;
     } else {
       container.innerHTML = `<p class="aa-no-issues"><em>No issues found 🎉</em></p>`;
     }
