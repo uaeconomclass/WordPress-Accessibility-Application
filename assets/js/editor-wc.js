@@ -59,13 +59,14 @@ class AADashboard extends HTMLElement {
     dot.style.background = color;
   }
 
-  // 4. update panel badge
-  const badge = document.querySelector(".aa-score-badge");
+  this.score = score;
+
+  // 4. update panel badge (must use shadowRoot — badge lives in Shadow DOM)
+  const badge = this.shadowRoot ? this.shadowRoot.querySelector(".aa-score-badge") : null;
   if (badge) {
     badge.textContent = grade;
     badge.style.color = color;
     badge.style.border = `1px solid ${color}`;
-    
   }
 }
 
@@ -974,8 +975,10 @@ async _highlightNode(node) {
 
 
       // Render violations (prefer results.violations)
-      this.renderResults(results.violations || []);
-      //this.updateAccessibilityUI(100);
+      const violations = results.violations || [];
+      this.renderResults(violations);
+      const calcScore = Math.max(0, 100 - violations.length * 5);
+      this.updateAccessibilityUI(calcScore);
 
       // optionally persist results via ajax to server (if aaEditor ajax present)
       if (typeof aaEditor !== "undefined" && aaEditor.ajaxurl) {
