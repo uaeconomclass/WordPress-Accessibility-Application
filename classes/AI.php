@@ -222,10 +222,12 @@ public function apply_auto_fix(WP_REST_Request $request)
             - Images → ensure descriptive alt text; set settings.image.alt.
             - Iframes/videos → add a title or aria-label; remove redundant attributes.
             - Text/headings → fix tag hierarchy (settings.tag), remove unnecessary roles.
-            - Color contrast → use `settings._cssCustom` with a CSS color string that achieves the required contrast ratio.
-              Example: {\"added_keys\": {\"settings\": {\"_cssCustom\": \"color: #1a1a1a;\"}}}
-              This generates a scoped ID-selector CSS rule that overrides theme/ACSS styles.
+            - Color contrast → use `settings._cssCustom` with Bricks %root% syntax.
+              Example: {\"added_keys\": {\"settings\": {\"_cssCustom\": \"%root% { color: #1a1a1a; }\"}}}
+              %root% is replaced by Bricks with the element scoped ID selector, overriding theme/ACSS styles.
               Calculate a new foreground color that achieves at least 4.5:1 ratio against the background.
+              If _cssCustom already exists, use \"changes\" not \"added_keys\".
+            - Images → for alt text use settings.altText (NOT settings.image.alt). Example: {\"added_keys\": {\"settings\": {\"altText\": \"Descriptive text\"}}}
 
             ⚙️ Output Rules:
             - Must be valid JSON (no markdown, comments, or explanations).
@@ -623,6 +625,33 @@ private function extract_bricks_elements_from_issue($elements, $issue)
         $el = $this->find_bricks_element($elements, $id);
         if ($el) $result[] = $el;
     }
+
+    // Fallback: no #brxe- ID in selectors (e.g. bare <a> inside a text-basic element).
+    // Search all elements whose settings.text contains the axe node HTML snippet.
+    if (empty($result)) {
+        $html_needles = [];
+        foreach ($issue['nodes'] ?? [] as $node) {
+            if (!empty($node['html'])) {
+                $html_needles[] = trim($node['html']);
+            }
+        }
+        if (!empty($html_needles)) {
+            foreach ($elements as $el) {
+                $text = trim($el['settings']['text'] ?? '');
+                if (!$text) continue;
+                foreach ($html_needles as $needle) {
+                    if ($needle && strpos($text, $needle) !== false) {
+                        $result[] = $el;
+                        break;
+                    }
+                }
+            }
+        }
+        if (!empty($result)) {
+            error_log( sprintf( '[AA:auto-fix] fallback html-match found %d element(s) for issue %s', count($result), $issue['id'] ?? '?' ) );
+        }
+    }
+
     return $result;
 }
 
