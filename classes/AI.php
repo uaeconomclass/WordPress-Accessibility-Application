@@ -632,7 +632,9 @@ private function extract_bricks_elements_from_issue($elements, $issue)
         $html_needles = [];
         foreach ($issue['nodes'] ?? [] as $node) {
             if (!empty($node['html'])) {
-                $html_needles[] = trim($node['html']);
+                // axe injects style="outline:..." on nodes during scanning — strip before matching
+                $clean = preg_replace('/\s+style="[^"]*"/', '', $node['html']);
+                $html_needles[] = trim($clean);
             }
         }
         if (!empty($html_needles)) {
