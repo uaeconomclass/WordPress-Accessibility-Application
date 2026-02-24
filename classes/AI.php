@@ -613,9 +613,17 @@ private function extract_bricks_elements_from_issue($elements, $issue)
 {
     $targets = [];
     foreach ($issue['nodes'] ?? [] as $node) {
+        // 1) Match #brxe-{id} in target selectors
         foreach ($node['target'] ?? [] as $selector) {
             if (preg_match('/#brxe-([\w-]+)/i', $selector, $m)) {
                 $targets[] = $m[1];
+            }
+        }
+        // 2) If target is a bare tag (e.g. "pre", "a"), extract brxe ID from node.html id attribute
+        if (empty($targets) && !empty($node['html'])) {
+            if (preg_match('/\bid="brxe-([\w-]+)"/i', $node['html'], $m)) {
+                $targets[] = $m[1];
+                error_log( '[AA:extract] id-attr fallback matched element: ' . $m[1] );
             }
         }
     }

@@ -30,12 +30,22 @@ class Pages_Column {
 
         $meta = $labels[ $status ] ?? $labels['unknown'];
 
-        $url = $scan_id ? admin_url( 'admin.php?page=aa-scan-report&scan_id=' . intval( $scan_id ) ) : admin_url( 'admin.php?page=aa-scan-report' );
+        $score   = get_post_meta( $post_id, '_aa_scan_score', true );
+        $summary = get_post_meta( $post_id, '_aa_scan_summary', true );
+        $url     = $scan_id ? admin_url( 'admin.php?page=aa-scan-report&scan_id=' . intval( $scan_id ) ) : admin_url( 'admin.php?page=aa-scan-report' );
 
-        printf( '<a href="%s" title="%s"><span class="aa-status-dot" style="display:inline-block;width:12px;height:12px;border-radius:50%%;background:%s;"></span></a>',
+        printf(
+            '<a href="%s" title="%s" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;">
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%%;background:%s;flex-shrink:0;"></span>
+                <span style="color:%s;font-weight:600;">%s</span>
+                %s
+            </a>',
             esc_url( $url ),
-            esc_attr( $meta['title'] ),
-            esc_attr( $meta['color'] )
+            esc_attr( $summary ?: $meta['title'] ),
+            esc_attr( $meta['color'] ),
+            esc_attr( $meta['color'] ),
+            $score !== '' && $score !== false ? esc_html( (int) $score ) . '%' : esc_html( $meta['title'] ),
+            $summary ? '<span style="color:#999;font-size:11px;">' . esc_html( $summary ) . '</span>' : ''
         );
     }
 }
