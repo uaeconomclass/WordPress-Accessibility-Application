@@ -612,7 +612,7 @@ private function extract_bricks_elements_from_issue($elements, $issue)
     $targets = [];
     foreach ($issue['nodes'] ?? [] as $node) {
         foreach ($node['target'] ?? [] as $selector) {
-            if (preg_match('/#brxe-([a-z0-9]+)/i', $selector, $m)) {
+            if (preg_match('/#brxe-([\w-]+)/i', $selector, $m)) {
                 $targets[] = $m[1];
             }
         }
