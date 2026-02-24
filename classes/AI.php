@@ -122,6 +122,8 @@ public function apply_auto_fix(WP_REST_Request $request)
         return new WP_Error('forbidden', 'You do not have permission to edit this post.', ['status' => 403]);
     }
 
+    error_log( sprintf( '[AA:auto-fix] START post_id=%d issue_id=%s nodes=%d', $post_id, $issue['id'] ?? '?', count( $issue['nodes'] ?? [] ) ) );
+
     // 2️⃣ Load Bricks content
     $content = get_post_meta($post_id, BRICKS_DB_PAGE_CONTENT, true);
     $elements = is_array($content) ? $content : json_decode($content, true);
@@ -132,7 +134,9 @@ public function apply_auto_fix(WP_REST_Request $request)
 
     // 3️⃣ Extract relevant Bricks elements for this issue
     $target_elements = $this->extract_bricks_elements_from_issue($elements, $issue);
+    error_log( sprintf( '[AA:auto-fix] Bricks elements loaded=%d target_elements=%d', count( $elements ), count( $target_elements ) ) );
     if (empty($target_elements)) {
+        error_log( '[AA:auto-fix] No matching Bricks elements found — returning error' );
         return new WP_Error('missing_elements', 'No matching Bricks elements found.');
     }
 
@@ -221,10 +225,12 @@ public function apply_auto_fix(WP_REST_Request $request)
 
         try {
             // 6️⃣ Send prompt to Claude
+            error_log( sprintf( '[AA:auto-fix] Calling Claude for element_id=%s type=%s', $element['id'] ?? '?', $element['name'] ?? '?' ) );
             $response = $this->call_claude_api($prompt, true);
 
             // 7️⃣ Normalize and decode AI output
             $json = $this->normalize_ai_response($response);
+            error_log( '[AA:auto-fix] Claude raw (first 300): ' . substr( $json, 0, 300 ) );
 
            
 
@@ -306,6 +312,8 @@ public function apply_auto_fix(WP_REST_Request $request)
             // ✅ 9️⃣ Save revision and changelog
             $revision_key = $this->save_bricks_revision($post_id, $elements, 'ai_fix');
             $changelog    = $this->generate_changelog($applied);
+
+            error_log( sprintf( '[AA:auto-fix] DONE applied=%d revision_key=%s', count( $applied ), $revision_key ?? 'none' ) );
 
             // ✅ 🔟 Return REST response
             return new WP_REST_Response([
