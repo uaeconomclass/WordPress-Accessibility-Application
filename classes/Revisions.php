@@ -28,11 +28,15 @@ class Revisions {
     public static function save_bricks_snapshot( int $post_id, array $elements, string $context = 'auto_fix' ): string {
         $key = "bricks_revision_{$context}_" . time();
 
-        update_post_meta( $post_id, $key, wp_json_encode( [
+        // `update_post_meta()` unslashes strings before storing. Snapshot payload can
+        // contain HTML quotes inside Bricks settings.text, so pre-slash JSON here.
+        $payload = wp_json_encode( [
             'timestamp' => current_time( 'Y-m-d H:i:s' ),
             'context'   => $context,
             'elements'  => $elements,
-        ] ) );
+        ] );
+
+        update_post_meta( $post_id, $key, wp_slash( $payload ) );
 
         return $key;
     }

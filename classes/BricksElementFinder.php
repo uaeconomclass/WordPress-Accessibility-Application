@@ -114,18 +114,7 @@ class BricksElementFinder {
                 }
             }
 
-            foreach ( $elements as $el ) {
-                $text = trim( $el['settings']['text'] ?? '' );
-                if ( ! $text ) {
-                    continue;
-                }
-                foreach ( $needles as $needle ) {
-                    if ( $needle !== '' && strpos( $text, $needle ) !== false ) {
-                        $result[] = $el;
-                        break;
-                    }
-                }
-            }
+            $result = self::find_by_text_content( $elements, $needles );
 
             if ( ! empty( $result ) ) {
                 error_log( sprintf(
@@ -137,5 +126,47 @@ class BricksElementFinder {
         }
 
         return $result;
+    }
+
+    /**
+     * Recursively search the Bricks element tree for elements whose `settings.text`
+     * contains any of the provided HTML needles.
+     *
+     * @param array $elements Bricks element tree.
+     * @param array $needles  Cleaned HTML snippets from axe node.html.
+     * @return array          Matching element arrays (deduplicated by element ID).
+     */
+    private static function find_by_text_content( array $elements, array $needles ): array {
+        $matches = [];
+
+        foreach ( $elements as $el ) {
+            $text = trim( $el['settings']['text'] ?? '' );
+            if ( $text ) {
+                foreach ( $needles as $needle ) {
+                    if ( $needle !== '' && strpos( $text, $needle ) !== false ) {
+                        $id = $el['id'] ?? null;
+                        if ( $id ) {
+                            $matches[ $id ] = $el; // dedupe by element id
+                        } else {
+                            $matches[] = $el;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if ( ! empty( $el['children'] ) && is_array( $el['children'] ) ) {
+                foreach ( self::find_by_text_content( $el['children'], $needles ) as $child_match ) {
+                    $child_id = $child_match['id'] ?? null;
+                    if ( $child_id ) {
+                        $matches[ $child_id ] = $child_match;
+                    } else {
+                        $matches[] = $child_match;
+                    }
+                }
+            }
+        }
+
+        return array_values( $matches );
     }
 }
