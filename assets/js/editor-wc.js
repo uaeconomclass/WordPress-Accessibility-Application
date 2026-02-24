@@ -41,7 +41,14 @@ class AADashboard extends HTMLElement {
     this.renderButton();
   }
 
-
+  connectedCallback() {
+    // After an auto-fix the page reloads. Re-open the panel automatically
+    // so the user sees the fresh scan without any manual step.
+    if (sessionStorage.getItem('aa_after_fix')) {
+      sessionStorage.removeItem('aa_after_fix');
+      setTimeout(() => this.renderPanel(), 400);
+    }
+  }
 
  updateAccessibilityUI(score) {
 
@@ -511,6 +518,9 @@ this._resultsClickHandler = async (e) => {
 
       if (result?.error) {
         aiTextDiv.innerHTML = `<p class="aa-error">AI Fix failed: ${result.error}</p>`;
+      } else if (result?.guided_fallback) {
+        // Rule not auto-fixable — show guided steps inline instead of an error.
+        aiTextDiv.innerHTML = result.steps;
       } else if (result?.changelog?.length) {
         // 🔹 Show changelog summary
         const logHtml = result.changelog
@@ -709,6 +719,12 @@ async _applyAutoFix(issue) {
     const data = await resp.json();
     console.log('Response data:', data);
 
+    // Unsupported rule — guided steps returned instead of a patch.
+    if (data.guided_fallback) {
+      console.groupEnd();
+      return data;
+    }
+
     this._lastRevisionKey = data.revision_key || null;
 
     // Show reload notice then reload the full builder page so Bricks
@@ -718,6 +734,8 @@ async _applyAutoFix(issue) {
       container.innerHTML = `<p class="aa-no-issues" style="color:#f0c040;padding:12px;">
         ✅ Fix applied! Reloading editor…</p>`;
     }
+    // Flag so connectedCallback auto-reopens the panel after reload (triggering rescan).
+    sessionStorage.setItem('aa_after_fix', '1');
     setTimeout(() => window.location.reload(), 1500);
 
     console.groupEnd();

@@ -63,25 +63,7 @@ class AI {
         $params  = $request->get_json_params();
         $context = $params['context'] ?? $params;
 
-        $prompt = "You are an accessibility assistant. The site uses Bricks Builder and AutomaticCSS.\n"
-                . "Provide step-by-step WCAG fix instructions in this exact HTML format:\n\n"
-                . "<div class=\"aa-resolution-steps-list\">\n"
-                . "  <ol style=\"margin:0; padding-left:18px;\">\n"
-                . "    <li>[Step 1 with optional <ul> for sub-steps]</li>\n"
-                . "    <li>[Step 2 ...]</li>\n"
-                . "    <li>[Verification / testing]</li>\n"
-                . "  </ol>\n"
-                . "</div>\n\n"
-                . "Guidelines:\n"
-                . "- Always return valid HTML only (no markdown, no headings like ##).\n"
-                . "- Use <ol> for main steps.\n"
-                . "- Use <ul> for sub-steps.\n"
-                . "- Keep Bricks Builder terminology (Navigator, Sidebar, Edit with Bricks, etc.).\n"
-                . "- Return ONLY the HTML block.\n\n"
-                . "Accessibility issue to fix:\n"
-                . json_encode( $context, JSON_PRETTY_PRINT );
-
-        $response = ClaudeClient::request( $prompt );
+        $response = ClaudeClient::request( $this->build_guided_prompt( $context ) );
 
         if ( is_wp_error( $response ) ) {
             return rest_ensure_response( [ 'error' => true, 'message' => $response->get_error_message() ] );
@@ -125,11 +107,12 @@ class AI {
         ];
         $rule_id = $issue['id'] ?? '';
         if ( ! in_array( $rule_id, $supported_rules, true ) ) {
-            return new WP_Error(
-                'rule_not_supported',
-                "Auto-fix is not supported for rule '{$rule_id}'. Use guided-fix for manual instructions.",
-                [ 'status' => 422 ]
-            );
+            // Unsupported rule — fall back to guided instructions instead of an error.
+            $steps = ClaudeClient::request( $this->build_guided_prompt( $issue ) );
+            if ( is_wp_error( $steps ) ) {
+                $steps = '<p>Auto-fix is not supported for this issue type. Please review and fix manually.</p>';
+            }
+            return rest_ensure_response( [ 'guided_fallback' => true, 'steps' => $steps ] );
         }
 
         error_log( sprintf( '[AA:auto-fix] START post_id=%d issue_id=%s nodes=%d', $post_id, $issue['id'] ?? '?', count( $issue['nodes'] ?? [] ) ) );
@@ -384,5 +367,29 @@ Output only the JSON patch.',
         delete_post_meta( $post_id, $revision_key );
 
         return rest_ensure_response( [ 'success' => true, 'message' => 'Fix reverted successfully.' ] );
+    }
+
+    // =========================================================================
+    // Private helpers
+    // =========================================================================
+
+    private function build_guided_prompt( array $context ): string {
+        return "You are an accessibility assistant. The site uses Bricks Builder and AutomaticCSS.\n"
+             . "Provide step-by-step WCAG fix instructions in this exact HTML format:\n\n"
+             . "<div class=\"aa-resolution-steps-list\">\n"
+             . "  <ol style=\"margin:0; padding-left:18px;\">\n"
+             . "    <li>[Step 1 with optional <ul> for sub-steps]</li>\n"
+             . "    <li>[Step 2 ...]</li>\n"
+             . "    <li>[Verification / testing]</li>\n"
+             . "  </ol>\n"
+             . "</div>\n\n"
+             . "Guidelines:\n"
+             . "- Always return valid HTML only (no markdown, no headings like ##).\n"
+             . "- Use <ol> for main steps.\n"
+             . "- Use <ul> for sub-steps.\n"
+             . "- Keep Bricks Builder terminology (Navigator, Sidebar, Edit with Bricks, etc.).\n"
+             . "- Return ONLY the HTML block.\n\n"
+             . "Accessibility issue to fix:\n"
+             . json_encode( $context, JSON_PRETTY_PRINT );
     }
 }
