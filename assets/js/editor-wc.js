@@ -1065,13 +1065,14 @@ async _highlightNode(node) {
 
       // helper to run axe inside preview window
       const runAxeInPreview = async () => {
-        // runOnly filter to cover WCAG criteria
-        //const opts = { runOnly: ["wcag2a", "wcag2aa", "wcag21aa"] };
-
+        const level = (window.aaEditor?.wcagLevel || "AA").toUpperCase();
+        const tagsByLevel = {
+          A:   ["wcag2a", "wcag21a"],
+          AA:  ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"],
+          AAA: ["wcag2a", "wcag2aa", "wcag2aaa", "wcag21aa", "wcag22aa"],
+        };
         const opts = {
-          type: "tag",
-          runOnly: ["wcag2a", "wcag2aa", "wcag21aa"],
-          
+          runOnly: { type: "tag", values: tagsByLevel[level] ?? tagsByLevel["AA"] },
         };
 
         // axe.run returns { violations, incomplete, passes, etc. }

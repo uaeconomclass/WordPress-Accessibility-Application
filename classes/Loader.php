@@ -108,18 +108,20 @@ class Loader {
             $summary   = get_post_meta( $post_id, '_acss_scan_summary', true );
             $score     = get_post_meta( $post_id, '_acss_scan_score', true ); // <-- add this in save_scan()
 
+            $opts = get_option( Settings::OPTION_KEY, [] );
+
             wp_localize_script( 'aa-editor-wc', 'aaEditor', [
-                'nonce'     => wp_create_nonce( 'aa_scan_nonce' ),
-                'ajaxurl'   => admin_url( 'admin-ajax.php' ),
-                'needsScan' => 1, //( get_post_meta( $post_id, '_aa_needs_scan', true ) === '1' ) ? 1 : 0,
-                'root'  => esc_url_raw( rest_url('aa/v1/') ),
-                'restNonce' => wp_create_nonce('wp_rest'),
-                'postId'    => $post_id,
-                'results'   => $results,
-                'status'    => $status,
-                'summary'   => $summary,
-                'score'     => $score,
-                
+                'nonce'          => wp_create_nonce( 'aa_scan_nonce' ),
+                'ajaxurl'        => admin_url( 'admin-ajax.php' ),
+                'needsScan'      => 1, //( get_post_meta( $post_id, '_aa_needs_scan', true ) === '1' ) ? 1 : 0,
+                'root'           => esc_url_raw( rest_url('aa/v1/') ),
+                'restNonce'      => wp_create_nonce('wp_rest'),
+                'postId'         => $post_id,
+                'results'        => $results,
+                'status'         => $status,
+                'summary'        => $summary,
+                'score'          => $score,
+                'wcagLevel'      => $opts['compliance_level'] ?? 'AA',
             ] );
     }
 

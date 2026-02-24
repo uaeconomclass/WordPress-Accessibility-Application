@@ -71,7 +71,10 @@ class Settings {
         $out['claude_use_constant'] = isset( $input['claude_use_constant'] ) ? (bool) $input['claude_use_constant'] : false;
 
         if ( empty( $out['claude_use_constant'] ) ) {
-            $out['claude_api_key'] = isset( $input['claude_api_key'] ) ? sanitize_text_field( trim( $input['claude_api_key'] ) ) : '';
+            $submitted = sanitize_text_field( trim( $input['claude_api_key'] ?? '' ) );
+            $prev      = get_option( self::OPTION_KEY, [] );
+            // Keep existing key if the field was left empty (standard password field behaviour).
+            $out['claude_api_key'] = $submitted !== '' ? $submitted : ( $prev['claude_api_key'] ?? '' );
         } else {
             $prev = get_option( self::OPTION_KEY, [] );
             $out['claude_api_key'] = $prev['claude_api_key'] ?? '';
@@ -99,13 +102,16 @@ class Settings {
     }
 
     public static function fieldClaudeKeyCb() {
-        $opts = get_option( self::OPTION_KEY, [] );
-        $val = isset( $opts['claude_api_key'] ) ? $opts['claude_api_key'] : '';
-        $masked = $val ? str_repeat( '•', 8 ) : '';
-        printf( '<input type="password" autocomplete="new-password" name="%1$s[claude_api_key]" value="%2$s" class="regular-text" /> <span class="description">%3$s</span>',
+        $opts        = get_option( self::OPTION_KEY, [] );
+        $has_key     = ! empty( $opts['claude_api_key'] );
+        $placeholder = $has_key
+            ? __( 'Key configured — enter a new value to replace it', 'accessibility-auditor' )
+            : __( 'Paste your Claude API key here', 'accessibility-auditor' );
+        printf(
+            '<input type="password" autocomplete="new-password" name="%1$s[claude_api_key]" value="" placeholder="%2$s" class="regular-text" /> <span class="description">%3$s</span>',
             esc_attr( self::OPTION_KEY ),
-            esc_attr( $val ? $masked : '' ),
-            esc_html__( 'Enter the Claude API key. If "Use WP-CONFIG constant" is checked, this field will be ignored.', 'accessibility-auditor' )
+            esc_attr( $placeholder ),
+            esc_html__( 'Enter the Claude API key. Leave blank to keep the existing key. If "Use WP-CONFIG constant" is checked, this field is ignored.', 'accessibility-auditor' )
         );
     }
 
