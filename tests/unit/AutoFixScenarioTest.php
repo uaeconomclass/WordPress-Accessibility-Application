@@ -388,3 +388,100 @@ $t->assert_equals(
     $patched_frame['settings']['attributes']['title'] ?? null,
     'frame-title patch sets title attribute'
 );
+
+$t->suite( 'Auto-fix scenarios вЂ” color-contrast (guarded)' );
+
+$elements_contrast = [
+    [
+        'id'       => 'aatst0',
+        'name'     => 'heading',
+        'settings' => [
+            'text' => 'Accessibility Auto-Fix Test Page',
+        ],
+        'children' => [],
+    ],
+];
+
+$issue_contrast = [
+    'id'    => 'color-contrast',
+    'nodes' => [
+        [
+            'target' => [ '#brxe-aatst0' ],
+            'html'   => '<h1 id="brxe-aatst0">Accessibility Auto-Fix Test Page</h1>',
+        ],
+    ],
+];
+
+$targets_contrast = Finder::from_issue( $elements_contrast, $issue_contrast );
+$t->assert_equals( 1, count( $targets_contrast ), 'color-contrast maps issue to one Bricks element' );
+$t->assert_equals( 'aatst0', $targets_contrast[0]['id'] ?? null, 'color-contrast maps to expected element id' );
+
+$contrast_patch = [
+    'element_id' => 'aatst0',
+    'changes'    => [
+        'settings' => [
+            '_cssCustom' => '#brxe-aatst0 { color: #1f2937; }',
+        ],
+    ],
+];
+
+$t->assert_null(
+    Validator::validate( $contrast_patch, 'aatst0' ),
+    'color-contrast patch passes validator with target-scoped _cssCustom'
+);
+
+$patched_contrast = Applier::apply( $targets_contrast[0], $contrast_patch );
+$t->assert_equals(
+    '#brxe-aatst0 { color: #1f2937; }',
+    $patched_contrast['settings']['_cssCustom'] ?? null,
+    'color-contrast patch stores scoped _cssCustom'
+);
+
+$contrast_bad_patch = [
+    'element_id' => 'aatst0',
+    'changes'    => [
+        'settings' => [
+            '_cssCustom' => 'body { color: red; }',
+        ],
+    ],
+];
+
+$t->assert_not_null(
+    Validator::validate( $contrast_bad_patch, 'aatst0' ),
+    'color-contrast patch is rejected when _cssCustom targets global selector'
+);
+
+$t->suite( 'Auto-fix scenarios вЂ” flagged rule payload guards' );
+
+$aria_labelledby_patch = [
+    'element_id' => 'icon_link_01',
+    'added_keys' => [
+        'settings' => [
+            'attributes' => [
+                'aria-labelledby' => 'heading-id',
+            ],
+        ],
+    ],
+];
+
+$t->assert_null(
+    Validator::validate( $aria_labelledby_patch, 'icon_link_01' ),
+    'aria-labelledby patch is structurally allowed (flagged rule still needs semantic ID validation)'
+);
+
+$aria_hidden_focus_patch = [
+    'element_id' => 'icon_link_01',
+    'changes'    => [
+        'settings' => [
+            'attributes' => [
+                'aria-hidden' => 'true',
+                'tabindex'    => '-1',
+            ],
+        ],
+    ],
+];
+
+$t->assert_null(
+    Validator::validate( $aria_hidden_focus_patch, 'icon_link_01' ),
+    'aria-hidden-focus style patch is structurally allowed (flagged rule needs conservative policy)'
+);
