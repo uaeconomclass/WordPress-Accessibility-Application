@@ -1,6 +1,7 @@
 <?php
 namespace Accessibility_Auditor;
 
+use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 
