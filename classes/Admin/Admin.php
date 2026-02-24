@@ -62,5 +62,3 @@ class Admin {
         echo '<p><a href="' . esc_url( admin_url( 'edit.php?post_type=page' ) ) . '">' . esc_html__( 'View All Pages', 'accessibility-auditor' ) . '</a></p>';
     }
 }
-
-Admin::init();

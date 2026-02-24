@@ -123,9 +123,35 @@ public function apply_auto_fix(WP_REST_Request $request)
         return new WP_Error('forbidden', 'You do not have permission to edit this post.', ['status' => 403]);
     }
 
+    // 1b️⃣ Issue whitelist — only auto-fix supported rule IDs.
+    // Everything else should use guided-fix (manual instructions) instead.
+    $supported_rules = [
+        'color-contrast',       // CSS color fix via _cssCustom
+        'image-alt',            // settings.altText
+        'link-name',            // settings.url.ariaLabel / aria-label attribute
+        'button-name',          // aria-label attribute
+        'frame-title',          // title / aria-label attribute
+        'input-image-alt',      // settings.altText on input[type=image]
+        'aria-label',           // generic aria-label fixes
+        'aria-labelledby',      // aria-labelledby attribute
+        'aria-hidden-focus',    // remove aria-hidden from focusable elements
+    ];
+    $rule_id = $issue['id'] ?? '';
+    if (!in_array($rule_id, $supported_rules, true)) {
+        return new WP_Error(
+            'rule_not_supported',
+            "Auto-fix is not supported for rule '{$rule_id}'. Use guided-fix for manual instructions.",
+            ['status' => 422]
+        );
+    }
+
     error_log( sprintf( '[AA:auto-fix] START post_id=%d issue_id=%s nodes=%d', $post_id, $issue['id'] ?? '?', count( $issue['nodes'] ?? [] ) ) );
 
     // 2️⃣ Load Bricks content
+    if ( ! defined( 'BRICKS_DB_PAGE_CONTENT' ) ) {
+        return new WP_Error( 'bricks_unavailable', 'Bricks Builder is not active on this installation.', [ 'status' => 503 ] );
+    }
+
     $content = get_post_meta($post_id, BRICKS_DB_PAGE_CONTENT, true);
     $elements = is_array($content) ? $content : json_decode($content, true);
 
@@ -134,7 +160,7 @@ public function apply_auto_fix(WP_REST_Request $request)
     }
 
     // 3️⃣ Extract relevant Bricks elements for this issue
-    $target_elements = $this->extract_bricks_elements_from_issue($elements, $issue);
+    $target_elements = BricksElementFinder::from_issue($elements, $issue);
     error_log( sprintf( '[AA:auto-fix] Bricks elements loaded=%d target_elements=%d', count( $elements ), count( $target_elements ) ) );
     if (empty($target_elements)) {
         error_log( '[AA:auto-fix] No matching Bricks elements found — returning error' );
@@ -219,7 +245,7 @@ public function apply_auto_fix(WP_REST_Request $request)
 
             📘 Accessibility guidance:
             - Links/buttons → add meaningful aria-labels, remove duplicate or empty attributes.
-            - Images → ensure descriptive alt text; set settings.image.alt.
+            - Images → for alt text use settings.altText ONLY. Example: {\"added_keys\": {\"settings\": {\"altText\": \"Descriptive text\"}}}. Never use settings.image.alt.
             - Iframes/videos → add a title or aria-label; remove redundant attributes.
             - Text/headings → fix tag hierarchy (settings.tag), remove unnecessary roles.
             - Color contrast → use `settings._cssCustom` with the LITERAL element selector (NOT %%root%%).
@@ -227,7 +253,6 @@ public function apply_auto_fix(WP_REST_Request $request)
               Example for element id \"abc123\": {\"added_keys\": {\"settings\": {\"_cssCustom\": \"#brxe-abc123 { color: #1a1a1a; }\"}}}
               Target at least 5:1 contrast ratio against the background to have margin above the 4.5:1 threshold.
               If _cssCustom already exists, use \"changes\" not \"added_keys\".
-            - Images → for alt text use settings.altText (NOT settings.image.alt). Example: {\"added_keys\": {\"settings\": {\"altText\": \"Descriptive text\"}}}
 
             ⚙️ Output Rules:
             - Must be valid JSON (no markdown, comments, or explanations).
@@ -266,30 +291,31 @@ public function apply_auto_fix(WP_REST_Request $request)
 
                
                 $id = $patch['element_id'] ?? null;
-               
+
                 if (!$id) {
                     error_log('[AAI] Skipping patch: no element ID provided');
                     continue;
                 }
 
+                // 🛡️ Validate patch against whitelist before applying.
+                $validation_error = BricksPatchValidator::validate($patch, $element['id']);
+                if ($validation_error !== null) {
+                    error_log("[AA:auto-fix] Patch rejected by validator for element {$id}: {$validation_error}");
+                    continue;
+                }
 
-              
-                  $original = $this->find_bricks_element($elements, $id);
+                  $original = BricksElementFinder::find($elements, $id);
 
-
-
-                  
                     if (!$original) {
                         error_log("[AAI] Could not find element with ID: {$id}");
                         continue;
                     }
 
                     // 🧩 Apply AI patch into original element
-                    $updated_element = $this->apply_patch_to_bricks_element($original, $patch);
+                    $updated_element = BricksPatchApplier::apply($original, $patch);
 
-                    
                     // 🧱 Update the element in the full structure
-                    if ($this->update_bricks_element($elements, $id, $updated_element)) {
+                    if (BricksElementFinder::update($elements, $id, $updated_element)) {
                         $applied[] = $updated_element;
                     } else {
                         error_log("[AAI] Failed to update element {$id} in structure");
@@ -506,90 +532,8 @@ private function normalize_ai_response($response)
  * Apply AI patch data to a Bricks element.
  * Supports nested "changes" and "added_keys" structures (no dot notation).
  */
-private function apply_patch_to_bricks_element(array $original, $patch): array
-{
-    if (is_string($patch)) {
-        $patch = json_decode($patch, true);
-    }
-
-    if (!is_array($patch)) {
-        throw new Exception('Invalid patch format — expected JSON array or object.');
-    }
-
-    // 🔹 Apply "changes" by deep-merging directly (nested JSON)
-    if (!empty($patch['changes']) && is_array($patch['changes'])) {
-        $original = $this->deep_merge_bricks_element($original, $patch['changes']);
-    }
-
-    // 🔹 Apply "added_keys" by merging as well
-    if (!empty($patch['added_keys']) && is_array($patch['added_keys'])) {
-        $original = $this->deep_merge_bricks_element($original, $patch['added_keys']);
-    }
-
-    // 🔹 Apply removals (deeply unset based on nested JSON)
-    if (!empty($patch['removed_keys']) && is_array($patch['removed_keys'])) {
-        $original = $this->deep_remove_bricks_keys($original, $patch['removed_keys']);
-    }
-
-    
-
-    // 🔸 If AI didn't include the ID, preserve the original
-    if (empty($original['id']) && !empty($patch['element_id'])) {
-        $original['id'] = $patch['element_id'];
-    }
-
-    // 🧱 Ensure children structure is valid
-    if (isset($original['children']) && !is_array($original['children'])) {
-        $original['children'] = [];
-    }
-
-    return $original;
-}
-
-
-private function deep_remove_bricks_keys(array $original, array $patch): array
-{
-    foreach ($patch as $key => $value) {
-        // If this key should be removed entirely
-        if (isset($original[$key]) && $value === true) {
-            unset($original[$key]);
-            continue;
-        }
-
-        // If nested object, recurse deeper
-        if (isset($original[$key]) && is_array($value) && is_array($original[$key])) {
-            $original[$key] = $this->deep_remove_bricks_keys($original[$key], $value);
-        }
-    }
-
-    return $original;
-}
-
-
-/**
- * Deep merge arrays recursively (preserves Bricks Builder structure).
- * - Merges nested arrays instead of overwriting them.
- * - Overwrites scalar values.
- */
-private function deep_merge_bricks_element(array $original, array $patch): array
-{
-    foreach ($patch as $key => $value) {
-        // Recursively merge arrays
-        if (is_array($value) && isset($original[$key]) && is_array($original[$key])) {
-            $original[$key] = $this->deep_merge_bricks_element($original[$key], $value);
-        } else {
-            // Overwrite or add scalar
-            $original[$key] = $value;
-        }
-    }
-
-    // Keep Bricks structure safe
-    if (isset($original['children']) && !is_array($original['children'])) {
-        $original['children'] = [];
-    }
-
-    return $original;
-}
+// Patch application moved to BricksPatchApplier::apply()
+// Deep merge/remove moved to BricksPatchApplier (private helpers)
 
 
 private function save_bricks_revision($post_id, $elements, $context = 'auto_fix')
@@ -609,92 +553,14 @@ private function save_bricks_revision($post_id, $elements, $context = 'auto_fix'
 }
 
 
-private function extract_bricks_elements_from_issue($elements, $issue)
-{
-    $targets = [];
-    foreach ($issue['nodes'] ?? [] as $node) {
-        // 1) Match #brxe-{id} in target selectors
-        foreach ($node['target'] ?? [] as $selector) {
-            if (preg_match('/#brxe-([\w-]+)/i', $selector, $m)) {
-                $targets[] = $m[1];
-            }
-        }
-        // 2) If target is a bare tag (e.g. "pre", "a"), extract brxe ID from node.html id attribute
-        if (empty($targets) && !empty($node['html'])) {
-            if (preg_match('/\bid="brxe-([\w-]+)"/i', $node['html'], $m)) {
-                $targets[] = $m[1];
-                error_log( '[AA:extract] id-attr fallback matched element: ' . $m[1] );
-            }
-        }
-    }
-
-    $result = [];
-    foreach (array_unique($targets) as $id) {
-        $el = $this->find_bricks_element($elements, $id);
-        if ($el) $result[] = $el;
-    }
-
-    // Fallback: no #brxe- ID in selectors (e.g. bare <a> inside a text-basic element).
-    // Search all elements whose settings.text contains the axe node HTML snippet.
-    if (empty($result)) {
-        $node_count = count($issue['nodes'] ?? []);
-        $first_html  = ($issue['nodes'][0] ?? [])['html'] ?? '(no html field)';
-        error_log( sprintf( '[AA:fallback] issue=%s nodes=%d first_html=%s', $issue['id'] ?? '?', $node_count, substr($first_html, 0, 200) ) );
-
-        $html_needles = [];
-        foreach ($issue['nodes'] ?? [] as $node) {
-            if (!empty($node['html'])) {
-                // axe injects style="outline:..." on nodes during scanning — strip before matching
-                $clean = preg_replace('/\s+style="[^"]*"/', '', $node['html']);
-                $html_needles[] = trim($clean);
-                error_log( '[AA:fallback] needle after strip: ' . substr($clean, 0, 200) );
-            }
-        }
-        error_log( '[AA:fallback] needle count=' . count($html_needles) );
-        if (!empty($html_needles)) {
-            foreach ($elements as $el) {
-                $text = trim($el['settings']['text'] ?? '');
-                if (!$text) continue;
-                foreach ($html_needles as $needle) {
-                    if ($needle && strpos($text, $needle) !== false) {
-                        $result[] = $el;
-                        break;
-                    }
-                }
-            }
-        }
-        if (!empty($result)) {
-            error_log( sprintf( '[AA:auto-fix] fallback html-match found %d element(s) for issue %s', count($result), $issue['id'] ?? '?' ) );
-        }
-    }
-
-    return $result;
-}
+// Element extraction moved to BricksElementFinder::from_issue()
 
 
 
 
 
 
-
-
-
-private function update_bricks_element(&$elements, $element_id, $new_data) {
-
-    foreach ($elements as &$el) {
-        if (($el['id'] ?? null) === $element_id) {
-            $el = $new_data;
-            return true;
-        }
-        if (!empty($el['children'])) {
-            if ($this->update_bricks_element($el['children'], $element_id, $new_data)) return true;
-        }
-    }
-    return false;
-}
-
-
-
+// Element tree traversal moved to BricksElementFinder::find() and BricksElementFinder::update()
 
 /**
  * Generate a human-readable changelog for audit/log UI.
@@ -715,21 +581,7 @@ private function generate_changelog( $applied ) {
     return $log;
 }
 
-private function find_bricks_element( $elements, $target_id ) {
-    foreach ( $elements as $el ) {
-        if ( isset( $el['id'] ) && $el['id'] === $target_id ) {
-            return $el;
-        }
-        if ( ! empty( $el['children'] ) ) {
-            $found = $this->find_bricks_element( $el['children'], $target_id );
-            if ( $found ) return $found;
-        }
-    }
-    return null;
-}
-
-
-
+// find_bricks_element moved to BricksElementFinder::find()
 
 
     /**
