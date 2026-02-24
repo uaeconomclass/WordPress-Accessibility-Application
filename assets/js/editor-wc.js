@@ -711,13 +711,14 @@ async _applyAutoFix(issue) {
 
     this._lastRevisionKey = data.revision_key || null;
 
-    const iframe = document.getElementById('bricks-builder-iframe') || document.querySelector('iframe#bricks-builder-iframe');
-    refreshBricksCanvas().then(res => {
-      console.log('[AA] Canvas refresh:', res);
-      // re-scan after iframe reloads so violations panel reflects the fix
-      const delay = iframe ? 5000 : 500;
-      setTimeout(() => this.runScan(), delay);
-    });
+    // Show reload notice then reload the full builder page so Bricks
+    // picks up the DB changes (iframe-only reloads break the canvas).
+    const container = this.shadowRoot.querySelector('#aa-scan-results');
+    if (container) {
+      container.innerHTML = `<p class="aa-no-issues" style="color:#f0c040;padding:12px;">
+        ✅ Fix applied! Reloading editor…</p>`;
+    }
+    setTimeout(() => window.location.reload(), 1500);
 
     console.groupEnd();
     return data;
