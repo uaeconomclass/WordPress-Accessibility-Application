@@ -149,8 +149,27 @@ public function apply_auto_fix(WP_REST_Request $request)
     // 5️⃣ Iterate each affected element and fix individually via Claude
     foreach ($target_elements as $element) {
 
-
-      
+        // Extract computed color data from axe nodes (available for color-contrast violations)
+        $color_context = '';
+        if ( ! empty( $issue['nodes'] ) ) {
+            foreach ( $issue['nodes'] as $node ) {
+                $checks = array_merge( $node['any'] ?? [], $node['all'] ?? [] );
+                foreach ( $checks as $check ) {
+                    if ( ! empty( $check['data']['fgColor'] ) ) {
+                        $color_context = sprintf(
+                            "\n\n🎨 Computed color data from browser:\n- Foreground color: %s\n- Background color: %s\n- Current contrast ratio: %s\n- Required ratio: %s\n- Font size: %s, weight: %s",
+                            $check['data']['fgColor'],
+                            $check['data']['bgColor'] ?? 'unknown',
+                            $check['data']['contrastRatio'] ?? 'unknown',
+                            $check['data']['expectedContrastRatio'] ?? '4.5:1',
+                            $check['data']['fontSize'] ?? 'unknown',
+                            $check['data']['fontWeight'] ?? 'unknown'
+                        );
+                        break 2;
+                    }
+                }
+            }
+        }
 
         $prompt = sprintf(
             "You are an AI accessibility assistant for WordPress using the Bricks Builder framework and AutomaticCSS.
@@ -158,7 +177,7 @@ public function apply_auto_fix(WP_REST_Request $request)
             You are provided with:
             1️⃣ An accessibility issue (axe-core JSON).
             2️⃣ The Bricks element JSON responsible for that issue.
-            3️⃣ The element type name: **%s**
+            3️⃣ The element type name: **%s**%s
 
             Your task:
             - Analyze the accessibility issue and generate the *minimal JSON patch* to fix it.
@@ -200,10 +219,13 @@ public function apply_auto_fix(WP_REST_Request $request)
 
             📘 Accessibility guidance:
             - Links/buttons → add meaningful aria-labels, remove duplicate or empty attributes.
-            - Images → ensure descriptive alt text; remove decorative or empty alts.
+            - Images → ensure descriptive alt text; set settings.image.alt.
             - Iframes/videos → add a title or aria-label; remove redundant attributes.
             - Text/headings → fix tag hierarchy (settings.tag), remove unnecessary roles.
-            - Colors → ensure contrast ≥ 4.5:1 by adjusting `settings.style.color` or `_cssGlobalClasses`.
+            - Color contrast → use `settings._cssCustom` with a CSS color string that achieves the required contrast ratio.
+              Example: {\"added_keys\": {\"settings\": {\"_cssCustom\": \"color: #1a1a1a;\"}}}
+              This generates a scoped ID-selector CSS rule that overrides theme/ACSS styles.
+              Calculate a new foreground color that achieves at least 4.5:1 ratio against the background.
 
             ⚙️ Output Rules:
             - Must be valid JSON (no markdown, comments, or explanations).
@@ -220,6 +242,7 @@ public function apply_auto_fix(WP_REST_Request $request)
 
             Output only the JSON patch as described above.",
             strtoupper($element['name'] ?? 'UNKNOWN'),
+            $color_context,
             json_encode($issue, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
             json_encode($element, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
         );
