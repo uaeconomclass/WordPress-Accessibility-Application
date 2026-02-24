@@ -17,6 +17,8 @@ class Loader {
         require_once AA_PLUGIN_DIR . 'classes/BricksElementFinder.php';
         require_once AA_PLUGIN_DIR . 'classes/BricksPatchApplier.php';
         require_once AA_PLUGIN_DIR . 'classes/BricksPatchValidator.php';
+        require_once AA_PLUGIN_DIR . 'classes/ClaudeClient.php';
+        require_once AA_PLUGIN_DIR . 'classes/AiResponseNormalizer.php';
         require_once AA_PLUGIN_DIR . 'classes/AI.php';
         new \Accessibility_Auditor\AI();
 

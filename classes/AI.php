@@ -5,185 +5,171 @@ use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 
+/**
+ * REST API controller for AI-powered accessibility fix routes.
+ *
+ * This class is intentionally thin: it handles routing, auth, and input
+ * validation only. All business logic lives in dedicated helper classes:
+ *
+ *   ClaudeClient           — Anthropic API HTTP calls
+ *   AiResponseNormalizer   — Claude output cleanup / JSON extraction
+ *   BricksElementFinder    — Bricks element tree traversal + issue-to-element mapping
+ *   BricksPatchApplier     — Deep-merge / deep-remove patch application
+ *   BricksPatchValidator   — Patch safety whitelist (element_id, settings shape, _cssCustom)
+ *   Revisions              — Bricks snapshots, changelog, audit history
+ */
 class AI {
 
     public function __construct() {
-        add_action('rest_api_init', [$this, 'register_routes']);
-        
-
+        add_action( 'rest_api_init', [ $this, 'register_routes' ] );
     }
 
-    /**
-     * Register custom REST API routes
-     */
     public function register_routes() {
-        register_rest_route('aa/v1', '/guided-fix', [
-            'methods'  => 'POST',
-            'callback' => [$this, 'generate_guided_fix'],
-            'permission_callback' => [$this, 'check_permissions'],
-        ]);
+        register_rest_route( 'aa/v1', '/guided-fix', [
+            'methods'             => 'POST',
+            'callback'            => [ $this, 'generate_guided_fix' ],
+            'permission_callback' => [ $this, 'check_permissions' ],
+        ] );
 
-        register_rest_route('aa/v1', '/auto-fix', [
-            'methods'  => 'POST',
-            'callback' => [$this, 'apply_auto_fix'],
-            'permission_callback' => [$this, 'check_permissions'],
-        ]);
+        register_rest_route( 'aa/v1', '/auto-fix', [
+            'methods'             => 'POST',
+            'callback'            => [ $this, 'apply_auto_fix' ],
+            'permission_callback' => [ $this, 'check_permissions' ],
+        ] );
 
-        register_rest_route('aa/v1', '/save-fix', [
-            'methods'  => 'POST',
-            'callback' => [$this, 'save_fix'],
-            'permission_callback' => [$this, 'check_permissions'],
-        ]);
+        register_rest_route( 'aa/v1', '/save-fix', [
+            'methods'             => 'POST',
+            'callback'            => [ $this, 'save_fix' ],
+            'permission_callback' => [ $this, 'check_permissions' ],
+        ] );
 
-        register_rest_route('aa/v1', '/revert-fix', [
-            'methods'  => 'POST',
-            'callback' => [$this, 'revert_fix'],
-            'permission_callback' => [$this, 'check_permissions'],
-        ]);
+        register_rest_route( 'aa/v1', '/revert-fix', [
+            'methods'             => 'POST',
+            'callback'            => [ $this, 'revert_fix' ],
+            'permission_callback' => [ $this, 'check_permissions' ],
+        ] );
     }
 
-    /**
-     * Permissions: only editors/admins
-     */
+    /** Baseline gate: must be at least an editor. Per-resource checks happen inside each callback. */
     public function check_permissions() {
-        return current_user_can('edit_posts');
+        return current_user_can( 'edit_posts' );
     }
 
-    /**
-     * Generate WCAG step-by-step guidance from Claude
-     */
+    // =========================================================================
+    // Route: /guided-fix
+    // =========================================================================
 
     public function generate_guided_fix( WP_REST_Request $request ) {
-        $params = $request->get_json_params();
-        $context = $params['context'] ?? $params;  // adapt if you wrapped under 'context'
-
-
-
-        // $prompt = "You are an accessibility assistant. The site uses Bricks Builder and AutomaticCSS.\n"
-        //         . "Provide step-by-step WCAG fix instructions in plain text for this issue:\n"
-        //         . json_encode( $context, JSON_PRETTY_PRINT );
+        $params  = $request->get_json_params();
+        $context = $params['context'] ?? $params;
 
         $prompt = "You are an accessibility assistant. The site uses Bricks Builder and AutomaticCSS.\n"
-                    . "Provide step-by-step WCAG fix instructions in this exact HTML format:\n\n"
-                    . "<div class=\"aa-resolution-steps-list\">\n"
-                    . "  <ol style=\"margin:0; padding-left:18px;\">\n"
-                    . "    <li>[Step 1 with optional <ul> for sub-steps]</li>\n"
-                    . "    <li>[Step 2 ...]</li>\n"
-                    . "    <li>[Verification / testing]</li>\n"
-                    . "  </ol>\n"
-                    . "</div>\n\n"
-                    . "Guidelines:\n"
-                    . "- Always return valid HTML only (no markdown, no headings like ##).\n"
-                    . "- Use <ol> for main steps.\n"
-                    . "- Use <ul> for sub-steps.\n"
-                    . "- Keep Bricks Builder terminology (Navigator, Sidebar, Edit with Bricks, etc.).\n"
-                    . "- Return ONLY the HTML block.\n\n"
-                    . "Accessibility issue to fix:\n"
-                    . json_encode($context, JSON_PRETTY_PRINT);
+                . "Provide step-by-step WCAG fix instructions in this exact HTML format:\n\n"
+                . "<div class=\"aa-resolution-steps-list\">\n"
+                . "  <ol style=\"margin:0; padding-left:18px;\">\n"
+                . "    <li>[Step 1 with optional <ul> for sub-steps]</li>\n"
+                . "    <li>[Step 2 ...]</li>\n"
+                . "    <li>[Verification / testing]</li>\n"
+                . "  </ol>\n"
+                . "</div>\n\n"
+                . "Guidelines:\n"
+                . "- Always return valid HTML only (no markdown, no headings like ##).\n"
+                . "- Use <ol> for main steps.\n"
+                . "- Use <ul> for sub-steps.\n"
+                . "- Keep Bricks Builder terminology (Navigator, Sidebar, Edit with Bricks, etc.).\n"
+                . "- Return ONLY the HTML block.\n\n"
+                . "Accessibility issue to fix:\n"
+                . json_encode( $context, JSON_PRETTY_PRINT );
 
-
-        $response = $this->call_claude_api( $prompt );
-
-
-        
+        $response = ClaudeClient::request( $prompt );
 
         if ( is_wp_error( $response ) ) {
-            return rest_ensure_response([
-                'error'   => true,
-                'message' => $response->get_error_message(),
-            ]);
+            return rest_ensure_response( [ 'error' => true, 'message' => $response->get_error_message() ] );
         }
 
-        return rest_ensure_response([
-            'steps' => $response,
-        ]);
+        return rest_ensure_response( [ 'steps' => $response ] );
     }
 
+    // =========================================================================
+    // Route: /auto-fix
+    // =========================================================================
 
+    public function apply_auto_fix( WP_REST_Request $request ) {
+        $payload = $request->get_json_params();
 
-    /**
- * Handle automatic accessibility fixes using Claude + Bricks API.
- */
+        // 1. Input validation.
+        $issue = $payload['issue'] ?? null;
+        if ( ! $issue ) {
+            return new WP_Error( 'missing_issue', 'Missing issue data.' );
+        }
 
-public function apply_auto_fix(WP_REST_Request $request)
-{
-    $payload = $request->get_json_params();
+        $post_id = intval( $payload['post_id'] ?? 0 );
+        if ( ! $post_id ) {
+            return new WP_Error( 'missing_post', 'post_id is required.', [ 'status' => 400 ] );
+        }
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            return new WP_Error( 'forbidden', 'You do not have permission to edit this post.', [ 'status' => 403 ] );
+        }
 
-    // 1️⃣ Validate input
-    $issue = $payload['issue'] ?? null;
-    if (!$issue) {
-        return new WP_Error('missing_issue', 'Missing issue data.');
-    }
+        // 2. Issue whitelist — only auto-fix supported axe rule IDs.
+        $supported_rules = [
+            'color-contrast',    // CSS color fix via _cssCustom
+            'image-alt',         // settings.altText
+            'link-name',         // settings.url.ariaLabel / aria-label attribute
+            'button-name',       // aria-label attribute
+            'frame-title',       // title / aria-label attribute
+            'input-image-alt',   // settings.altText on input[type=image]
+            'aria-label',        // generic aria-label fixes
+            'aria-labelledby',   // aria-labelledby attribute
+            'aria-hidden-focus', // remove aria-hidden from focusable elements
+        ];
+        $rule_id = $issue['id'] ?? '';
+        if ( ! in_array( $rule_id, $supported_rules, true ) ) {
+            return new WP_Error(
+                'rule_not_supported',
+                "Auto-fix is not supported for rule '{$rule_id}'. Use guided-fix for manual instructions.",
+                [ 'status' => 422 ]
+            );
+        }
 
-    $post_id = intval($payload['post_id'] ?? 0);
-    if (!$post_id) {
-        return new WP_Error('missing_post', 'post_id is required.', ['status' => 400]);
-    }
-    if (!current_user_can('edit_post', $post_id)) {
-        return new WP_Error('forbidden', 'You do not have permission to edit this post.', ['status' => 403]);
-    }
+        error_log( sprintf( '[AA:auto-fix] START post_id=%d issue_id=%s nodes=%d', $post_id, $issue['id'] ?? '?', count( $issue['nodes'] ?? [] ) ) );
 
-    // 1b️⃣ Issue whitelist — only auto-fix supported rule IDs.
-    // Everything else should use guided-fix (manual instructions) instead.
-    $supported_rules = [
-        'color-contrast',       // CSS color fix via _cssCustom
-        'image-alt',            // settings.altText
-        'link-name',            // settings.url.ariaLabel / aria-label attribute
-        'button-name',          // aria-label attribute
-        'frame-title',          // title / aria-label attribute
-        'input-image-alt',      // settings.altText on input[type=image]
-        'aria-label',           // generic aria-label fixes
-        'aria-labelledby',      // aria-labelledby attribute
-        'aria-hidden-focus',    // remove aria-hidden from focusable elements
-    ];
-    $rule_id = $issue['id'] ?? '';
-    if (!in_array($rule_id, $supported_rules, true)) {
-        return new WP_Error(
-            'rule_not_supported',
-            "Auto-fix is not supported for rule '{$rule_id}'. Use guided-fix for manual instructions.",
-            ['status' => 422]
-        );
-    }
+        // 3. Load Bricks content.
+        if ( ! defined( 'BRICKS_DB_PAGE_CONTENT' ) ) {
+            return new WP_Error( 'bricks_unavailable', 'Bricks Builder is not active on this installation.', [ 'status' => 503 ] );
+        }
 
-    error_log( sprintf( '[AA:auto-fix] START post_id=%d issue_id=%s nodes=%d', $post_id, $issue['id'] ?? '?', count( $issue['nodes'] ?? [] ) ) );
+        $content  = get_post_meta( $post_id, BRICKS_DB_PAGE_CONTENT, true );
+        $elements = is_array( $content ) ? $content : json_decode( $content, true );
 
-    // 2️⃣ Load Bricks content
-    if ( ! defined( 'BRICKS_DB_PAGE_CONTENT' ) ) {
-        return new WP_Error( 'bricks_unavailable', 'Bricks Builder is not active on this installation.', [ 'status' => 503 ] );
-    }
+        if ( empty( $elements ) || ! is_array( $elements ) ) {
+            return new WP_Error( 'invalid_content', 'Invalid or empty Bricks content.' );
+        }
 
-    $content = get_post_meta($post_id, BRICKS_DB_PAGE_CONTENT, true);
-    $elements = is_array($content) ? $content : json_decode($content, true);
+        // 4. Map issue to affected Bricks elements.
+        $target_elements = BricksElementFinder::from_issue( $elements, $issue );
+        error_log( sprintf( '[AA:auto-fix] elements=%d targets=%d', count( $elements ), count( $target_elements ) ) );
 
-    if (empty($elements) || !is_array($elements)) {
-        return new WP_Error('invalid_content', 'Invalid or empty Bricks content.');
-    }
+        if ( empty( $target_elements ) ) {
+            error_log( '[AA:auto-fix] No matching Bricks elements found — returning error' );
+            return new WP_Error( 'missing_elements', 'No matching Bricks elements found.' );
+        }
 
-    // 3️⃣ Extract relevant Bricks elements for this issue
-    $target_elements = BricksElementFinder::from_issue($elements, $issue);
-    error_log( sprintf( '[AA:auto-fix] Bricks elements loaded=%d target_elements=%d', count( $elements ), count( $target_elements ) ) );
-    if (empty($target_elements)) {
-        error_log( '[AA:auto-fix] No matching Bricks elements found — returning error' );
-        return new WP_Error('missing_elements', 'No matching Bricks elements found.');
-    }
+        // 5. Snapshot before mutating (supports rollback).
+        Revisions::save_bricks_snapshot( $post_id, $elements, 'pre_fix_backup' );
 
-    // 4️⃣ Save a pre-fix revision (for undo support)
-    $this->save_bricks_revision($post_id, $elements, 'pre_fix_backup');
+        $applied = [];
 
-    $applied = [];
+        // 6. Per-element: build prompt → call Claude → validate → apply patch.
+        foreach ( $target_elements as $element ) {
 
-    // 5️⃣ Iterate each affected element and fix individually via Claude
-    foreach ($target_elements as $element) {
-
-        // Extract computed color data from axe nodes (available for color-contrast violations)
-        $color_context = '';
-        if ( ! empty( $issue['nodes'] ) ) {
-            foreach ( $issue['nodes'] as $node ) {
-                $checks = array_merge( $node['any'] ?? [], $node['all'] ?? [] );
-                foreach ( $checks as $check ) {
+            // Extract color data from axe checks (color-contrast issues).
+            $color_context = '';
+            foreach ( $issue['nodes'] ?? [] as $node ) {
+                foreach ( array_merge( $node['any'] ?? [], $node['all'] ?? [] ) as $check ) {
                     if ( ! empty( $check['data']['fgColor'] ) ) {
                         $color_context = sprintf(
-                            "\n\n🎨 Computed color data from browser:\n- Foreground color: %s\n- Background color: %s\n- Current contrast ratio: %s\n- Required ratio: %s\n- Font size: %s, weight: %s",
+                            "\n\n🎨 Computed color data:\n- Foreground: %s\n- Background: %s\n- Ratio: %s (required: %s)\n- Font: %s / weight: %s",
                             $check['data']['fgColor'],
                             $check['data']['bgColor'] ?? 'unknown',
                             $check['data']['contrastRatio'] ?? 'unknown',
@@ -195,473 +181,208 @@ public function apply_auto_fix(WP_REST_Request $request)
                     }
                 }
             }
-        }
 
-        $prompt = sprintf(
-            "You are an AI accessibility assistant for WordPress using the Bricks Builder framework and AutomaticCSS.
+            $prompt = sprintf(
+                'You are an AI accessibility assistant for WordPress using the Bricks Builder framework and AutomaticCSS.
 
-            You are provided with:
-            1️⃣ An accessibility issue (axe-core JSON).
-            2️⃣ The Bricks element JSON responsible for that issue.
-            3️⃣ The element type name: **%s**%s
+You are provided with:
+1️⃣ An accessibility issue (axe-core JSON).
+2️⃣ The Bricks element JSON responsible for that issue.
+3️⃣ The element type name: **%s**%s
 
-            Your task:
-            - Analyze the accessibility issue and generate the *minimal JSON patch* to fix it.
-            - If any attribute or key should be removed (e.g., invalid aria, redundant role), include it under `removed_keys` using nested JSON.
-            - If new attributes or keys are required, include them under `added_keys`.
-            - If existing attributes should be updated, include them under `changes`.
-            - Do NOT return the full element — only the patch object.
+Your task:
+- Analyze the accessibility issue and generate the *minimal JSON patch* to fix it.
+- If any attribute or key should be removed (e.g., invalid aria, redundant role), include it under `removed_keys` using nested JSON.
+- If new attributes or keys are required, include them under `added_keys`.
+- If existing attributes should be updated, include them under `changes`.
+- Do NOT return the full element — only the patch object.
 
-            ⚙️ Output must include only the minimal patch object in this exact format:
+⚙️ Output must be the minimal patch object in this exact format:
+{
+  "element_id": "<same ID as provided>",
+  "changes":      { "settings": { ... } },
+  "added_keys":   { "settings": { ... } },
+  "removed_keys": { "settings": { ... } }
+}
 
-            {
-            \"element_id\": \"<same ID as provided>\",
-            \"changes\": {
-                \"settings\": {
-                \"url\": {
-                    \"ariaLabel\": \"New label here\"
-                },
-                \"attributes\": {
-                    \"aria-label\": \"New label here\"
-                }
-                }
-            },
-            \"added_keys\": {
-                \"settings\": {
-                \"image\": {
-                    \"alt\": \"Descriptive alt text\"
-                }
-                }
-            },
-            \"removed_keys\": {
-                \"settings\": {
-                \"attributes\": {
-                    \"role\": true,
-                    \"aria-hidden\": true
-                }
-                }
-            }
-            }
+📘 Accessibility guidance:
+- Links/buttons → add meaningful aria-labels, remove duplicate or empty attributes.
+- Images → for alt text use settings.altText ONLY. Example: {"added_keys": {"settings": {"altText": "Descriptive text"}}}. Never use settings.image.alt.
+- Iframes/videos → add a title or aria-label; remove redundant attributes.
+- Text/headings → fix tag hierarchy (settings.tag), remove unnecessary roles.
+- Color contrast → use `settings._cssCustom` with the LITERAL element selector (NOT %%root%%).
+  The element ID is in the Bricks Element JSON as "id". Prefix it with "#brxe-".
+  Example for element id "abc123": {"added_keys": {"settings": {"_cssCustom": "#brxe-abc123 { color: #1a1a1a; }"}}}
+  Target at least 5:1 contrast ratio. If _cssCustom already exists, use "changes" not "added_keys".
 
-            📘 Accessibility guidance:
-            - Links/buttons → add meaningful aria-labels, remove duplicate or empty attributes.
-            - Images → for alt text use settings.altText ONLY. Example: {\"added_keys\": {\"settings\": {\"altText\": \"Descriptive text\"}}}. Never use settings.image.alt.
-            - Iframes/videos → add a title or aria-label; remove redundant attributes.
-            - Text/headings → fix tag hierarchy (settings.tag), remove unnecessary roles.
-            - Color contrast → use `settings._cssCustom` with the LITERAL element selector (NOT %%root%%).
-              The element ID is in the Bricks Element JSON as \"id\". Prefix it with \"#brxe-\".
-              Example for element id \"abc123\": {\"added_keys\": {\"settings\": {\"_cssCustom\": \"#brxe-abc123 { color: #1a1a1a; }\"}}}
-              Target at least 5:1 contrast ratio against the background to have margin above the 4.5:1 threshold.
-              If _cssCustom already exists, use \"changes\" not \"added_keys\".
+⚙️ Output Rules:
+- Must be valid JSON (no markdown, comments, or explanations).
+- Use only nested JSON objects (no dot-notation paths).
+- Must include only changed, added, or removed keys.
+- Always include the `element_id` copied exactly from the provided element JSON.
 
-            ⚙️ Output Rules:
-            - Must be valid JSON (no markdown, comments, or explanations).
-            - Use only nested JSON objects (no dot-notation paths).
-            - Must include only changed, added, or removed keys.
-            - Do not include unrelated or full Bricks structure.
-            - Always include the `element_id` copied exactly from the provided element JSON.
+=== Accessibility Issue JSON ===
+%s
 
-            === Accessibility Issue JSON ===
-            %s
+=== Bricks Element JSON ===
+%s
 
-            === Bricks Element JSON ===
-            %s
-
-            Output only the JSON patch as described above.",
-            strtoupper($element['name'] ?? 'UNKNOWN'),
-            $color_context,
-            json_encode($issue, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
-            json_encode($element, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
-        );
-
-        try {
-            // 6️⃣ Send prompt to Claude
-            error_log( sprintf( '[AA:auto-fix] Calling Claude for element_id=%s type=%s', $element['id'] ?? '?', $element['name'] ?? '?' ) );
-            $response = $this->call_claude_api($prompt, true);
-
-            // 7️⃣ Normalize and decode AI output
-            $json = $this->normalize_ai_response($response);
-            error_log( '[AA:auto-fix] Claude raw (first 300): ' . substr( $json, 0, 300 ) );
-
-           
+Output only the JSON patch.',
+                strtoupper( $element['name'] ?? 'UNKNOWN' ),
+                $color_context,
+                json_encode( $issue, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ),
+                json_encode( $element, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES )
+            );
 
             try {
-                // Attempt strict decoding
-                $patch = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+                error_log( sprintf( '[AA:auto-fix] Calling Claude for element_id=%s type=%s', $element['id'] ?? '?', $element['name'] ?? '?' ) );
+                $response = ClaudeClient::request( $prompt, true );
+                $json     = AiResponseNormalizer::normalize( $response );
+                error_log( '[AA:auto-fix] Claude response (first 300): ' . substr( $json, 0, 300 ) );
 
-               
-                $id = $patch['element_id'] ?? null;
+                try {
+                    $patch = json_decode( $json, true, 512, JSON_THROW_ON_ERROR );
 
-                if (!$id) {
-                    error_log('[AAI] Skipping patch: no element ID provided');
-                    continue;
-                }
-
-                // 🛡️ Validate patch against whitelist before applying.
-                $validation_error = BricksPatchValidator::validate($patch, $element['id']);
-                if ($validation_error !== null) {
-                    error_log("[AA:auto-fix] Patch rejected by validator for element {$id}: {$validation_error}");
-                    continue;
-                }
-
-                  $original = BricksElementFinder::find($elements, $id);
-
-                    if (!$original) {
-                        error_log("[AAI] Could not find element with ID: {$id}");
+                    $id = $patch['element_id'] ?? null;
+                    if ( ! $id ) {
+                        error_log( '[AAI] Skipping patch: no element_id in response' );
                         continue;
                     }
 
-                    // 🧩 Apply AI patch into original element
-                    $updated_element = BricksPatchApplier::apply($original, $patch);
-
-                    // 🧱 Update the element in the full structure
-                    if (BricksElementFinder::update($elements, $id, $updated_element)) {
-                        $applied[] = $updated_element;
-                    } else {
-                        error_log("[AAI] Failed to update element {$id} in structure");
+                    $validation_error = BricksPatchValidator::validate( $patch, $element['id'] );
+                    if ( $validation_error !== null ) {
+                        error_log( "[AA:auto-fix] Patch rejected: {$validation_error}" );
+                        continue;
                     }
-                
 
-            } catch (JsonException $e) {
-                error_log("[AAI] JSON decode failed at line " . __LINE__);
-                error_log("Bad JSON: " . substr($json, 0, 300));
-                error_log("Error message: " . $e->getMessage());
+                    $original = BricksElementFinder::find( $elements, $id );
+                    if ( ! $original ) {
+                        error_log( "[AAI] Element not found in tree: {$id}" );
+                        continue;
+                    }
 
-                return new WP_REST_Response([
-                    'error'   => true,
-                    'message' => 'AI returned invalid JSON.',
-                    'details' => $e->getMessage(),
-                    'raw'     => substr($json, 0, 300)
-                ], 500);
+                    $updated = BricksPatchApplier::apply( $original, $patch );
+
+                    if ( BricksElementFinder::update( $elements, $id, $updated ) ) {
+                        $applied[] = $updated;
+                    } else {
+                        error_log( "[AAI] Failed to update element {$id} in tree" );
+                    }
+
+                } catch ( \JsonException $e ) {
+                    error_log( '[AAI] JSON decode failed: ' . $e->getMessage() );
+                    error_log( 'Bad JSON: ' . substr( $json, 0, 300 ) );
+                    return new WP_REST_Response( [
+                        'error'   => true,
+                        'message' => 'AI returned invalid JSON.',
+                        'details' => $e->getMessage(),
+                        'raw'     => substr( $json, 0, 300 ),
+                    ], 500 );
+                }
+
+            } catch ( \Throwable $e ) {
+                error_log( '[AAI] Unexpected error during AI fix: ' . $e->getMessage() );
+                continue;
             }
-
-           
-            
-        } catch (Throwable $e) {
-            error_log('[AAI] Error during AI fix: ' . $e->getMessage());
-            continue;
         }
-    }
 
-
-    // ✅ 8️⃣ Save updated Bricks content and clear caches
+        // 7. Persist, flush caches, return.
         try {
-            // Save updated Bricks structure
-            update_post_meta($post_id, BRICKS_DB_PAGE_CONTENT, $elements);
+            update_post_meta( $post_id, BRICKS_DB_PAGE_CONTENT, $elements );
 
-            // Clear Bricks cache (CSS, rendered data)
-            if (function_exists('bricks_flush_post_css')) {
-                bricks_flush_post_css($post_id);
+            if ( function_exists( 'bricks_flush_post_css' ) ) {
+                bricks_flush_post_css( $post_id );
             }
-            if (function_exists('bricks_clear_rendered_data')) {
-                bricks_clear_rendered_data($post_id);
+            if ( function_exists( 'bricks_clear_rendered_data' ) ) {
+                bricks_clear_rendered_data( $post_id );
             }
 
-            // Optional: Trigger Bricks data refresh on frontend (if using iframe)
-            // This can help reflect changes instantly in builder view
-            do_action('bricks_after_save_post', $post_id);
+            do_action( 'bricks_after_save_post', $post_id );
 
-            // ✅ 9️⃣ Save revision and changelog
-            $revision_key = $this->save_bricks_revision($post_id, $elements, 'ai_fix');
-            $changelog    = $this->generate_changelog($applied);
+            $revision_key = Revisions::save_bricks_snapshot( $post_id, $elements, 'ai_fix' );
+            $changelog    = Revisions::generate_changelog( $applied );
 
-            error_log( sprintf( '[AA:auto-fix] DONE applied=%d revision_key=%s', count( $applied ), $revision_key ?? 'none' ) );
+            error_log( sprintf( '[AA:auto-fix] DONE applied=%d revision_key=%s', count( $applied ), $revision_key ) );
 
-            // ✅ 🔟 Return REST response
-            return new WP_REST_Response([
+            return new WP_REST_Response( [
                 'success'   => true,
                 'message'   => 'Accessibility fixes applied successfully.',
                 'changes'   => $applied,
                 'revision'  => $revision_key,
                 'changelog' => $changelog,
-            ]);
+            ] );
 
-        } catch (Throwable $e) {
-            error_log('[AAI] Failed to save updated Bricks content: ' . $e->getMessage());
-            return new WP_REST_Response([
+        } catch ( \Throwable $e ) {
+            error_log( '[AAI] Failed to save Bricks content: ' . $e->getMessage() );
+            return new WP_REST_Response( [
                 'error'   => true,
                 'message' => 'Failed to save updated Bricks content.',
                 'details' => $e->getMessage(),
-            ], 500);
-        }
-}
-
-
-/**
- * Accept an auto-fix: logs the acceptance to audit trail.
- * The Bricks content was already saved by apply_auto_fix.
- */
-public function save_fix(WP_REST_Request $request)
-{
-    $payload  = $request->get_json_params();
-    $post_id  = intval($payload['post_id'] ?? 0);
-
-    if (!$post_id || !current_user_can('edit_post', $post_id)) {
-        return new WP_Error('forbidden', 'Unauthorized.', ['status' => 403]);
-    }
-
-    $revision_key = sanitize_text_field($payload['revision_key'] ?? '');
-
-    Revisions::log_autofix($post_id, [
-        'revision_key' => $revision_key,
-        'action'       => 'accepted',
-    ]);
-
-    return rest_ensure_response(['success' => true]);
-}
-
-
-/**
- * Reject an auto-fix: restores Bricks content from the pre-fix revision snapshot.
- */
-public function revert_fix(WP_REST_Request $request)
-{
-    $payload      = $request->get_json_params();
-    $post_id      = intval($payload['post_id'] ?? 0);
-    $revision_key = sanitize_text_field($payload['revision_key'] ?? '');
-
-    if (!$post_id || !current_user_can('edit_post', $post_id)) {
-        return new WP_Error('forbidden', 'Unauthorized.', ['status' => 403]);
-    }
-
-    if (!$revision_key) {
-        return new WP_Error('missing_revision', 'revision_key is required.', ['status' => 400]);
-    }
-
-    $revision_json = get_post_meta($post_id, $revision_key, true);
-    if (!$revision_json) {
-        return new WP_Error('revision_not_found', 'Revision not found.', ['status' => 404]);
-    }
-
-    $revision = json_decode($revision_json, true);
-    $elements = $revision['elements'] ?? null;
-
-    if (empty($elements) || !is_array($elements)) {
-        return new WP_Error('invalid_revision', 'Revision data is invalid.', ['status' => 500]);
-    }
-
-    update_post_meta($post_id, BRICKS_DB_PAGE_CONTENT, $elements);
-
-    if (function_exists('bricks_flush_post_css')) {
-        bricks_flush_post_css($post_id);
-    }
-    if (function_exists('bricks_clear_rendered_data')) {
-        bricks_clear_rendered_data($post_id);
-    }
-
-    delete_post_meta($post_id, $revision_key);
-
-    return rest_ensure_response(['success' => true, 'message' => 'Fix reverted successfully.']);
-}
-
-
-private function normalize_ai_response($response)
-{
-
-
-    // 🔹 1. Handle WP error and normalize to string
-    if (is_wp_error($response)) {
-        throw new Exception('Claude API request failed: ' . $response->get_error_message());
-    }
-
-    if (is_array($response)) {
-        $response = $response['content']
-            ?? $response['body']
-            ?? $response['message']
-            ?? wp_json_encode($response);
-    } elseif (is_object($response)) {
-        $response = $response->content
-            ?? $response->body
-            ?? $response->message
-            ?? json_encode($response);
-    }
-
-    if (!is_string($response)) {
-        $response = wp_json_encode($response);
-    }
-
-    // 🔹 2. Clean up Claude / AI artifacts
-    $response = mb_convert_encoding($response, 'UTF-8', 'UTF-8');
-    $response = preg_replace('/[[:cntrl:]&&[^\r\n\t]]/', '', $response); // invisible chars
-    $response = preg_replace('/^```(?:json)?\s*/i', '', $response); // remove starting ```json
-    $response = preg_replace('/\s*```$/', '', $response); // remove trailing ```
-    //$response = preg_replace('/^Output:\s*/i', '', $response); // strip "Output:"
-    //$response = preg_replace('/^Here is the corrected JSON[:\s]*/i', '', $response);
-    $response = preg_replace('/,(\s*[\]\}])/', '$1', $response); // trailing commas
-    $response = trim($response);
-
-    // 🔹 3. Ensure proper bracket closure
-    if (str_starts_with($response, '[') && !str_ends_with($response, ']')) {
-        $response .= ']';
-    } elseif (str_starts_with($response, '{') && !str_ends_with($response, '}')) {
-        $response .= '}';
-    }
-
-    // 🔹 4. Try to decode safely
-    $decoded = json_decode($response, true);
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        error_log('[AAI] JSON decode error: ' . json_last_error_msg());
-        error_log('[AAI] Raw response: ' . substr($response, 0, 500));
-
-        // Try to extract valid JSON substring
-        if (preg_match('/\{.*\}|\[.*\]/s', $response, $match)) {
-            $decoded = json_decode($match[0], true);
+            ], 500 );
         }
     }
 
+    // =========================================================================
+    // Route: /save-fix  (accept — log to audit trail)
+    // =========================================================================
 
+    public function save_fix( WP_REST_Request $request ) {
+        $payload  = $request->get_json_params();
+        $post_id  = intval( $payload['post_id'] ?? 0 );
 
-    // 🔹 5. If still invalid, throw for higher-level handler
-    // if (empty($decoded)) {
-    //     error_log("[AAI] Claude returned invalid JSON after cleanup: " . substr($response, 0, 300));
-
-    //     return new \WP_REST_Response([
-    //         'error'   => true,
-    //         'message' => 'Claude returned invalid or empty JSON after cleanup.',
-    //         'raw'     => substr($response, 0, 500)
-    //     ], 500);
-    //  }
-
-    // 🔹 6. Return normalized JSON string for further merging
-    return wp_json_encode($decoded, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-}
-
-
-
-/**
- * Apply AI patch data to a Bricks element.
- * Supports nested "changes" and "added_keys" structures (no dot notation).
- */
-// Patch application moved to BricksPatchApplier::apply()
-// Deep merge/remove moved to BricksPatchApplier (private helpers)
-
-
-private function save_bricks_revision($post_id, $elements, $context = 'auto_fix')
-{
-    $timestamp = current_time('Y-m-d H:i:s');
-    $key = "bricks_revision_{$context}_" . time();
-
-    $revision_data = [
-        'timestamp' => $timestamp,
-        'context'   => $context,
-        'elements'  => $elements,
-    ];
-
-    update_post_meta($post_id, $key, wp_json_encode($revision_data));
-
-    return $key;
-}
-
-
-// Element extraction moved to BricksElementFinder::from_issue()
-
-
-
-
-
-
-// Element tree traversal moved to BricksElementFinder::find() and BricksElementFinder::update()
-
-/**
- * Generate a human-readable changelog for audit/log UI.
- */
-private function generate_changelog( $applied ) {
-    $log = [];
-    foreach ( $applied as $el ) {
-        $id      = $el['id'] ?? 'unknown';
-        $changes = $el['changes']['settings'] ?? [];
-        foreach ( $changes as $key => $val ) {
-            $display = is_array( $val ) ? wp_json_encode( $val ) : (string) $val;
-            $log[] = sprintf( 'Element %s: updated settings.%s → %s', $id, $key, $display );
-        }
-        if ( empty( $changes ) ) {
-            $log[] = sprintf( 'Element %s: patch applied', $id );
-        }
-    }
-    return $log;
-}
-
-// find_bricks_element moved to BricksElementFinder::find()
-
-
-    /**
-     * Helper: Call Claude API
-     */
-    private function call_claude_api( $prompt, $json_mode = false ) {
-        $api_key = \Accessibility_Auditor\Settings::getClaudeKey();
-
-        if ( empty( $api_key ) ) {
-            return new \WP_Error( 'no_api_key', 'Claude API key is not configured.' );
+        if ( ! $post_id || ! current_user_can( 'edit_post', $post_id ) ) {
+            return new WP_Error( 'forbidden', 'Unauthorized.', [ 'status' => 403 ] );
         }
 
-        $url = "https://api.anthropic.com/v1/messages";
+        $revision_key = sanitize_text_field( $payload['revision_key'] ?? '' );
 
-        $headers = [
-            'Content-Type'      => 'application/json',
-            'x-api-key'         => $api_key,
-            'anthropic-version' => '2023-06-01',
-        ];
+        Revisions::log_autofix( $post_id, [
+            'revision_key' => $revision_key,
+            'action'       => 'accepted',
+        ] );
 
-        // Pick a default Claude model that most accounts have
-        $model = 'claude-sonnet-4-20250514'; 
-        // If your account has 3.5 access, swap with: claude-3-5-sonnet-20240620
-
-        $body = [
-            'model'      => $model,
-            'max_tokens' => 4096,
-            'messages'   => [
-                [ 'role' => 'user', 'content' => $prompt ]
-            ],
-        ];
-
-        if ( $json_mode ) {
-            $body['system'] = "Respond ONLY with valid JSON.";
-        }
-
-        $args = [
-            'headers' => $headers,
-            'body'    => wp_json_encode( $body ),
-            'timeout' => 300,
-        ];
-
-        $response = wp_remote_post( $url, $args );
-
-        if ( is_wp_error( $response ) ) {
-            return new \WP_Error( 'api_request_failed', $response->get_error_message() );
-        }
-
-        $status   = wp_remote_retrieve_response_code( $response );
-        $raw_body = wp_remote_retrieve_body( $response );
-
-        if ( $status < 200 || $status >= 300 ) {
-            return new \WP_Error( 'api_http_error', "HTTP $status: " . substr( $raw_body, 0, 200 ) );
-        }
-
-        $decoded = json_decode( $raw_body, true );
-        if ( null === $decoded ) {
-            return new \WP_Error( 'api_json_decode_error', 'Failed to decode API response: ' . substr( $raw_body, 0, 200 ) );
-        }
-
-        // Parse Claude v1/messages response
-        $content = '';
-        if ( isset( $decoded['content'] ) && is_array( $decoded['content'] ) ) {
-            foreach ( $decoded['content'] as $block ) {
-                if ( isset( $block['text'] ) ) {
-                    $content .= $block['text'];
-                }
-            }
-        }
-
-        $content = trim( $content );
-
-        if ( $content === '' ) {
-            return new \WP_Error( 'api_empty_response', 'API responded but content is empty.' );
-        }
-
-        return $content;
+        return rest_ensure_response( [ 'success' => true ] );
     }
 
+    // =========================================================================
+    // Route: /revert-fix  (reject — restore from snapshot)
+    // =========================================================================
 
+    public function revert_fix( WP_REST_Request $request ) {
+        $payload      = $request->get_json_params();
+        $post_id      = intval( $payload['post_id'] ?? 0 );
+        $revision_key = sanitize_text_field( $payload['revision_key'] ?? '' );
 
+        if ( ! $post_id || ! current_user_can( 'edit_post', $post_id ) ) {
+            return new WP_Error( 'forbidden', 'Unauthorized.', [ 'status' => 403 ] );
+        }
+        if ( ! $revision_key ) {
+            return new WP_Error( 'missing_revision', 'revision_key is required.', [ 'status' => 400 ] );
+        }
 
+        $revision_json = get_post_meta( $post_id, $revision_key, true );
+        if ( ! $revision_json ) {
+            return new WP_Error( 'revision_not_found', 'Revision not found.', [ 'status' => 404 ] );
+        }
+
+        $revision = json_decode( $revision_json, true );
+        $elements = $revision['elements'] ?? null;
+
+        if ( empty( $elements ) || ! is_array( $elements ) ) {
+            return new WP_Error( 'invalid_revision', 'Revision data is invalid.', [ 'status' => 500 ] );
+        }
+
+        update_post_meta( $post_id, BRICKS_DB_PAGE_CONTENT, $elements );
+
+        if ( function_exists( 'bricks_flush_post_css' ) ) {
+            bricks_flush_post_css( $post_id );
+        }
+        if ( function_exists( 'bricks_clear_rendered_data' ) ) {
+            bricks_clear_rendered_data( $post_id );
+        }
+
+        delete_post_meta( $post_id, $revision_key );
+
+        return rest_ensure_response( [ 'success' => true, 'message' => 'Fix reverted successfully.' ] );
+    }
 }
