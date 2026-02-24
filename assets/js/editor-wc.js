@@ -92,6 +92,30 @@ class AADashboard extends HTMLElement {
     try { return JSON.stringify(obj); } catch(e){ return "[]"; }
   }
 
+  _makeTraceId(prefix = "aa") {
+    return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  async _postDebugLog(event, traceId, data = {}) {
+    try {
+      if (!window.aaEditor?.ajaxurl) return;
+      await fetch(window.aaEditor.ajaxurl, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          action: "aa_debug_log",
+          nonce: window.aaEditor.nonce || "",
+          postId: window.aaEditor.postId || "",
+          traceId: traceId || "",
+          event,
+          data: JSON.stringify(data || {}),
+        }),
+      });
+    } catch (_) {
+      // Debug logging must never break UX.
+    }
+  }
+
   /*****************************************************************
    * Render Floating Button
    *****************************************************************/
@@ -291,14 +315,19 @@ class AADashboard extends HTMLElement {
 /*****************************************************************
  * Render Results (receives violations array or axe results violations)
  *****************************************************************/
-renderResults(violations = []) {
+renderResults(violations = [], incomplete = []) {
   console.log(violations);
   this._violations = violations; // store for highlight lookup
+  this._incomplete = Array.isArray(incomplete) ? incomplete : [];
   const container = this.shadowRoot.querySelector("#aa-scan-results");
   if (!container) return;
 
   if (!Array.isArray(violations) || violations.length === 0) {
-    container.innerHTML = `<p class="aa-no-issues"><em>No issues found 🎉</em></p>`;
+    if (this._incomplete.length > 0) {
+      container.innerHTML = `<p class="aa-no-issues"><em>Needs review: ${this._incomplete.length} item(s) require manual verification.</em></p>`;
+    } else {
+      container.innerHTML = `<p class="aa-no-issues"><em>No issues found 🎉</em></p>`;
+    }
     return;
   }
 
@@ -655,6 +684,7 @@ _gradeColor(grade) {
  * Generate Guided Fixes (Claude → step-by-step WCAG guidance)
  *****************************************************************/
 async _generateGuidedFix(issue) {
+  const traceId = this._makeTraceId("guided");
   try {
     // Construct context for Claude
     const context = {
@@ -669,21 +699,26 @@ async _generateGuidedFix(issue) {
     };
 
     // Call your backend AI endpoint
+    await this._postDebugLog("guided-fix.start", traceId, { issueId: issue.id, nodes: issue.nodes?.length || 0 });
+
     const resp = await fetch(`${aaEditor.root}guided-fix`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-WP-Nonce": aaEditor.restNonce,
       },
-      body: JSON.stringify({ context })
+      body: JSON.stringify({ context, trace_id: traceId })
     });
 
+    await this._postDebugLog("guided-fix.http", traceId, { status: resp.status, ok: resp.ok });
     if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
     const data = await resp.json();
+    await this._postDebugLog("guided-fix.done", traceId, { responseTraceId: data.trace_id || null, keys: Object.keys(data || {}) });
 
     // Claude should return a plain text / markdown string with steps
     return data.steps || "⚠️ No guidance returned from AI.";
   } catch (err) {
+    await this._postDebugLog("guided-fix.error", traceId, { message: err?.message || String(err) });
     console.error("GuidedFix error:", err);
     return `❌ Error generating fix guide: ${err.message}`;
   }
@@ -693,11 +728,13 @@ async _generateGuidedFix(issue) {
  * Apply Auto-Fix (Claude → JSON patch, Bricks API → apply changes)
  *****************************************************************/
 async _applyAutoFix(issue) {
+  const traceId = this._makeTraceId("autofix");
   console.group(`[AA] Auto-fix → ${issue.id}`);
   console.log('Issue:', { id: issue.id, description: issue.description, nodes: issue.nodes?.length });
 
   try {
-    const payload = { issue, post_id: aaEditor.postId };
+    const payload = { issue, post_id: aaEditor.postId, trace_id: traceId };
+    await this._postDebugLog("auto-fix.start", traceId, { issueId: issue.id, nodes: issue.nodes?.length || 0 });
     console.log('POST', `${aaEditor.root}auto-fix`, payload);
 
     const resp = await fetch(`${aaEditor.root}auto-fix`, {
@@ -709,6 +746,7 @@ async _applyAutoFix(issue) {
       body: JSON.stringify(payload)
     });
 
+    await this._postDebugLog("auto-fix.http", traceId, { status: resp.status, ok: resp.ok });
     console.log('Response status:', resp.status, resp.statusText);
     if (!resp.ok) {
       const text = await resp.text();
@@ -717,6 +755,11 @@ async _applyAutoFix(issue) {
     }
 
     const data = await resp.json();
+    await this._postDebugLog("auto-fix.done", traceId, {
+      responseTraceId: data.trace_id || null,
+      guidedFallback: !!data.guided_fallback,
+      success: !!data.success
+    });
     console.log('Response data:', data);
 
     // Unsupported rule — guided steps returned instead of a patch.
@@ -741,6 +784,7 @@ async _applyAutoFix(issue) {
     console.groupEnd();
     return data;
   } catch (err) {
+    await this._postDebugLog("auto-fix.error", traceId, { message: err?.message || String(err) });
     console.error('[AA] AutoFix error:', err);
     console.groupEnd();
     return { error: err.message };
@@ -941,11 +985,15 @@ async _highlightNode(node) {
   async runScan(auto = false) {
     const resultsEl = this.shadowRoot.querySelector("#aa-scan-results");
     if (!resultsEl) return;
+    const traceId = this._makeTraceId("scan");
+    const startedAt = Date.now();
+    await this._postDebugLog("scan.start", traceId, { auto: !!auto, wcagLevel: window.aaEditor?.wcagLevel || "AA" });
     resultsEl.innerHTML = `<p class="aa-no-issues"><em>Scanning with axe-core…</em></p>`;
 
     try {
       const previewIframe = document.querySelector("#bricks-builder-iframe") || document.querySelector("iframe");
       if (!previewIframe) {
+        await this._postDebugLog("scan.no-iframe", traceId, {});
         resultsEl.innerHTML = `<p class="aa-no-issues"><em>Preview iframe not found. Ensure you're in Bricks editor.</em></p>`;
         return;
       }
@@ -954,6 +1002,7 @@ async _highlightNode(node) {
       let previewDoc;
       try { previewDoc = previewIframe.contentDocument || previewWin.document; } catch(e){ previewDoc = null; }
       if (!previewDoc) {
+        await this._postDebugLog("scan.no-preview-doc", traceId, {});
         resultsEl.innerHTML = `<p class="aa-no-issues"><em>Preview document not accessible (cross-origin?).</em></p>`;
         return;
       }
@@ -971,12 +1020,17 @@ async _highlightNode(node) {
         };
 
         // axe.run returns { violations, incomplete, passes, etc. }
-        return await previewWin.axe.run(previewDoc, opts);
+        await this._postDebugLog("scan.axe.run", traceId, { tags: opts.runOnly?.values || [], axeLoaded: !!previewWin.axe });
+        return await Promise.race([
+          previewWin.axe.run(previewDoc, opts),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("axe.run timeout after 15000ms")), 15000)),
+        ]);
       };
 
       let results;
       // if axe not present in preview, inject it and wait for load
       if (!previewWin.axe) {
+        await this._postDebugLog("scan.axe.inject", traceId, { src: "cdnjs/axe-core/4.10.0" });
         await new Promise((resolve, reject) => {
           const script = previewDoc.createElement("script");
           script.src = "https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.10.0/axe.min.js";
@@ -997,33 +1051,48 @@ async _highlightNode(node) {
 
       console.log("axe results", results);
       console.log("violations:", results.violations);
+      await this._postDebugLog("scan.axe.done", traceId, {
+        violations: results?.violations?.length || 0,
+        incomplete: results?.incomplete?.length || 0,
+        passes: results?.passes?.length || 0,
+        ms: Date.now() - startedAt
+      });
 
 
       // Render violations (prefer results.violations)
       const violations = results.violations || [];
-      this.renderResults(violations);
+      this.renderResults(violations, results.incomplete || []);
       const calcScore = Math.max(0, 100 - violations.length * 5);
       this.updateAccessibilityUI(calcScore);
 
       // optionally persist results via ajax to server (if aaEditor ajax present)
       if (typeof aaEditor !== "undefined" && aaEditor.ajaxurl) {
         try {
-          await fetch(aaEditor.ajaxurl, {
+          const persistResp = await fetch(aaEditor.ajaxurl, {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: new URLSearchParams({
               action: "run_scan",
               nonce: aaEditor.nonce || "",
               postId: aaEditor.postId || "",
+              traceId,
               results: JSON.stringify(results),
             }),
           });
+          const persistText = await persistResp.text();
+          await this._postDebugLog("scan.persist", traceId, {
+            status: persistResp.status,
+            ok: persistResp.ok,
+            body: persistText.slice(0, 300)
+          });
         } catch (err) {
+          await this._postDebugLog("scan.persist.error", traceId, { message: err?.message || String(err) });
           console.warn("Failed to post scan results to server:", err);
         }
       }
 
     } catch (err) {
+      await this._postDebugLog("scan.error", traceId, { message: err?.message || String(err), ms: Date.now() - startedAt });
       console.error(err);
       const resultsElInner = this.shadowRoot.querySelector("#aa-scan-results");
       if (resultsElInner) resultsElInner.innerHTML = `<p class="aa-no-issues"><strong>Error:</strong> ${this.escapeHTML(err.message || String(err))}</p>`;

@@ -68,6 +68,7 @@ class Loader {
 
         // AJAX
         add_action( 'wp_ajax_run_scan', [ __CLASS__, 'save_scan_results' ] );
+        add_action( 'wp_ajax_aa_debug_log', [ __CLASS__, 'debug_log_event' ] );
         //add_action( 'wp_ajax_aa_guided_fix', [__CLASS__, 'ajax_guided_fix' ] );
 
         // add_action( 'wp_ajax_guided_fix', [ __CLASS__, 'ajax_guided_fix' ] );
@@ -140,10 +141,19 @@ class Loader {
         check_ajax_referer( 'aa_scan_nonce', 'nonce' );
 
         $post_id = intval( $_POST['postId'] ?? 0 );
+        $trace_id = sanitize_text_field( wp_unslash( $_POST['traceId'] ?? '' ) );
         $raw     = wp_unslash( $_POST['results'] ?? '' );
         $results = json_decode( $raw, true );
 
+        self::aa_log( 'run_scan.request', [
+            'trace_id' => $trace_id,
+            'post_id'  => $post_id,
+            'raw_len'  => strlen( $raw ),
+            'json_ok'  => is_array( $results ),
+        ] );
+
         if ( ! $post_id || ! is_array( $results ) ) {
+            self::aa_log( 'run_scan.invalid', [ 'trace_id' => $trace_id, 'post_id' => $post_id ] );
             wp_send_json_error( [ 'message' => 'Invalid request' ], 400 );
         }
 
@@ -152,12 +162,58 @@ class Loader {
         // delete flag
         delete_post_meta( $post_id, '_aa_needs_scan' );
 
-        wp_send_json_success( [
+        $response = [
             'scan_id' => $scan_id,
             'status'  => get_post_meta( $post_id, '_aa_scan_status', true ),
             'summary' => get_post_meta( $post_id, '_aa_scan_summary', true ),
-            'score' => get_post_meta( $post_id, '_aa_scan_score', true ),
+            'score'   => get_post_meta( $post_id, '_aa_scan_score', true ),
+            'trace_id'=> $trace_id,
+        ];
+
+        self::aa_log( 'run_scan.success', [
+            'trace_id'   => $trace_id,
+            'post_id'    => $post_id,
+            'scan_id'    => $scan_id,
+            'violations' => count( $results['violations'] ?? [] ),
+            'incomplete' => count( $results['incomplete'] ?? [] ),
+            'status'     => $response['status'],
+            'score'      => $response['score'],
         ] );
+
+        wp_send_json_success( $response );
+    }
+
+    public static function debug_log_event() {
+        check_ajax_referer( 'aa_scan_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'edit_posts' ) ) {
+            wp_send_json_error( [ 'message' => 'Unauthorized' ], 403 );
+        }
+
+        $trace_id = sanitize_text_field( wp_unslash( $_POST['traceId'] ?? '' ) );
+        $event    = sanitize_text_field( wp_unslash( $_POST['event'] ?? '' ) );
+        $post_id  = intval( $_POST['postId'] ?? 0 );
+        $data_raw = wp_unslash( $_POST['data'] ?? '' );
+        $data     = json_decode( $data_raw, true );
+
+        self::aa_log( 'frontend.' . ( $event ?: 'unknown' ), [
+            'trace_id' => $trace_id,
+            'post_id'  => $post_id,
+            'data'     => is_array( $data ) ? $data : [ 'raw' => substr( (string) $data_raw, 0, 500 ) ],
+        ] );
+
+        wp_send_json_success( [ 'ok' => true, 'trace_id' => $trace_id ] );
+    }
+
+    public static function aa_log( string $event, array $context = [] ): void {
+        $line = sprintf(
+            "[%s] %s %s\n",
+            gmdate( 'Y-m-d\\TH:i:s\\Z' ),
+            $event,
+            wp_json_encode( $context, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE )
+        );
+
+        @file_put_contents( WP_CONTENT_DIR . '/aa-debug.log', $line, FILE_APPEND );
     }
 
     /**

@@ -31,6 +31,7 @@ echo "\033[1m╚═════════════════════�
 require_once __DIR__ . '/ElementFinderTest.php';
 require_once __DIR__ . '/PatchValidatorTest.php';
 require_once __DIR__ . '/PatchApplierTest.php';
+require_once __DIR__ . '/AutoFixScenarioTest.php';
 
 $all_passed = $t->summary();
 exit( $all_passed ? 0 : 1 );

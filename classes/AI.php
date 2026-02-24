@@ -62,14 +62,22 @@ class AI {
     public function generate_guided_fix( WP_REST_Request $request ) {
         $params  = $request->get_json_params();
         $context = $params['context'] ?? $params;
+        $trace_id = sanitize_text_field( (string) ( $params['trace_id'] ?? '' ) );
+
+        Loader::aa_log( 'guided_fix.start', [
+            'trace_id' => $trace_id,
+            'issue_id' => $context['issueId'] ?? ( $context['id'] ?? null ),
+        ] );
 
         $response = ClaudeClient::request( $this->build_guided_prompt( $context ) );
 
         if ( is_wp_error( $response ) ) {
-            return rest_ensure_response( [ 'error' => true, 'message' => $response->get_error_message() ] );
+            Loader::aa_log( 'guided_fix.error', [ 'trace_id' => $trace_id, 'message' => $response->get_error_message() ] );
+            return rest_ensure_response( [ 'error' => true, 'message' => $response->get_error_message(), 'trace_id' => $trace_id ] );
         }
 
-        return rest_ensure_response( [ 'steps' => $response ] );
+        Loader::aa_log( 'guided_fix.success', [ 'trace_id' => $trace_id ] );
+        return rest_ensure_response( [ 'steps' => $response, 'trace_id' => $trace_id ] );
     }
 
     // =========================================================================
@@ -78,18 +86,22 @@ class AI {
 
     public function apply_auto_fix( WP_REST_Request $request ) {
         $payload = $request->get_json_params();
+        $trace_id = sanitize_text_field( (string) ( $payload['trace_id'] ?? '' ) );
 
         // 1. Input validation.
         $issue = $payload['issue'] ?? null;
         if ( ! $issue ) {
+            Loader::aa_log( 'auto_fix.missing_issue', [ 'trace_id' => $trace_id ] );
             return new WP_Error( 'missing_issue', 'Missing issue data.' );
         }
 
         $post_id = intval( $payload['post_id'] ?? 0 );
         if ( ! $post_id ) {
+            Loader::aa_log( 'auto_fix.missing_post', [ 'trace_id' => $trace_id ] );
             return new WP_Error( 'missing_post', 'post_id is required.', [ 'status' => 400 ] );
         }
         if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            Loader::aa_log( 'auto_fix.forbidden', [ 'trace_id' => $trace_id, 'post_id' => $post_id ] );
             return new WP_Error( 'forbidden', 'You do not have permission to edit this post.', [ 'status' => 403 ] );
         }
 
@@ -107,6 +119,7 @@ class AI {
         ];
         $rule_id = $issue['id'] ?? '';
         if ( ! in_array( $rule_id, $supported_rules, true ) ) {
+            Loader::aa_log( 'auto_fix.guided_fallback', [ 'trace_id' => $trace_id, 'post_id' => $post_id, 'rule_id' => $rule_id ] );
             // Log so unsupported rules can be identified and promoted to the whitelist later.
             error_log( sprintf(
                 '[AA:auto-fix] UNSUPPORTED_RULE rule_id="%s" impact="%s" nodes=%d description="%s" — falling back to guided fix',
@@ -121,9 +134,10 @@ class AI {
             if ( is_wp_error( $steps ) ) {
                 $steps = '<p>Auto-fix is not supported for this issue type. Please review and fix manually.</p>';
             }
-            return rest_ensure_response( [ 'guided_fallback' => true, 'steps' => $steps ] );
+            return rest_ensure_response( [ 'guided_fallback' => true, 'steps' => $steps, 'trace_id' => $trace_id ] );
         }
 
+        Loader::aa_log( 'auto_fix.start', [ 'trace_id' => $trace_id, 'post_id' => $post_id, 'rule_id' => $rule_id, 'nodes' => count( $issue['nodes'] ?? [] ) ] );
         error_log( sprintf( '[AA:auto-fix] START post_id=%d issue_id=%s nodes=%d', $post_id, $issue['id'] ?? '?', count( $issue['nodes'] ?? [] ) ) );
 
         // 3. Load Bricks content.
@@ -294,6 +308,13 @@ Output only the JSON patch.',
             $revision_key = Revisions::save_bricks_snapshot( $post_id, $elements, 'ai_fix' );
             $changelog    = Revisions::generate_changelog( $applied );
 
+            Loader::aa_log( 'auto_fix.success', [
+                'trace_id'     => $trace_id,
+                'post_id'      => $post_id,
+                'rule_id'      => $rule_id,
+                'applied_count'=> count( $applied ),
+                'revision'     => $revision_key,
+            ] );
             error_log( sprintf( '[AA:auto-fix] DONE applied=%d revision_key=%s', count( $applied ), $revision_key ) );
 
             return new WP_REST_Response( [
@@ -302,9 +323,11 @@ Output only the JSON patch.',
                 'changes'   => $applied,
                 'revision'  => $revision_key,
                 'changelog' => $changelog,
+                'trace_id'  => $trace_id,
             ] );
 
         } catch ( \Throwable $e ) {
+            Loader::aa_log( 'auto_fix.save_error', [ 'trace_id' => $trace_id, 'post_id' => $post_id, 'message' => $e->getMessage() ] );
             error_log( '[AAI] Failed to save Bricks content: ' . $e->getMessage() );
             return new WP_REST_Response( [
                 'error'   => true,

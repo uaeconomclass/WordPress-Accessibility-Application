@@ -2,12 +2,32 @@
 
 Purpose: define what the plugin can currently auto-fix, what falls back to guided/manual fixes, and the rollout plan to maximize safe auto-fix coverage.
 
+Spec context:
+
+- `docs/requirements/whittemore-spec-2025-09-29.md`
+- `docs/requirements/whittemore-current-status-vs-spec.md`
+- `tests/coverage/wcag-rule-matrix.md`
+
 ## Scope Notes
 
 - Detection is performed on rendered DOM in Bricks preview (`axe.run(...)`).
 - Auto-fix applies patches to Bricks JSON (`bricks_data`), then re-scan verifies impact.
 - "Auto-fix" here means "allowed to generate and apply a Bricks patch" (with validation).
 - "Guided" means the plugin may provide Claude-generated instructions but should not auto-apply a patch.
+- This matrix is rule-centric (`axe` rule IDs). The Whittemore spec also has component-centric requirements (34 Bricks components), which should be tracked in a separate component matrix.
+
+## Scoring and Grading Constraints (Spec Reminder)
+
+The Whittemore spec clarifies:
+
+- `score = 100 - (issue_instances * 5)`, clamped to `0`
+- letter grades:
+  - `A >= 95`
+  - `B >= 85`
+  - `C >= 70`
+  - `D >= 50`
+
+This auto-fix matrix should be evaluated against how much it improves issue-instance counts (and therefore grades), not only rule coverage.
 
 ## Current Auto-Fix Whitelist (from `classes/AI.php`)
 
@@ -120,4 +140,3 @@ This is the evidence needed to answer "Can Claude actually auto-fix accessibilit
 3. Implement strategy classes for the whitelist rules
 4. Gate conditional rules (`aria-labelledby`, `aria-hidden-focus`) behind feature flags
 5. Add metrics logging per auto-fix attempt/result
-

@@ -70,6 +70,23 @@ function aa_seed_bricks_fixtures(): array {
             'notes'      => 'Image element without altText for auto-fix/image-alt testing.',
         ],
         [
+            'slug'      => 'aa-fixture-input-image-alt',
+            'title'     => 'AA Fixture - Input Image Alt',
+            'post_html' => '<p>Fixture page for input-image-alt rule.</p>',
+            'bricks'    => [
+                [
+                    'id'       => 'input_img_01',
+                    'name'     => 'image',
+                    'settings' => [
+                        'image' => [ 'url' => 'https://via.placeholder.com/120x50?text=Submit' ],
+                    ],
+                    'children' => [],
+                ],
+            ],
+            'rule_ids'   => [ 'input-image-alt' ],
+            'notes'      => 'Input-image style fixture for altText auto-fix scenarios (settings.altText).',
+        ],
+        [
             'slug'      => 'aa-fixture-link-name',
             'title'     => 'AA Fixture - Link Name',
             'post_html' => '<p>Fixture page for link-name rule.</p>',
@@ -104,6 +121,42 @@ function aa_seed_bricks_fixtures(): array {
             ],
             'rule_ids'   => [ 'frame-title' ],
             'notes'      => 'Inline iframe without title to test frame-title mapping/fixes.',
+        ],
+        [
+            'slug'      => 'aa-fixture-button-name',
+            'title'     => 'AA Fixture - Button Name',
+            'post_html' => '<p>Fixture page for button-name rule.</p>',
+            'bricks'    => [
+                [
+                    'id'       => 'btn_name_01',
+                    'name'     => 'button',
+                    'settings' => [
+                        'text' => '',
+                        'url'  => [ 'url' => '#' ],
+                    ],
+                    'children' => [],
+                ],
+            ],
+            'rule_ids'  => [ 'button-name' ],
+            'notes'     => 'Button element with missing accessible name for button-name auto-fix scenarios.',
+        ],
+        [
+            'slug'      => 'aa-fixture-aria-label',
+            'title'     => 'AA Fixture - Aria Label',
+            'post_html' => '<p>Fixture page for aria-label rule.</p>',
+            'bricks'    => [
+                [
+                    'id'       => 'icon_link_01',
+                    'name'     => 'icon',
+                    'settings' => [
+                        'icon'       => 'ti-star',
+                        'attributes' => [],
+                    ],
+                    'children' => [],
+                ],
+            ],
+            'rule_ids'  => [ 'aria-label' ],
+            'notes'     => 'Generic aria-label fixture for icon/link-like elements.',
         ],
     ];
 }
