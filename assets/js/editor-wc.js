@@ -1092,19 +1092,11 @@ async function  refreshBricksCanvas(opts = {}) {
         }
       }
 
-      // 2b) Send a postMessage the iframe might listen for (Bricks listens to some msg types)
+      // 2b) Send a postMessage for selection only — Bricks doesn't reload on postMessage
       try {
         const sel = normalize(selectElementId);
-        if (sel) {
-          iw.postMessage({ type: 'bricks.selectElement', id: sel }, '*');
-        }
-        // generic reload message (some integrations may respond)
-        iw.postMessage({ type: 'bricks.reload' }, '*');
-
-        return { ok: true, method: 'iframe.postMessage' };
-      } catch (err) {
-        // fall through to last resort
-      }
+        if (sel) iw.postMessage({ type: 'bricks.selectElement', id: sel }, '*');
+      } catch (err) { /* ignore */ }
     } catch (err) {
       console.warn('iframe invocation failed (maybe cross-origin)', err);
     }
