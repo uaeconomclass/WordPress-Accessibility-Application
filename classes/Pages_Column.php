@@ -17,8 +17,8 @@ class Pages_Column {
     public static function render_column( $column, $post_id ) {
         if ( $column !== 'aa_a11y' ) return;
 
-        $status  = get_post_meta( $post_id, '_acss_scan_status', true ) ?: 'unknown';
-        $scan_id = get_post_meta( $post_id, '_acss_last_scan_id', true );
+        $status  = get_post_meta( $post_id, '_aa_scan_status', true ) ?: 'unknown';
+        $scan_id = get_post_meta( $post_id, '_aa_last_scan_id', true );
 
         $labels = [
             'ok' => [ 'color' => '#28a745', 'title' => 'Pass' ],

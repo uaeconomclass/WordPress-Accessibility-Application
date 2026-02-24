@@ -104,9 +104,9 @@ class Loader {
                 $post_id = absint( $_GET['post'] );
             }
             $results   = get_post_meta( $post_id, '_aa_scan_results', true );
-            $status    = get_post_meta( $post_id, '_acss_scan_status', true );
-            $summary   = get_post_meta( $post_id, '_acss_scan_summary', true );
-            $score     = get_post_meta( $post_id, '_acss_scan_score', true ); // <-- add this in save_scan()
+            $status    = get_post_meta( $post_id, '_aa_scan_status', true );
+            $summary   = get_post_meta( $post_id, '_aa_scan_summary', true );
+            $score     = get_post_meta( $post_id, '_aa_scan_score', true ); // <-- add this in save_scan()
 
             $opts = get_option( Settings::OPTION_KEY, [] );
 
@@ -149,9 +149,9 @@ class Loader {
 
         wp_send_json_success( [
             'scan_id' => $scan_id,
-            'status'  => get_post_meta( $post_id, '_acss_scan_status', true ),
-            'summary' => get_post_meta( $post_id, '_acss_scan_summary', true ),
-            'score' => get_post_meta( $post_id, '_acss_scan_score', true ),
+            'status'  => get_post_meta( $post_id, '_aa_scan_status', true ),
+            'summary' => get_post_meta( $post_id, '_aa_scan_summary', true ),
+            'score' => get_post_meta( $post_id, '_aa_scan_score', true ),
         ] );
     }
 

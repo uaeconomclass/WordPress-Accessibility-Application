@@ -56,10 +56,10 @@ class ScanManager {
         $scan_id = $wpdb->insert_id;
 
        
-        update_post_meta( $post_id, '_acss_last_scan_id', $scan_id );
-        update_post_meta( $post_id, '_acss_scan_score', $score );
-        update_post_meta( $post_id, '_acss_scan_status', $status );
-        update_post_meta( $post_id, '_acss_scan_summary', $summary );
+        update_post_meta( $post_id, '_aa_last_scan_id', $scan_id );
+        update_post_meta( $post_id, '_aa_scan_score', $score );
+        update_post_meta( $post_id, '_aa_scan_status', $status );
+        update_post_meta( $post_id, '_aa_scan_summary', $summary );
         update_post_meta( $post_id, '_aa_scan_results', $results ); // keep full JSON for frontend
 
 
@@ -152,22 +152,10 @@ class ScanManager {
     }
 
     private static function calculate_score( $results ) {
-        $issues = 0;
-
-    if (isset($results['violations'])) {
-        foreach ($results['violations'] as $v) {
-            $issues += count($v['nodes']); // count per-node
-        }
-    }
-
-    if (isset($results['incomplete'])) {
-        foreach ($results['incomplete'] as $i) {
-            $issues += count($i['nodes']);
-        }
-    }
-
-    $score = 100 - ($issues * 5);
-    if ($score < 0) $score = 0;
-    return $score;
+        // Count violations only (not incomplete — those need manual review, not automatic penalty).
+        // Match JS formula: 5 points per violation rule, not per node.
+        $violations = count( $results['violations'] ?? [] );
+        $score = max( 0, 100 - $violations * 5 );
+        return $score;
     }
 }
