@@ -548,11 +548,23 @@ this._resultsClickHandler = async (e) => {
       return;
     }
 
-    // Reject AI fix
+    // Reject AI fix — revert Bricks content to pre-fix snapshot
     if (rejectBtn) {
-      const issueId = rejectBtn.dataset.issueId;
-      const aiPanel = this.shadowRoot.querySelector(`#ai-success-${issueId}`);
-      aiPanel.style.display = "none";
+      if (this._lastRevisionKey) {
+        await fetch(`${aaEditor.root}revert-fix`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-WP-Nonce": aaEditor.restNonce,
+          },
+          body: JSON.stringify({ post_id: aaEditor.postId, revision_key: this._lastRevisionKey })
+        });
+        location.reload();
+      } else {
+        const issueId = rejectBtn.dataset.issueId;
+        const aiPanel = this.shadowRoot.querySelector(`#ai-success-${issueId}`);
+        if (aiPanel) aiPanel.style.display = "none";
+      }
       return;
     }
 
@@ -797,8 +809,7 @@ async _applyAutoFix(issue) {
         "Content-Type": "application/json",
         "X-WP-Nonce": aaEditor.restNonce,
       },
-      
-       body: JSON.stringify({ issue })
+      body: JSON.stringify({ issue, post_id: aaEditor.postId })
     });
 
     if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
@@ -807,21 +818,8 @@ async _applyAutoFix(issue) {
 
     const data = await resp.json();
 
-    // Expect JSON describing Bricks element changes:
-    // {
-    //   "changes": [
-    //     { "elementId": "brxe-123", "setting": "ariaLabel", "before": "", "after": "Main Navigation" },
-    //     { "elementId": "brxe-456", "setting": "class", "before": "", "after": "color-contrast" }
-    //   ],
-    //   "changelog": [...]
-    // }
-
-    // Apply each change via Bricks API/REST
-    if (data.changes && Array.isArray(data.changes)) {
-      for (const change of data.changes) {
-        //await this._applyBricksChange(change);
-      }
-    }
+    // Store revision_key for later Accept/Reject
+    this._lastRevisionKey = data.revision_key || null;
 
     return data;
   } catch (err) {
@@ -838,10 +836,13 @@ async _applyAutoFix(issue) {
  *****************************************************************/
 async _saveFix(issue) {
   try {
-    const resp = await fetch("/wp-json/aa/v1/save-fix", {
+    const resp = await fetch(`${aaEditor.root}save-fix`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ issue })
+      headers: {
+        "Content-Type": "application/json",
+        "X-WP-Nonce": aaEditor.restNonce,
+      },
+      body: JSON.stringify({ issue, post_id: aaEditor.postId, revision_key: this._lastRevisionKey })
     });
 
     if (!resp.ok) throw new Error(`Server returned ${resp.status}`);

@@ -33,6 +33,12 @@ class AI {
             'callback' => [$this, 'save_fix'],
             'permission_callback' => [$this, 'check_permissions'],
         ]);
+
+        register_rest_route('aa/v1', '/revert-fix', [
+            'methods'  => 'POST',
+            'callback' => [$this, 'revert_fix'],
+            'permission_callback' => [$this, 'check_permissions'],
+        ]);
     }
 
     /**
@@ -695,10 +701,12 @@ public function apply_auto_fix(WP_REST_Request $request)
         return new WP_Error('missing_issue', 'Missing issue data.');
     }
 
-    global $post;
-    $post_id = $post->ID ?? url_to_postid($_SERVER['HTTP_REFERER'] ?? '');
+    $post_id = intval($payload['post_id'] ?? 0);
     if (!$post_id) {
-        return new WP_Error('missing_post', 'Cannot detect post ID.', ['status' => 400]);
+        return new WP_Error('missing_post', 'post_id is required.', ['status' => 400]);
+    }
+    if (!current_user_can('edit_post', $post_id)) {
+        return new WP_Error('forbidden', 'You do not have permission to edit this post.', ['status' => 403]);
     }
 
     // 2️⃣ Load Bricks content
@@ -1085,8 +1093,74 @@ public function apply_auto_fix(WP_REST_Request $request)
                 'details' => $e->getMessage(),
             ], 500);
         }
+}
 
-    
+
+/**
+ * Accept an auto-fix: logs the acceptance to audit trail.
+ * The Bricks content was already saved by apply_auto_fix.
+ */
+public function save_fix(WP_REST_Request $request)
+{
+    $payload  = $request->get_json_params();
+    $post_id  = intval($payload['post_id'] ?? 0);
+
+    if (!$post_id || !current_user_can('edit_post', $post_id)) {
+        return new WP_Error('forbidden', 'Unauthorized.', ['status' => 403]);
+    }
+
+    $revision_key = sanitize_text_field($payload['revision_key'] ?? '');
+
+    Revisions::log_autofix($post_id, [
+        'revision_key' => $revision_key,
+        'action'       => 'accepted',
+    ]);
+
+    return rest_ensure_response(['success' => true]);
+}
+
+
+/**
+ * Reject an auto-fix: restores Bricks content from the pre-fix revision snapshot.
+ */
+public function revert_fix(WP_REST_Request $request)
+{
+    $payload      = $request->get_json_params();
+    $post_id      = intval($payload['post_id'] ?? 0);
+    $revision_key = sanitize_text_field($payload['revision_key'] ?? '');
+
+    if (!$post_id || !current_user_can('edit_post', $post_id)) {
+        return new WP_Error('forbidden', 'Unauthorized.', ['status' => 403]);
+    }
+
+    if (!$revision_key) {
+        return new WP_Error('missing_revision', 'revision_key is required.', ['status' => 400]);
+    }
+
+    $revision_json = get_post_meta($post_id, $revision_key, true);
+    if (!$revision_json) {
+        return new WP_Error('revision_not_found', 'Revision not found.', ['status' => 404]);
+    }
+
+    $revision = json_decode($revision_json, true);
+    $elements = $revision['elements'] ?? null;
+
+    if (empty($elements) || !is_array($elements)) {
+        return new WP_Error('invalid_revision', 'Revision data is invalid.', ['status' => 500]);
+    }
+
+    update_post_meta($post_id, BRICKS_DB_PAGE_CONTENT, $elements);
+
+    if (function_exists('bricks_flush_post_css')) {
+        bricks_flush_post_css($post_id);
+    }
+    if (function_exists('bricks_clear_rendered_data')) {
+        bricks_clear_rendered_data($post_id);
+    }
+
+    delete_post_meta($post_id, $revision_key);
+
+    return rest_ensure_response(['success' => true, 'message' => 'Fix reverted successfully.']);
 }
 
 
@@ -1348,8 +1422,8 @@ private function update_bricks_element(&$elements, $element_id, $new_data) {
             $el = $new_data;
             return true;
         }
-        if (!empty($el['elements'])) {
-            if ($this->update_bricks_element($el['elements'], $element_id, $new_data)) return true;
+        if (!empty($el['children'])) {
+            if ($this->update_bricks_element($el['children'], $element_id, $new_data)) return true;
         }
     }
     return false;
@@ -1653,7 +1727,7 @@ private function recursive_bricks_update( &$elements, $element_id, $setting, $af
 
         $body = [
             'model'      => $model,
-            'max_tokens' => 800,
+            'max_tokens' => 4096,
             'messages'   => [
                 [ 'role' => 'user', 'content' => $prompt ]
             ],
