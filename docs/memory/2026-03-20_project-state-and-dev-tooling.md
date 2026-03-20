@@ -1,0 +1,82 @@
+# Project State and Dev Tooling
+
+Last updated: 2026-03-20
+
+## Current State Snapshot
+
+- The repository is a WordPress plugin for accessibility scanning and AI-assisted remediation inside Bricks Builder.
+- Core plugin bootstrap is stable and easy to trace: `accessibility-auditor.php` -> `classes/Loader.php`.
+- The codebase already contains incremental AI refactor work:
+  - `ClaudeClient.php`
+  - `AiResponseNormalizer.php`
+  - `BricksPatchValidator.php`
+  - `BricksPatchApplier.php`
+  - `BricksElementFinder.php`
+- This means the repo is ahead of the older February review docs that still describe `AI.php` mostly as a single god object.
+- `AI.php` is still the main orchestration hotspot, so the architectural direction in `docs/architecture/ai-autofix-refactor-plan.md` remains relevant.
+
+## What Looks Healthy
+
+- Clear WordPress entrypoint and class-based module layout
+- Existing architecture and requirements docs under `docs/`
+- Dedicated pure-PHP unit tests under `tests/unit`
+- Integration tests prepared for WordPress/WP-CLI execution
+- Playwright smoke coverage for key Bricks/wp-admin flows under `tests/e2e`
+
+## Verification Performed In This Pass
+
+- `php tests/unit/run.php` -> passed locally on 2026-03-20
+- Current observed result: `103/103` unit tests passed
+- Integration and Playwright suites were not re-run in this pass
+
+## What Still Looks Risky
+
+- Root `README.md` is still effectively empty for onboarding
+- No obvious CI pipeline is present in the repo root
+- AI flow appears to remain synchronous from the current docs/code surface
+- Spec alignment docs are older than the extracted-class state now visible in `classes/`
+- There is active uncommitted work in `tests/e2e`, so current local state is not a "clean baseline"
+
+## Working Tree Note
+
+Observed during this pass:
+
+- modified: `tests/e2e/tests/autofix-flow.smoke.spec.js`
+- untracked: `docs/review-report.md`
+- untracked: `tests/e2e/artifacts/`
+
+These changes were left untouched.
+
+## Recommended Skills To Keep Handy
+
+Recommended core set for this repo:
+
+- `ai-factory.fix`
+- `ai-factory.review`
+- `ai-factory.task`
+- `ai-factory.implement`
+- `ai-factory.architecture`
+- `playwright`
+- `security-review`
+
+Useful optional add-ons:
+
+- `php-pro` for deeper PHP cleanup and modernization
+- `ai-factory.security-checklist` before release or client handoff
+
+## How I Would Use Them Here
+
+- `ai-factory.fix`: bugfixes in scan persistence, REST handlers, or Bricks patch flow
+- `ai-factory.review`: review current changes and catch regressions
+- `ai-factory.task` + `ai-factory.implement`: drive Phase 2 work in small, tracked chunks
+- `ai-factory.architecture`: plan the remaining breakup of `AI.php`
+- `playwright`: validate editor/admin flows after PHP or JS changes
+- `security-review`: review capability checks, nonce handling, and API key storage whenever those areas change
+
+## Documentation Follow-Up
+
+Best next doc improvements:
+
+1. Expand `README.md` into a real onboarding document.
+2. Refresh spec/status docs so they explicitly mention the extracted AI helper classes.
+3. Add a short "how to run tests locally" section in the root docs, linking to `tests/run.sh` and `tests/e2e/README.md`.
