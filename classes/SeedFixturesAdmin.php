@@ -56,7 +56,6 @@ class SeedFixturesAdmin {
 
         $notice            = null;
         $fixtures          = aa_seed_fixture_catalog();
-        $component_summary = self::component_summary( $fixtures );
         $catalog_summary   = self::catalog_summary( $fixtures );
         $filter_values     = self::current_filter_values();
         $visible_fixtures  = self::filter_fixtures( $fixtures, $filter_values );
@@ -124,26 +123,6 @@ class SeedFixturesAdmin {
         echo '<a class="button" href="' . esc_url( admin_url( 'admin.php?page=' . self::PAGE_SLUG ) ) . '">' . esc_html__( 'Reset', 'accessibility-auditor' ) . '</a></p>';
         echo '</form>';
         echo '</details>';
-        echo '</div>';
-
-        echo '<div style="max-width:1100px;background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:20px 24px;margin:18px 0;">';
-        echo '<h2 style="margin-top:0;">' . esc_html__( 'Component Coverage Snapshot', 'accessibility-auditor' ) . '</h2>';
-        echo '<table class="widefat striped">';
-        echo '<thead><tr>';
-        echo '<th>' . esc_html__( 'Component', 'accessibility-auditor' ) . '</th>';
-        echo '<th>' . esc_html__( 'Scenarios', 'accessibility-auditor' ) . '</th>';
-        echo '<th>' . esc_html__( 'Rules', 'accessibility-auditor' ) . '</th>';
-        echo '<th>' . esc_html__( 'Top Strategy', 'accessibility-auditor' ) . '</th>';
-        echo '</tr></thead><tbody>';
-        foreach ( $component_summary as $component => $summary ) {
-            echo '<tr>';
-            echo '<td><strong>' . esc_html( $component ) . '</strong></td>';
-            echo '<td>' . esc_html( (string) $summary['scenario_count'] ) . '</td>';
-            echo '<td>' . esc_html( implode( ', ', $summary['rules'] ) ) . '</td>';
-            echo '<td>' . esc_html( implode( ', ', $summary['strategies'] ) ) . '</td>';
-            echo '</tr>';
-        }
-        echo '</tbody></table>';
         echo '</div>';
 
         echo '<table class="widefat striped" style="max-width:1100px;">';
@@ -272,29 +251,6 @@ class SeedFixturesAdmin {
             }
             return true;
         } ) );
-    }
-
-    private static function component_summary( array $fixtures ): array {
-        $summary = [];
-
-        foreach ( $fixtures as $fixture ) {
-            foreach ( $fixture['components'] as $component ) {
-                if ( ! isset( $summary[ $component ] ) ) {
-                    $summary[ $component ] = [
-                        'scenario_count' => 0,
-                        'rules'          => [],
-                        'strategies'     => [],
-                    ];
-                }
-
-                $summary[ $component ]['scenario_count']++;
-                $summary[ $component ]['rules']      = array_values( array_unique( array_merge( $summary[ $component ]['rules'], $fixture['rule_ids'] ) ) );
-                $summary[ $component ]['strategies'] = array_values( array_unique( array_merge( $summary[ $component ]['strategies'], [ $fixture['strategy'] ] ) ) );
-            }
-        }
-
-        ksort( $summary );
-        return $summary;
     }
 
     private static function catalog_summary( array $fixtures ): array {
