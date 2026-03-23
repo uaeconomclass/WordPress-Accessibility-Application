@@ -141,8 +141,15 @@ class SeedFixturesAdmin {
             echo '<td>';
             self::render_action_form( __( 'Prepare This Demo', 'accessibility-auditor' ), [ 'scenario' => $fixture['scenario'] ], true );
             if ( $post instanceof \WP_Post ) {
+                $bricks_url = add_query_arg(
+                    [
+                        'page_id' => $post->ID,
+                        'bricks'  => 'run',
+                    ],
+                    home_url( '/' )
+                );
                 echo '<div style="margin-top:8px;">';
-                echo '<a class="button button-small" href="' . esc_url( admin_url( 'post.php?post=' . $post->ID . '&action=bricks' ) ) . '">' . esc_html__( 'Open in Bricks', 'accessibility-auditor' ) . '</a>';
+                echo '<a class="button button-small" href="' . esc_url( $bricks_url ) . '">' . esc_html__( 'Open in Bricks', 'accessibility-auditor' ) . '</a>';
                 echo '</div>';
             }
             echo '</td>';
