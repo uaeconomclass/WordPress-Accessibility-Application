@@ -7,7 +7,7 @@ Status values:
 - `detect-only`
 - `guided`
 - `auto-fix`
-- `auto-fix (flagged)`
+- `auto-fix (conditional)`
 - `not-planned`
 
 Verification values:
@@ -23,14 +23,14 @@ Verification values:
 | Rule ID | Status | Strategy | Verification | Notes |
 |---|---|---|---|---|
 | `image-alt` | auto-fix | `ImageAltFixStrategy` (planned) / current generic | fixture, unit, integration, manual | Scenario unit test covers mapping + validator + `settings.altText` patch path |
-| `input-image-alt` | auto-fix | `InputImageAltFixStrategy` (planned) / current generic | fixture, unit, manual | Scenario unit test covers `settings.altText` patch path |
+| `input-image-alt` | auto-fix | `InputImageAltFixStrategy` (planned) / current generic | fixture, unit, manual | Current real Bricks linked-image fixture surfaces as `link-name`; keep this rule in the broader strategy set, but do not treat it as a separate live page-level detector today |
 | `link-name` | auto-fix | `LinkNameFixStrategy` (planned) / current generic | fixture, unit, manual | Scenario unit test covers selector + fallback mapping and `aria-label` patch path |
 | `button-name` | auto-fix | `ButtonNameFixStrategy` (planned) / current generic | fixture, unit, manual | Scenario unit test covers mapping + validator + apply; confirm more Bricks variants |
 | `frame-title` | auto-fix | `FrameTitleFixStrategy` (planned) / current generic | fixture, unit, manual | Scenario unit test covers `title` attribute patch |
 | `color-contrast` | auto-fix | `ColorContrastFixStrategy` (planned) / current generic | fixture, unit, manual | Scenario unit test covers scoped `_cssCustom` apply + reject on global selector |
 | `aria-label` | auto-fix | `AriaLabelFixStrategy` (planned) / current generic | fixture, unit, manual | Scenario unit test covers mapping + validator + apply; attribute allowlist enforced |
-| `aria-labelledby` | auto-fix (flagged) | `AriaLabelledByFixStrategy` (planned) | unit (payload-guard), fixture (pending), manual | Structurally allowed by validator; still needs ID existence validation |
-| `aria-hidden-focus` | auto-fix (flagged) | `AriaHiddenFocusFixStrategy` (planned) | unit (payload-guard), fixture (pending), manual | Structurally allowed by validator; still needs conservative patch policy |
+| `aria-labelledby` | auto-fix (conditional) | `AriaLabelledByFixStrategy` (planned) | unit (payload-guard), fixture (pending), manual | Structurally allowed by validator; still needs ID existence validation |
+| `aria-hidden-focus` | auto-fix (conditional) | `AriaHiddenFocusFixStrategy` (planned) | unit (payload-guard), fixture (pending), manual | Structurally allowed by validator; still needs conservative patch policy |
 | `heading-order` | guided | `GuidedOnlyStrategy` | manual | Semantic/content intent dependent |
 | `label` | guided | `GuidedOnlyStrategy` | manual | Often requires visible label UX decisions |
 | `document-title` | guided | `GuidedOnlyStrategy` | manual | Out of Bricks element patch scope |

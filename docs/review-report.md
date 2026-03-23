@@ -1,7 +1,7 @@
 # Accessibility Auditor Plugin — Code Review & Feasibility Report
 
 **Prepared by:** Valentyn Moroz
-**Date:** 2026-02-24
+**Date:** 2026-03-23
 **Repo:** WordPress-Accessibility-Application (`feature/auto-fix` branch)
 **Spec ref:** [Google Doc requirements](https://docs.google.com/document/d/1Zd2yxkuNsaz5LvZtkKe2kbfrOEos4JhZhQV0IshBHLc/)
 
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-The previous developers delivered a working foundation: axe-core scanning, page-level indicators, guided AI fixes, and a partial auto-fix implementation. The core architecture is sound, but the auto-fix flow had several critical bugs that prevented it from working end-to-end. Those have now been repaired. The plugin is not production-ready, but it is a viable base for Phase 2 work.
+The previous developers delivered a working foundation: axe-core scanning, page-level indicators, guided AI fixes, and a partial auto-fix implementation. The core architecture is sound, and several critical bugs in scan scoring, page-level filtering, admin UX, and auto-fix fallback behavior have now been repaired. The plugin is still not production-ready, but it is a viable base for the next implementation phase.
 
 Auto-fix via Claude is **feasible for a defined subset of issue types** — specifically aria-labels, alt text, semantic tag corrections, and simple role attribute fixes. It is not feasible as a one-click "fix everything" solution for all 34 component types in the spec.
 
@@ -29,7 +29,7 @@ Auto-fix via Claude is **feasible for a defined subset of issue types** — spec
 | Accept / Reject auto-fix | ✅ Fixed | Reject restores pre-fix snapshot |
 | Audit changelog per page | ✅ Done | `_aa_autofix_history` post meta |
 | Rollback / revision history | ⚠️ Partial | See revision note below |
-| Dashboard widget | ⚠️ Partial | Exists but may read stale meta |
+| Dashboard widget | ✅ Done | Exists and is grouped under the plugin admin area |
 | WCAG level selector (A / AA) | ✅ Done | Setting wired to axe-core tags including wcag22aa |
 | Background / non-blocking AI calls | ❌ Missing | All Claude calls are synchronous |
 | Per-user usage limits | ❌ Missing | No rate limiting implemented |
@@ -38,6 +38,8 @@ Auto-fix via Claude is **feasible for a defined subset of issue types** — spec
 | AutomaticCSS class references | ⚠️ Partial | Referenced in prompts; not validated |
 | Secure API key storage | ✅ Fixed | Masking bug repaired; field renders empty, preserves existing key on save |
 | Nonces + capability checks | ✅ Done | All REST routes check `edit_posts` |
+| LLM call audit / cost visibility | ✅ Done | Dedicated DB audit table + wp-admin `LLM Calls` screen |
+| Dev-only fixture seeding UI | ✅ Done | `Seed Fixtures` screen exists and is gated to debug/dev mode |
 
 ### WCAG Version Note
 The axe-core scanner supports WCAG 2.2 AA. Tags are selected dynamically based on the compliance level setting: AA includes `wcag2a`, `wcag2aa`, `wcag21aa`, `wcag22aa`. The compliance level from Settings is passed to the JS via `wp_localize_script` and used in axe `runOnly` config.
@@ -48,7 +50,7 @@ The spec says to "leverage WordPress native revisions." The current implementati
 ### 34-Component Requirement Coverage
 The spec defines specific accessibility requirements for 34 Bricks element types (Heading, Button, Image, Form, Counter, Accordion, Tabs, Carousel, etc.), each mapped to specific WCAG success criteria.
 
-The current implementation does **not** address these on a per-component basis. Axe-core detects violations generically, and Claude receives the raw Bricks element JSON plus the axe violation — it is not given the spec's per-component guidance. For Phase 2, a component-specific prompt library or system prompt section would significantly improve fix accuracy.
+The current implementation still does **not** address these fully on a per-component strategy basis. But the fixture and verification story is now much stronger: live seeded Bricks fixtures cover the major page-level families, and detectability is measured against real rendered DOM instead of synthetic assumptions.
 
 ---
 
@@ -60,12 +62,13 @@ The codebase is functional and demonstrates reasonable WordPress development pra
 
 ### Scoring System — `ScanManager.php`
 
-**Quality: Good. One concern.**
+**Quality: Good. One main open question.**
 
 - Formula correctly implements the spec: `100 - (issue_count × 5)`, min 0 ✅
 - Score counts per-node instances (one missing alt per image = one issue each) ✅
 - Grades in the JS component match the spec (A≥95, B≥85, C≥70, D≥50) ✅
 - `calculate_score()` counts only `violations` — `incomplete` (needs-review) items do **not** reduce the score. ✅
+- Page-level filtering now excludes template/global/header/footer noise before score persistence ✅
 
 ### API Key Handling — `Settings.php`
 
@@ -87,7 +90,7 @@ The codebase is functional and demonstrates reasonable WordPress development pra
 
 1. **Synchronous HTTP with 300-second timeout.** `wp_remote_post()` blocks the PHP process for up to 5 minutes. If Claude is slow or the page has many elements, this will hit PHP `max_execution_time`, browser connection timeouts, or WP heartbeat conflicts. The spec specifically requires non-blocking async calls.
 
-2. **No API error recovery.** If Claude returns a 529 (overloaded) or rate-limit error, a `WP_Error` is returned but the user sees no message. Retry logic or a user-facing error notice would improve reliability.
+2. **No full API error recovery.** If Claude returns a 529 (overloaded) or rate-limit error, we now at least have audit visibility and better fallback behavior, but retry logic / friendlier UX still need work.
 
 3. **Model ID hardcoded** in `ClaudeClient.php` (`const MODEL = 'claude-sonnet-4-20250514'`). Should be a configurable setting so it doesn't require a code change when the model is updated.
 
@@ -99,6 +102,12 @@ Simple and correct. Logs to `_aa_autofix_history` array in post meta.
 
 ### `Loader.php`
 The asset enqueue guard was recently fixed (current engagement). Now correctly handles both Bricks frontend preview and Bricks admin editor contexts, with a capability check. Clean.
+
+### New Observability / Admin Surfaces
+
+- `LlmAuditLogger.php` + `LlmCallsAdmin.php` give real visibility into prompt volume, token usage, latency, and failures.
+- Admin IA is now more coherent: top-level `Accessibility Auditor` menu with `Overview`, `Reports`, `Settings`, `Seed Fixtures`, and `LLM Calls`.
+- `Seed Fixtures` is dev-gated and gives a practical path to repeatable Bricks regression work.
 
 ---
 
@@ -155,7 +164,7 @@ The approach the developers took is architecturally correct. The main thing need
 
 The technical foundation is working. The auto-fix mechanism (Claude → JSON patch → Bricks update → snapshot → revert) is sound. Claude handles the clear-cut cases (aria-labels, alt text, tag corrections) reliably when given a well-structured prompt with the element JSON. The unreliable cases (color contrast, layout, complex ARIA patterns) should be excluded from auto-fix scope and handled by guided-fix only.
 
-A realistic Phase 2 scope would be: auto-fix covering 8–12 high-confidence axe rule IDs, plus guided fix for everything else, plus the blocking/async fix.
+A realistic next scope would be: auto-fix covering the current high-confidence page-level subset, plus guided fix for everything else, plus the blocking/async fix.
 
 ---
 
@@ -166,12 +175,17 @@ A realistic Phase 2 scope would be: auto-fix covering 8–12 high-confidence axe
 - [x] WCAG 2.2 (`wcag22aa`) tag added; compliance level wired to axe scanner
 - [x] `generate_changelog()` updated to use correct patch format keys
 - [x] Dead code and unused helper functions removed from `AI.php`
+- [x] Score now counts page-level issue instances correctly
+- [x] Template/global issues no longer pollute page-level scan results
+- [x] LLM audit logging + admin visibility added
+- [x] Real Bricks fixture sweep now covers `35/37` scenarios (`11/37` auto-fix-ready)
 
 ### Critical (must fix before Phase 2)
 - [ ] Synchronous Claude calls — will time out on real pages
 
 ### High Priority
 - [ ] Auto-fix issue type whitelist (only fixable rule IDs go through Claude)
+- [ ] Convert current whitelist into a more explicit rule/component strategy registry
 
 ### Medium Priority
 - [ ] User confirmation step before auto-fix is applied (not just after)
@@ -179,8 +193,8 @@ A realistic Phase 2 scope would be: auto-fix covering 8–12 high-confidence axe
 - [ ] API error recovery (retry logic or user-facing error message)
 - [ ] Native WP revision integration (if Gabriel wants it in revision history UI)
 - [ ] Usage limit / rate limiting per spec requirement
+- [ ] Automated before/after proof suite for the `11` auto-fix-ready seeded scenarios
 
 ### Low Priority
 - [ ] Confirm with Gabriel that `incomplete` items correctly do not reduce score (current behaviour)
 - [ ] Make Claude model ID configurable vs hardcoded
-- [ ] Dashboard widget — verify meta key reads are consistent

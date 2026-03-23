@@ -1,6 +1,6 @@
 # Project State and Dev Tooling
 
-Last updated: 2026-03-20
+Last updated: 2026-03-23
 
 ## Current State Snapshot
 
@@ -27,25 +27,23 @@ Last updated: 2026-03-20
 
 - `php tests/unit/run.php` -> passed locally on 2026-03-20
 - Current observed result: `103/103` unit tests passed
-- Integration and Playwright suites were not re-run in this pass
+- Integration suite now also passes locally: `33/33`
+- Seed detectability sweep now passes at `35/37` page-level scan-ready and `11/37` auto-fix-ready
 
 ## What Still Looks Risky
 
 - Root `README.md` is still effectively empty for onboarding
 - No obvious CI pipeline is present in the repo root
-- AI flow appears to remain synchronous from the current docs/code surface
+- AI flow still remains synchronous from the current docs/code surface
 - Spec alignment docs are older than the extracted-class state now visible in `classes/`
-- There is active uncommitted work in `tests/e2e`, so current local state is not a "clean baseline"
+- There is still no full automated before/after proof suite for the seeded auto-fix scenarios
 
 ## Working Tree Note
 
-Observed during this pass:
+Observed during the latest pass:
 
-- modified: `tests/e2e/tests/autofix-flow.smoke.spec.js`
-- untracked: `docs/review-report.md`
-- untracked: `tests/e2e/artifacts/`
-
-These changes were left untouched.
+- working tree was cleaned before wrap-up
+- current branch now contains committed fixture, admin, and observability updates
 
 ## Recommended Skills To Keep Handy
 
@@ -78,5 +76,5 @@ Useful optional add-ons:
 Best next doc improvements:
 
 1. Expand `README.md` into a real onboarding document.
-2. Refresh spec/status docs so they explicitly mention the extracted AI helper classes.
+2. Refresh spec/status docs so they explicitly mention page-level scan filtering, LLM audit logging, and the seeded Bricks fixture system.
 3. Add a short "how to run tests locally" section in the root docs, linking to `tests/run.sh` and `tests/e2e/README.md`.

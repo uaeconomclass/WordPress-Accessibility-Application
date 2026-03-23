@@ -45,7 +45,7 @@ Current detectability snapshot from `tests/coverage/seed-detectability-report.md
 | `Team Members` | partial | guided-only | `team-members-profile` | Current team-member seed is scan-ready via heading structure, but not yet via image-alt |
 | `Testimonials` | seeded | guided-only | `testimonials-quote` | Real Bricks testimonials now render and are scan-ready through a live color-contrast issue |
 | `Logo` | seeded | auto-fix | `logo-image-alt`, `logo-linked-image` | Real Bricks logo component is now auto-fix ready for `logo-image-alt`; linked variant stays useful for link-name flow |
-| `Gallery` | partial | auto-fix | `gallery-image-alt-grid` | Real Bricks gallery is seeded, but still does not yield a stable page-level rule in the current render |
+| `Gallery` | seeded | auto-fix | `gallery-image-alt-grid` | Real Bricks gallery now yields a stable page-level `link-name` failure through linked decorative images |
 | `Audio` | seeded | guided-only | `audio-controls` | Real Bricks audio now renders and is scan-ready via `aria-allowed-role` plus `color-contrast` from the MediaElement wrapper |
 | `Carousel` | seeded | guided-only | `carousel-structure`, `carousel-controls` | Real Bricks carousel now renders and both scenarios are scan-ready (`role-img-alt` and `button-name`) |
 | `Slider` | seeded | guided-only | `carousel-structure`, `carousel-controls` | Shared starter fixtures with carousel family |
