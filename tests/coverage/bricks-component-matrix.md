@@ -27,33 +27,33 @@ Strategy values:
 | `Accordion` | seeded | guided-only | `accordion-structure` | Initial family fixture added; still needs richer keyboard and state coverage |
 | `Tabs` | seeded | guided-only | `tabs-structure` | Initial family fixture added; still needs tab order and selection-state coverage |
 | `Form` | seeded | guided-only | `label-missing`, `form-label-required` | Good starting point, still light on real Bricks form field variants |
-| `Map` | planned | guided-only | none | Likely iframe/title + alternative text guidance |
-| `Alert` | planned | guided-only | none | Needs live-region semantics decisions |
+| `Map` | seeded | guided-only | `map-frame-title` | Starter fixture added via embedded map iframe |
+| `Alert` | seeded | guided-only | `alert-live-region` | Starter fixture added for live-region semantics |
 | `Countdown` | planned | guided-only | none | Time-sensitive announcements and pause/stop guidance |
 | `Counter` | planned | guided-only | none | Likely semantic/meaningful text guidance |
-| `Pricing Tables` | planned | guided-only | none | Usually structural semantics and heading/list associations |
+| `Pricing Tables` | seeded | guided-only | `pricing-table-structure` | Starter fixture added for heading/list semantics |
 | `Progress Bar` | seeded | guided-only | `progressbar-name` | Initial progress semantics fixture added; still needs real re-scan validation |
 | `Pie Chart` | planned | guided-only | none | Needs text alternative / data summary coverage |
 | `Team Members` | planned | guided-only | none | Mostly image alt + heading/link semantics combinations |
 | `Testimonials` | planned | guided-only | none | Usually quote/citation structure and image alt combinations |
-| `Logo` | planned | auto-fix | none | Could reuse image-alt family with branding semantics |
+| `Logo` | seeded | auto-fix | `logo-image-alt` | Safe starter coverage via image-alt branding scenario |
 | `Gallery` | seeded | auto-fix | `gallery-image-alt-grid` | Good initial image-heavy coverage |
-| `Audio` | planned | guided-only | none | Needs transcript / control-label guidance |
-| `Carousel` | planned | guided-only | none | Keyboard, pause, and announcement semantics |
-| `Slider` | planned | guided-only | none | Similar to carousel, likely guided-only first |
-| `SVG` | planned | flagged | none | Candidate for aria-label/title strategies after validation rules harden |
+| `Audio` | seeded | guided-only | `audio-controls` | Starter fixture added for transcript/control guidance |
+| `Carousel` | seeded | guided-only | `carousel-structure` | Initial family fixture added; still needs keyboard and pause-state coverage |
+| `Slider` | seeded | guided-only | `carousel-structure` | Shared starter fixture with carousel family |
+| `SVG` | seeded | flagged | `svg-accessible-name` | Starter fixture added for future accessible-name and title strategies |
 | `Code / Embed` | seeded | guided-only | `code-embed-frame-title` | Mostly useful for editor noise and fallback handling |
 | `Site Scope` | seeded | guided-only | `document-title-site-scope`, `html-has-lang-site-scope` | Not a Bricks patch target, but important to keep in catalog |
 
 ## Next Component Families To Seed
 
-1. `Carousel`
-2. `SVG`
-3. `Logo`
-4. `Map`
-5. `Alert`
-6. `Audio`
-7. `Pricing Tables`
+1. `Pie Chart`
+2. `Team Members`
+3. `Testimonials`
+4. `Countdown`
+5. `Counter`
+6. `Label-heavy Form Variants`
+7. `Advanced Carousel States`
 
 ## Acceptance Criteria For A Component Family
 

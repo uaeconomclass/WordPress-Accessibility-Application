@@ -686,6 +686,164 @@ function aa_seed_fixture_catalog(): array {
     ];
 
     $catalog[] = [
+        'slug'       => 'aa-fixture-carousel-structure',
+        'title'      => 'AA Fixture - Carousel Structure',
+        'scenario'   => 'carousel-structure',
+        'rule_ids'   => [ 'aria-required-children', 'scrollable-region-focusable' ],
+        'components' => [ 'carousel', 'slider' ],
+        'strategy'   => 'guided-only',
+        'notes'      => 'Carousel/slider family fixture for navigation, focus, and announcement guidance.',
+        'post_html'  => '<p>Fixture page for carousel component coverage.</p>',
+        'bricks'     => aa_seed_add_to_root_container(
+            aa_seed_page_shell( 'carouselfx', 'Carousel Fixture', $placeholder_hero ),
+            [
+                aa_seed_element(
+                    'carousel',
+                    [
+                        'slides' => [
+                            [ 'title' => 'Slide one', 'content' => '<p>Slide content one.</p>' ],
+                            [ 'title' => '', 'content' => '<p>Unnamed slide content.</p>' ],
+                        ],
+                        'autoplay' => true,
+                    ],
+                    [],
+                    'carouselfx_cnt_01',
+                    'carousel_01'
+                ),
+            ]
+        ),
+    ];
+
+    $catalog[] = [
+        'slug'       => 'aa-fixture-svg-accessible-name',
+        'title'      => 'AA Fixture - SVG Accessible Name',
+        'scenario'   => 'svg-accessible-name',
+        'rule_ids'   => [ 'svg-img-alt', 'aria-label' ],
+        'components' => [ 'svg' ],
+        'strategy'   => 'flagged',
+        'notes'      => 'SVG fixture for future accessible-name strategy and validator hardening.',
+        'post_html'  => '<p>Fixture page for SVG component coverage.</p>',
+        'bricks'     => aa_seed_add_to_root_container(
+            aa_seed_page_shell( 'svgfixture', 'SVG Fixture', $placeholder_hero ),
+            [
+                aa_seed_text_basic(
+                    'txt_svg_01',
+                    'svgfixture_cnt_01',
+                    '<svg role="img" aria-label="" width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="#cccccc"></circle></svg>'
+                ),
+            ]
+        ),
+    ];
+
+    $catalog[] = [
+        'slug'       => 'aa-fixture-logo-image-alt',
+        'title'      => 'AA Fixture - Logo Image Alt',
+        'scenario'   => 'logo-image-alt',
+        'rule_ids'   => [ 'image-alt' ],
+        'components' => [ 'logo', 'image' ],
+        'strategy'   => 'auto-fix',
+        'notes'      => 'Logo-family fixture using a brand image without alt text.',
+        'post_html'  => '<p>Fixture page for logo component coverage.</p>',
+        'bricks'     => aa_seed_add_to_root_container(
+            aa_seed_page_shell( 'logofx', 'Logo Fixture', $placeholder_hero ),
+            [
+                aa_seed_image(
+                    'logo_img_01',
+                    'logofx_cnt_01',
+                    'https://via.placeholder.com/260x120?text=Brand+Logo',
+                    [
+                        'link' => [ 'type' => 'external', 'url' => '/' ],
+                    ]
+                ),
+            ]
+        ),
+    ];
+
+    $catalog[] = [
+        'slug'       => 'aa-fixture-map-frame-title',
+        'title'      => 'AA Fixture - Map Frame Title',
+        'scenario'   => 'map-frame-title',
+        'rule_ids'   => [ 'frame-title' ],
+        'components' => [ 'map' ],
+        'strategy'   => 'guided-only',
+        'notes'      => 'Map-family fixture using an untitled embedded map iframe.',
+        'post_html'  => '<p>Fixture page for map component coverage.</p>',
+        'bricks'     => aa_seed_add_to_root_container(
+            aa_seed_page_shell( 'mapfixture', 'Map Fixture', $placeholder_hero ),
+            [
+                aa_seed_text_basic(
+                    'txt_map_01',
+                    'mapfixture_cnt_01',
+                    '<iframe src="https://example.com/map" width="640" height="320"></iframe>'
+                ),
+            ]
+        ),
+    ];
+
+    $catalog[] = [
+        'slug'       => 'aa-fixture-alert-live-region',
+        'title'      => 'AA Fixture - Alert Live Region',
+        'scenario'   => 'alert-live-region',
+        'rule_ids'   => [ 'aria-required-attr', 'aria-valid-attr-value' ],
+        'components' => [ 'alert' ],
+        'strategy'   => 'guided-only',
+        'notes'      => 'Alert-family fixture for live-region semantics and announcement guidance.',
+        'post_html'  => '<p>Fixture page for alert component coverage.</p>',
+        'bricks'     => aa_seed_add_to_root_container(
+            aa_seed_page_shell( 'alertfixture', 'Alert Fixture', $placeholder_hero ),
+            [
+                aa_seed_text_basic(
+                    'txt_alert_01',
+                    'alertfixture_cnt_01',
+                    '<div role="alert" aria-live="">System maintenance starts soon.</div>'
+                ),
+            ]
+        ),
+    ];
+
+    $catalog[] = [
+        'slug'       => 'aa-fixture-audio-controls',
+        'title'      => 'AA Fixture - Audio Controls',
+        'scenario'   => 'audio-controls',
+        'rule_ids'   => [ 'audio-caption', 'aria-label' ],
+        'components' => [ 'audio' ],
+        'strategy'   => 'guided-only',
+        'notes'      => 'Audio-family fixture for transcript/control-label guidance.',
+        'post_html'  => '<p>Fixture page for audio component coverage.</p>',
+        'bricks'     => aa_seed_add_to_root_container(
+            aa_seed_page_shell( 'audiofixture', 'Audio Fixture', $placeholder_hero ),
+            [
+                aa_seed_text_basic(
+                    'txt_audio_01',
+                    'audiofixture_cnt_01',
+                    '<audio controls aria-label=""><source src="sample.mp3" type="audio/mpeg"></audio>'
+                ),
+            ]
+        ),
+    ];
+
+    $catalog[] = [
+        'slug'       => 'aa-fixture-pricing-table-structure',
+        'title'      => 'AA Fixture - Pricing Table Structure',
+        'scenario'   => 'pricing-table-structure',
+        'rule_ids'   => [ 'heading-order', 'listitem' ],
+        'components' => [ 'pricing-tables' ],
+        'strategy'   => 'guided-only',
+        'notes'      => 'Pricing-table family fixture for heading hierarchy and feature-list semantics.',
+        'post_html'  => '<p>Fixture page for pricing table component coverage.</p>',
+        'bricks'     => aa_seed_add_to_root_container(
+            aa_seed_page_shell( 'pricingfx', 'Pricing Table Fixture', $placeholder_hero ),
+            [
+                aa_seed_text_basic(
+                    'txt_pricing_01',
+                    'pricingfx_cnt_01',
+                    '<div class="pricing-card"><h4>Pro Plan</h4><div>Unlimited projects</div><div>Priority support</div></div>'
+                ),
+            ]
+        ),
+    ];
+
+    $catalog[] = [
         'slug'       => 'aa-fixture-code-embed-frame',
         'title'      => 'AA Fixture - Code Embed Frame',
         'scenario'   => 'code-embed-frame-title',
