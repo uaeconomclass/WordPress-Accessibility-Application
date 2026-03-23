@@ -592,6 +592,100 @@ function aa_seed_fixture_catalog(): array {
     ];
 
     $catalog[] = [
+        'slug'       => 'aa-fixture-accordion-structure',
+        'title'      => 'AA Fixture - Accordion Structure',
+        'scenario'   => 'accordion-structure',
+        'rule_ids'   => [ 'aria-required-children', 'heading-order' ],
+        'components' => [ 'accordion' ],
+        'strategy'   => 'guided-only',
+        'notes'      => 'Accordion-family fixture to drive future keyboard/ARIA guidance coverage.',
+        'post_html'  => '<p>Fixture page for accordion component coverage.</p>',
+        'bricks'     => aa_seed_add_to_root_container(
+            aa_seed_page_shell( 'accordion', 'Accordion Fixture', $placeholder_hero ),
+            [
+                aa_seed_element(
+                    'accordion',
+                    [
+                        'items' => [
+                            [
+                                'title'   => '',
+                                'content' => '<p>Accordion item content without a proper heading/button pattern.</p>',
+                            ],
+                            [
+                                'title'   => 'Second item',
+                                'content' => '<p>Additional accordion content.</p>',
+                            ],
+                        ],
+                    ],
+                    [],
+                    'accordion_cnt_01',
+                    'accordion_01'
+                ),
+            ]
+        ),
+    ];
+
+    $catalog[] = [
+        'slug'       => 'aa-fixture-tabs-structure',
+        'title'      => 'AA Fixture - Tabs Structure',
+        'scenario'   => 'tabs-structure',
+        'rule_ids'   => [ 'aria-required-children', 'aria-required-parent' ],
+        'components' => [ 'tabs' ],
+        'strategy'   => 'guided-only',
+        'notes'      => 'Tabs-family fixture for future roles, states, and keyboard guidance coverage.',
+        'post_html'  => '<p>Fixture page for tabs component coverage.</p>',
+        'bricks'     => aa_seed_add_to_root_container(
+            aa_seed_page_shell( 'tabsfixture', 'Tabs Fixture', $placeholder_hero ),
+            [
+                aa_seed_element(
+                    'tabs',
+                    [
+                        'items' => [
+                            [
+                                'title'   => '',
+                                'content' => '<p>Unnamed tab panel content.</p>',
+                            ],
+                            [
+                                'title'   => 'Specifications',
+                                'content' => '<p>Tab panel content.</p>',
+                            ],
+                        ],
+                    ],
+                    [],
+                    'tabsfixture_cnt_01',
+                    'tabs_01'
+                ),
+            ]
+        ),
+    ];
+
+    $catalog[] = [
+        'slug'       => 'aa-fixture-progressbar-name',
+        'title'      => 'AA Fixture - Progress Bar Name',
+        'scenario'   => 'progressbar-name',
+        'rule_ids'   => [ 'aria-progressbar-name', 'color-contrast' ],
+        'components' => [ 'progress-bar' ],
+        'strategy'   => 'guided-only',
+        'notes'      => 'Progress bar component fixture for label/value semantics and contrast follow-up.',
+        'post_html'  => '<p>Fixture page for progress bar component coverage.</p>',
+        'bricks'     => aa_seed_add_to_root_container(
+            aa_seed_page_shell( 'progressbar', 'Progress Bar Fixture', $placeholder_hero ),
+            [
+                aa_seed_element(
+                    'progress-bar',
+                    [
+                        'value' => 62,
+                        'label' => '',
+                    ],
+                    [],
+                    'progressbar_cnt_01',
+                    'progress_01'
+                ),
+            ]
+        ),
+    ];
+
+    $catalog[] = [
         'slug'       => 'aa-fixture-code-embed-frame',
         'title'      => 'AA Fixture - Code Embed Frame',
         'scenario'   => 'code-embed-frame-title',

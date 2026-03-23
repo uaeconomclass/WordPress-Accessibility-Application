@@ -24,15 +24,15 @@ Strategy values:
 | `Icon` | seeded | auto-fix, flagged | `aria-label-icon`, `aria-labelledby-missing` | Needs stricter ID/reference validation for flagged cases |
 | `Image` | seeded | auto-fix | `image-alt-basic`, `input-image-alt-banner`, `gallery-image-alt-grid` | Strongest deterministic family so far |
 | `Video / Embed` | seeded | auto-fix, guided-only | `frame-title-inline`, `code-embed-frame-title` | Embed/code edge cases still need noise control |
-| `Accordion` | planned | guided-only | none | Need real Bricks accordion fixture + keyboard/ARIA expectations |
-| `Tabs` | planned | guided-only | none | Needs tab order, roles, and aria-selected coverage |
+| `Accordion` | seeded | guided-only | `accordion-structure` | Initial family fixture added; still needs richer keyboard and state coverage |
+| `Tabs` | seeded | guided-only | `tabs-structure` | Initial family fixture added; still needs tab order and selection-state coverage |
 | `Form` | seeded | guided-only | `label-missing`, `form-label-required` | Good starting point, still light on real Bricks form field variants |
 | `Map` | planned | guided-only | none | Likely iframe/title + alternative text guidance |
 | `Alert` | planned | guided-only | none | Needs live-region semantics decisions |
 | `Countdown` | planned | guided-only | none | Time-sensitive announcements and pause/stop guidance |
 | `Counter` | planned | guided-only | none | Likely semantic/meaningful text guidance |
 | `Pricing Tables` | planned | guided-only | none | Usually structural semantics and heading/list associations |
-| `Progress Bar` | planned | guided-only | none | Needs ARIA/progress semantics fixture |
+| `Progress Bar` | seeded | guided-only | `progressbar-name` | Initial progress semantics fixture added; still needs real re-scan validation |
 | `Pie Chart` | planned | guided-only | none | Needs text alternative / data summary coverage |
 | `Team Members` | planned | guided-only | none | Mostly image alt + heading/link semantics combinations |
 | `Testimonials` | planned | guided-only | none | Usually quote/citation structure and image alt combinations |
@@ -47,13 +47,13 @@ Strategy values:
 
 ## Next Component Families To Seed
 
-1. `Accordion`
-2. `Tabs`
-3. `Progress Bar`
-4. `Carousel`
-5. `SVG`
-6. `Logo`
-7. `Map`
+1. `Carousel`
+2. `SVG`
+3. `Logo`
+4. `Map`
+5. `Alert`
+6. `Audio`
+7. `Pricing Tables`
 
 ## Acceptance Criteria For A Component Family
 
