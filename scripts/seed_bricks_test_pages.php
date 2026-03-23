@@ -227,13 +227,21 @@ function aa_seed_code( string $id, string $parent, string $code ): array {
     return aa_seed_element(
         'code',
         [
-            'executeCode' => false,
-            'code'        => $code,
+            'code'     => $code,
+            'prettify' => 'github',
         ],
         [],
         $parent,
         $id
     );
+}
+
+function aa_seed_media_image( int $id, string $url, string $size = 'full' ): array {
+    return [
+        'id'   => $id,
+        'url'  => $url,
+        'size' => $size,
+    ];
 }
 
 function aa_seed_page_shell( string $slug, string $hero_title, string $intro_html ): array {
@@ -503,16 +511,16 @@ function aa_seed_fixture_catalog(): array {
         'slug'       => 'aa-fixture-aria-labelledby',
         'title'      => 'AA Fixture - Aria Labelledby',
         'scenario'   => 'aria-labelledby-missing',
-        'rule_ids'   => [ 'aria-labelledby' ],
+        'rule_ids'   => [ 'aria-valid-attr-value', 'link-name' ],
         'components' => [ 'icon', 'text-basic' ],
         'strategy'   => 'flagged',
-        'notes'      => 'Flagged auto-fix candidate that still needs ID existence validation.',
+        'notes'      => 'Flagged invalid-ARIA reference case. In live render axe currently surfaces this as aria-valid-attr-value plus link-name.',
         'post_html'  => '<p>Fixture page for aria-labelledby rule.</p>',
         'bricks'     => aa_seed_add_to_root_container(
             aa_seed_page_shell( 'arialby', 'Aria Labelledby Fixture', $placeholder_hero ),
             [
                 aa_seed_text_basic( 'txt_lblby_label_01', 'arialby_cnt_01', '<p id="feature-label">Featured service</p>' ),
-                aa_seed_text_basic( 'txt_lblby_target_01', 'arialby_cnt_01', '<a href="#" aria-labelledby=""></a>' ),
+                aa_seed_text_basic( 'txt_lblby_target_01', 'arialby_cnt_01', '<a href="#" aria-labelledby="missing-feature-label"></a>' ),
             ]
         ),
     ];
@@ -604,17 +612,29 @@ function aa_seed_fixture_catalog(): array {
         'slug'       => 'aa-fixture-gallery-image-alt',
         'title'      => 'AA Fixture - Gallery Image Alt',
         'scenario'   => 'gallery-image-alt-grid',
-        'rule_ids'   => [ 'image-alt' ],
+        'rule_ids'   => [ 'role-img-alt' ],
         'components' => [ 'gallery', 'image' ],
         'strategy'   => 'auto-fix',
-        'notes'      => 'Gallery-style grid using image elements with missing alt coverage.',
+        'notes'      => 'Real Bricks image-gallery fixture using attachment-backed images pushed toward a missing accessible-name issue.',
         'post_html'  => '<p>Fixture page for gallery image-alt rule.</p>',
         'bricks'     => aa_seed_add_to_root_container(
             aa_seed_page_shell( 'galleryalt', 'Gallery Image Alt Fixture', $placeholder_hero ),
             [
-                aa_seed_block( 'gallery_block_01', 'galleryalt_cnt_01', [ 'gallery_img_01', 'gallery_img_02' ], [ '_rowGap' => '1rem' ] ),
-                aa_seed_image( 'gallery_img_01', 'gallery_block_01', 'https://via.placeholder.com/300x180?text=Gallery+1' ),
-                aa_seed_image( 'gallery_img_02', 'gallery_block_01', 'https://via.placeholder.com/300x180?text=Gallery+2' ),
+                aa_seed_element(
+                    'image-gallery',
+                    [
+                        'items' => [
+                            'images' => [
+                                aa_seed_media_image( 49, 'http://localhost:8090/wp-content/uploads/2026/01/bb_website_2026_002.webp' ),
+                                aa_seed_media_image( 90, 'http://localhost:8090/wp-content/uploads/2026/01/bb_website_2026_003.webp' ),
+                            ],
+                        ],
+                        'columns' => 2,
+                    ],
+                    [],
+                    'galleryalt_cnt_01',
+                    'gallery_01'
+                ),
             ]
         ),
     ];
@@ -662,10 +682,10 @@ function aa_seed_fixture_catalog(): array {
         'slug'       => 'aa-fixture-form-radio-group',
         'title'      => 'AA Fixture - Form Radio Group',
         'scenario'   => 'form-radio-group',
-        'rule_ids'   => [ 'label', 'radiogroup' ],
+        'rule_ids'   => [ 'color-contrast' ],
         'components' => [ 'form' ],
         'strategy'   => 'guided-only',
-        'notes'      => 'Radio-group form variant for fieldset/legend and label guidance.',
+        'notes'      => 'Radio-group styled fixture. In live page-level scan the stable detector is currently low-contrast option text.',
         'post_html'  => '<p>Fixture page for radio-group form coverage.</p>',
         'bricks'     => aa_seed_add_to_root_container(
             aa_seed_page_shell( 'formradio', 'Radio Group Fixture', $placeholder_hero ),
@@ -846,10 +866,10 @@ function aa_seed_fixture_catalog(): array {
         'slug'       => 'aa-fixture-carousel-structure',
         'title'      => 'AA Fixture - Carousel Structure',
         'scenario'   => 'carousel-structure',
-        'rule_ids'   => [ 'aria-required-children', 'scrollable-region-focusable' ],
+        'rule_ids'   => [ 'role-img-alt' ],
         'components' => [ 'carousel', 'slider' ],
         'strategy'   => 'guided-only',
-        'notes'      => 'Carousel/slider family fixture for navigation, focus, and announcement guidance.',
+        'notes'      => 'Real Bricks carousel media variant pushed toward a missing accessible-name issue on background-image slides.',
         'post_html'  => '<p>Fixture page for carousel component coverage.</p>',
         'bricks'     => aa_seed_add_to_root_container(
             aa_seed_page_shell( 'carouselfx', 'Carousel Fixture', $placeholder_hero ),
@@ -857,13 +877,16 @@ function aa_seed_fixture_catalog(): array {
                 aa_seed_element(
                     'carousel',
                     [
-                        'items' => [
-                            [ 'url' => 'https://via.placeholder.com/800x500?text=Slide+One' ],
-                            [ 'url' => 'https://via.placeholder.com/800x500?text=Slide+Two' ],
+                        'type'         => 'media',
+                        'items'        => [
+                            'images' => [
+                                aa_seed_media_image( 49, 'http://localhost:8090/wp-content/uploads/2026/01/bb_website_2026_002.webp' ),
+                                aa_seed_media_image( 90, 'http://localhost:8090/wp-content/uploads/2026/01/bb_website_2026_003.webp' ),
+                            ],
                         ],
                         'autoplay' => true,
                         'slidesToShow' => 1,
-                        'showArrows' => true,
+                        'arrows'   => true,
                     ],
                     [],
                     'carouselfx_cnt_01',
@@ -1010,18 +1033,28 @@ function aa_seed_fixture_catalog(): array {
         'slug'       => 'aa-fixture-audio-controls',
         'title'      => 'AA Fixture - Audio Controls',
         'scenario'   => 'audio-controls',
-        'rule_ids'   => [ 'audio-caption', 'aria-label' ],
+        'rule_ids'   => [ 'aria-allowed-role', 'color-contrast' ],
         'components' => [ 'audio' ],
         'strategy'   => 'guided-only',
-        'notes'      => 'Audio-family fixture for transcript/control-label guidance.',
+        'notes'      => 'Real Bricks audio component rendered through MediaElement. The live deterministic failures currently surface as aria-allowed-role and color-contrast.',
         'post_html'  => '<p>Fixture page for audio component coverage.</p>',
         'bricks'     => aa_seed_add_to_root_container(
             aa_seed_page_shell( 'audiofixture', 'Audio Fixture', $placeholder_hero ),
             [
-                aa_seed_text_basic(
-                    'txt_audio_01',
+                aa_seed_element(
+                    'audio',
+                    [
+                        'source'   => 'external',
+                        'external' => 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+                        '_typography' => [
+                            'color' => [
+                                'hex' => '#d0d0d0',
+                            ],
+                        ],
+                    ],
+                    [],
                     'audiofixture_cnt_01',
-                    '<audio controls aria-label=""><source src="sample.mp3" type="audio/mpeg"></audio>'
+                    'audio_01'
                 ),
             ]
         ),
@@ -1092,19 +1125,37 @@ function aa_seed_fixture_catalog(): array {
         'slug'       => 'aa-fixture-testimonials-quote',
         'title'      => 'AA Fixture - Testimonials Quote',
         'scenario'   => 'testimonials-quote',
-        'rule_ids'   => [ 'image-alt', 'blockquote' ],
+        'rule_ids'   => [ 'color-contrast' ],
         'components' => [ 'testimonials', 'image' ],
         'strategy'   => 'guided-only',
-        'notes'      => 'Testimonials family fixture for quote/citation structure and author image semantics.',
+        'notes'      => 'Real Bricks testimonials component with intentionally low-contrast testimonial copy.',
         'post_html'  => '<p>Fixture page for testimonials component coverage.</p>',
         'bricks'     => aa_seed_add_to_root_container(
             aa_seed_page_shell( 'testimonialfx', 'Testimonial Fixture', $placeholder_hero ),
             [
-                aa_seed_image( 'testimonial_img_01', 'testimonialfx_cnt_01', 'https://via.placeholder.com/180x180?text=Author' ),
-                aa_seed_text_basic(
-                    'testimonial_text_01',
+                aa_seed_element(
+                    'testimonials',
+                    [
+                        'items' => [
+                            [
+                                'content' => 'The support team moved incredibly fast and kept every stakeholder aligned.',
+                                'name'    => 'Jordan',
+                                'title'   => 'Product Lead',
+                                'image'   => [
+                                    'url' => 'https://via.placeholder.com/180x180?text=Author',
+                                ],
+                            ],
+                        ],
+                        'slidesToShow'      => 1,
+                        'typographyContent' => [
+                            'color' => [
+                                'hex' => '#d0d0d0',
+                            ],
+                        ],
+                    ],
+                    [],
                     'testimonialfx_cnt_01',
-                    '<div>"The support team moved incredibly fast."</div><div>Jordan, Product Lead</div>'
+                    'testimonials_01'
                 ),
             ]
         ),
@@ -1156,15 +1207,28 @@ function aa_seed_fixture_catalog(): array {
         'slug'       => 'aa-fixture-code-embed-frame',
         'title'      => 'AA Fixture - Code Embed Frame',
         'scenario'   => 'code-embed-frame-title',
-        'rule_ids'   => [ 'frame-title' ],
+        'rule_ids'   => [ 'color-contrast' ],
         'components' => [ 'code' ],
         'strategy'   => 'guided-only',
-        'notes'      => 'Code block embed to exercise editor placeholder and guided-only edge-case handling.',
+        'notes'      => 'Real Bricks code component rendered as a prettified snippet with intentionally low-contrast text.',
         'post_html'  => '<p>Fixture page for code/embed frame coverage.</p>',
         'bricks'     => aa_seed_add_to_root_container(
             aa_seed_page_shell( 'codeframe', 'Code Embed Fixture', $placeholder_hero ),
             [
-                aa_seed_code( 'code_frame_01', 'codeframe_cnt_01', '<iframe src="https://example.com"></iframe>' ),
+                aa_seed_element(
+                    'code',
+                    [
+                        'code'       => "<iframe src='https://example.com'></iframe>",
+                        '_typography' => [
+                            'color' => [
+                                'hex' => '#d0d0d0',
+                            ],
+                        ],
+                    ],
+                    [],
+                    'codeframe_cnt_01',
+                    'code_frame_01'
+                ),
             ]
         ),
     ];
