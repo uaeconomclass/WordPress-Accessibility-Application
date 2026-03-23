@@ -9,7 +9,7 @@ class Admin {
     const MENU_SLUG = 'aa-dashboard';
 
     public static function init() {
-        add_action( 'admin_menu', [ __CLASS__, 'registerAdminMenu' ] );
+        add_action( 'admin_menu', [ __CLASS__, 'registerAdminMenu' ], 5 );
         add_action( 'wp_dashboard_setup', [ __CLASS__, 'addDashboardWidget' ] );
     }
 
