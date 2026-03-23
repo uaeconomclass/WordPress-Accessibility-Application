@@ -106,6 +106,47 @@ class AADashboard extends HTMLElement {
     }, 0);
   }
 
+  _getPreviewDocument() {
+    const previewIframe = document.querySelector("#bricks-builder-iframe") || document.querySelector("iframe");
+    if (!previewIframe) return null;
+
+    try {
+      return previewIframe.contentDocument || previewIframe.contentWindow?.document || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  _extractPageBricksIdsFromElement(el) {
+    const ids = [];
+    if (!el || typeof el.closest !== "function") return ids;
+
+    const directId = typeof el.id === "string" ? el.id : "";
+    if (directId.startsWith("brxe-")) {
+      ids.push(directId.replace(/^brxe-/i, ""));
+    }
+
+    const directDataId = typeof el.getAttribute === "function" ? el.getAttribute("data-id") : "";
+    if (directDataId) {
+      ids.push(directDataId);
+    }
+
+    const owner = el.closest("[id^='brxe-'], [data-id]");
+    if (owner) {
+      const ownerId = typeof owner.id === "string" ? owner.id : "";
+      if (ownerId.startsWith("brxe-")) {
+        ids.push(ownerId.replace(/^brxe-/i, ""));
+      }
+
+      const ownerDataId = owner.getAttribute("data-id");
+      if (ownerDataId) {
+        ids.push(ownerDataId);
+      }
+    }
+
+    return ids.filter(Boolean);
+  }
+
   _nodeBelongsToCurrentPage(node, pageIdsSet) {
     if (!node || !pageIdsSet || pageIdsSet.size === 0) return true;
 
@@ -123,6 +164,23 @@ class AADashboard extends HTMLElement {
     for (const token of htmlIds) {
       const id = token.replace(/\bid="brxe-/i, "").replace(/"$/g, "");
       if (pageIdsSet.has(id)) return true;
+    }
+
+    const previewDoc = this._getPreviewDocument();
+    if (!previewDoc) return false;
+
+    for (const selector of selectors) {
+      try {
+        const elements = Array.from(previewDoc.querySelectorAll(selector));
+        for (const el of elements) {
+          const candidateIds = this._extractPageBricksIdsFromElement(el);
+          if (candidateIds.some((id) => pageIdsSet.has(id))) {
+            return true;
+          }
+        }
+      } catch (e) {
+        // Ignore invalid selectors from axe and continue with the rest.
+      }
     }
 
     return false;

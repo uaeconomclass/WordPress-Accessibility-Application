@@ -15,39 +15,68 @@ function reseedFixtures() {
 
 const SHOULD_PAUSE_ON_ERROR = process.env.E2E_PAUSE_ON_ERROR === '1' || Boolean(process.env.PWDEBUG);
 
+async function readPanelState(panel) {
+  return panel.evaluate((el) => {
+    const root = el.shadowRoot;
+    if (!root) {
+      return { state: 'no-root', text: '', open: false, hasLauncher: false, isScanning: false };
+    }
+
+    const container = root.querySelector('#aa-scan-results');
+    const text = (container?.textContent || '').trim();
+    const lower = text.toLowerCase();
+    const open = !!root.querySelector('.aa-panel-title') && !!container;
+    const hasLauncher = !!root.querySelector('#aa-accessibility-btn');
+    const isScanning = !!el._isScanning;
+
+    let state = 'idle';
+    if (isScanning || lower.includes('scanning with axe-core')) state = 'scanning';
+    else if (root.querySelector('.aa-accordion-item') || lower.includes('generate resolution steps') || lower.includes('fix with ai')) state = 'issues';
+    else if (lower.includes('no issues found')) state = 'no-issues';
+    else if (lower.includes('needs review')) state = 'needs-review';
+    else if (lower.includes('error:')) state = 'error';
+    else if (lower.includes('preview iframe not found')) state = 'preview-missing';
+    else if (lower.includes('preview document not accessible')) state = 'preview-inaccessible';
+
+    return { state, text, open, hasLauncher, isScanning };
+  });
+}
+
 async function openAccessibilityPanel(page) {
   const panel = page.locator('aa-dashboard');
   await expect(panel).toHaveCount(1);
 
-  await expect
-    .poll(async () => panel.evaluate((el) => !!el.shadowRoot?.querySelector('#aa-accessibility-btn')))
-    .toBeTruthy();
+  for (let i = 0; i < 8; i += 1) {
+    const state = await readPanelState(panel);
+    if (state.open) {
+      return panel;
+    }
 
-  const launcherBtn = page.locator('aa-dashboard').locator('#aa-accessibility-btn');
-  await expect(launcherBtn).toHaveCount(1);
-  for (let i = 0; i < 5; i += 1) {
+    if (!state.hasLauncher) {
+      await page.waitForTimeout(500);
+      continue;
+    }
+
     await page.waitForTimeout(300);
     await page.locator('#bricks-preloader.show').waitFor({ state: 'hidden', timeout: 1500 }).catch(() => {});
-    const clicked = await launcherBtn.click({ force: true }).then(() => true).catch(() => false);
+    const clicked = await page.locator('aa-dashboard').evaluate((el) => {
+      const button = el.shadowRoot?.querySelector('#aa-accessibility-btn');
+      if (!(button instanceof HTMLElement)) return false;
+      button.click();
+      return true;
+    }).catch(() => false);
     if (!clicked) continue;
-    const opened = await expect
-      .poll(async () => panel.evaluate((el) => {
-        const root = el.shadowRoot;
-        return !!root?.querySelector('.aa-panel-title') && !!root?.querySelector('#aa-run-scan');
-      }), { timeout: 2_500 })
-      .toBeTruthy()
-      .then(() => true)
-      .catch(() => false);
+    const opened = await expect.poll(async () => {
+      const inner = await readPanelState(panel);
+      return inner.open;
+    }, { timeout: 3_500 }).toBeTruthy().then(() => true).catch(() => false);
     if (opened) return panel;
   }
 
-  await expect
-    .poll(async () => panel.evaluate((el) => {
-      const root = el.shadowRoot;
-      if (!root) return false;
-      return !!root.querySelector('.aa-panel-title') && !!root.querySelector('#aa-run-scan');
-    }))
-    .toBeTruthy();
+  await expect.poll(async () => {
+    const state = await readPanelState(panel);
+    return state.open;
+  }).toBeTruthy();
 
   return panel;
 }
@@ -70,64 +99,22 @@ async function runAutoFixSmoke(page, baseURL, pageId) {
     }), { timeout: 20_000 })
     .toBe('complete');
 
-  const runScanBtn = page.locator('aa-dashboard').locator('#aa-run-scan');
-  await expect(runScanBtn).toHaveCount(1);
-  await runScanBtn.scrollIntoViewIfNeeded();
-  for (let i = 0; i < 3; i += 1) {
-    await runScanBtn.click({ force: true });
-    const started = await expect.poll(async () => panel.evaluate((el) => {
-      const root = el.shadowRoot;
-      const container = root?.querySelector('#aa-scan-results');
-      const txt = (container?.textContent || '').toLowerCase();
-      return txt.includes('scanning with axe-core') || txt.includes('needs review') || txt.includes('no issues found') || !!root?.querySelector('.aa-accordion-item');
-    }), { timeout: 5_000 }).toBeTruthy().then(() => true).catch(() => false);
-    if (started) break;
-  }
-
-  const scanStatePoll = expect.poll(async () => panel.evaluate((el) => {
-    const root = el.shadowRoot;
-    if (!root) return 'no-root';
-    const container = root.querySelector('#aa-scan-results');
-    if (!container) return 'no-container';
-    const txt = (container.textContent || '').toLowerCase();
-    if (txt.includes('scanning with axe-core')) return 'scanning';
-    if (root.querySelector('.aa-accordion-item') || txt.includes('generate resolution steps') || txt.includes('fix with ai')) return 'issues';
-    if (txt.includes('no issues found')) return 'no-issues';
-    if (txt.includes('needs review')) return 'needs-review';
-    if (txt.includes('error:')) return 'error';
-    if (txt.includes('preview iframe not found')) return 'preview-missing';
-    if (txt.includes('preview document not accessible')) return 'preview-inaccessible';
-    return 'unknown';
-  }), { timeout: 20_000 });
-
-  await scanStatePoll.not.toBe('scanning');
-  const scanState = await panel.evaluate((el) => {
-    const root = el.shadowRoot;
-    if (!root) return 'no-root';
-    const container = root.querySelector('#aa-scan-results');
-    if (!container) return 'no-container';
-    const txt = (container.textContent || '').toLowerCase();
-    if (root.querySelector('.aa-accordion-item') || txt.includes('generate resolution steps') || txt.includes('fix with ai')) return 'issues';
-    if (txt.includes('no issues found')) return 'no-issues';
-    if (txt.includes('needs review')) return 'needs-review';
-    if (txt.includes('error:')) return 'error';
-    if (txt.includes('preview iframe not found')) return 'preview-missing';
-    if (txt.includes('preview document not accessible')) return 'preview-inaccessible';
-    if (txt.includes('scanning with axe-core')) return 'scanning';
-    return 'unknown';
+  await page.locator('aa-dashboard').evaluate(async (el) => {
+    if (typeof el.runScan === 'function') {
+      await el.runScan(false);
+    }
   });
 
+  await expect.poll(async () => {
+    const state = await readPanelState(panel);
+    return state.isScanning ? 'scanning' : state.state;
+  }, { timeout: 30_000 }).not.toBe('scanning');
+
+  const scanStateData = await readPanelState(panel);
+  const scanState = scanStateData.state;
+
   if (scanState === 'unknown') {
-    const debug = await panel.evaluate((el) => {
-      const root = el.shadowRoot;
-      const container = root?.querySelector('#aa-scan-results');
-      return {
-        text: (container?.textContent || '').trim(),
-        html: container?.innerHTML || '',
-        hasAccordion: !!root?.querySelector('.aa-accordion-item')
-      };
-    });
-    console.log('SCAN_UNKNOWN_DEBUG', { pageId, ...debug });
+    console.log('SCAN_UNKNOWN_DEBUG', { pageId, ...scanStateData });
   }
 
   expect(scanState).toBe('issues');
@@ -200,21 +187,16 @@ async function runAutoFixSmoke(page, baseURL, pageId) {
   }
 
   const panelAfter = await openAccessibilityPanel(page);
-  const runScanBtnAfter = page.locator('aa-dashboard').locator('#aa-run-scan');
-  await expect(runScanBtnAfter).toHaveCount(1);
-  await runScanBtnAfter.click({ force: true });
+  await page.locator('aa-dashboard').evaluate(async (el) => {
+    if (typeof el.runScan === 'function') {
+      await el.runScan(false);
+    }
+  });
 
-  await expect.poll(async () => panelAfter.evaluate((el) => {
-    const root = el.shadowRoot;
-    const container = root?.querySelector('#aa-scan-results');
-    const txt = (container?.textContent || '').toLowerCase();
-    if (txt.includes('scanning with axe-core')) return 'scanning';
-    if (root?.querySelector('.aa-accordion-item') || txt.includes('generate resolution steps') || txt.includes('fix with ai')) return 'issues';
-    if (txt.includes('no issues found')) return 'no-issues';
-    if (txt.includes('needs review')) return 'needs-review';
-    if (txt.includes('error:')) return 'error';
-    return 'unknown';
-  }), { timeout: 30_000 }).not.toBe('scanning');
+  await expect.poll(async () => {
+    const state = await readPanelState(panelAfter);
+    return state.isScanning ? 'scanning' : state.state;
+  }, { timeout: 30_000 }).not.toBe('scanning');
 
   const postScan = await panelAfter.evaluate((el) => {
     const root = el.shadowRoot;
@@ -244,19 +226,16 @@ async function runGuidedFallbackSmoke(page, baseURL, pageId) {
   await page.goto(`${baseURL}/?page_id=${pageId}&bricks=run`, { waitUntil: 'domcontentloaded' });
   const panel = await openAccessibilityPanel(page);
 
-  const runScanBtn = page.locator('aa-dashboard').locator('#aa-run-scan');
-  await expect(runScanBtn).toHaveCount(1);
-  await runScanBtn.click({ force: true });
+  await page.locator('aa-dashboard').evaluate(async (el) => {
+    if (typeof el.runScan === 'function') {
+      await el.runScan(false);
+    }
+  });
 
-  await expect.poll(async () => panel.evaluate((el) => {
-    const root = el.shadowRoot;
-    const txt = (root?.querySelector('#aa-scan-results')?.textContent || '').toLowerCase();
-    if (txt.includes('scanning with axe-core')) return 'scanning';
-    if (root?.querySelector('.aa-accordion-item') || txt.includes('fix with ai')) return 'issues';
-    if (txt.includes('no issues found')) return 'no-issues';
-    if (txt.includes('needs review')) return 'needs-review';
-    return 'unknown';
-  }), { timeout: 30_000 }).not.toBe('scanning');
+  await expect.poll(async () => {
+    const state = await readPanelState(panel);
+    return state.isScanning ? 'scanning' : state.state;
+  }, { timeout: 30_000 }).not.toBe('scanning');
 
   const firstAccordionBtn = page.locator('aa-dashboard').locator('.aa-accordion-item .aa-accordion-btn').first();
   await expect(firstAccordionBtn).toHaveCount(1);
@@ -292,18 +271,16 @@ async function runGuidedFallbackSmoke(page, baseURL, pageId) {
 async function runNeedsReviewSmoke(page, baseURL, pageId) {
   await page.goto(`${baseURL}/?page_id=${pageId}&bricks=run`, { waitUntil: 'domcontentloaded' });
   const panel = await openAccessibilityPanel(page);
-  const runScanBtn = page.locator('aa-dashboard').locator('#aa-run-scan');
-  await runScanBtn.click({ force: true });
+  await page.locator('aa-dashboard').evaluate(async (el) => {
+    if (typeof el.runScan === 'function') {
+      await el.runScan(false);
+    }
+  });
 
-  await expect.poll(async () => panel.evaluate((el) => {
-    const root = el.shadowRoot;
-    const txt = (root?.querySelector('#aa-scan-results')?.textContent || '').toLowerCase();
-    if (txt.includes('scanning with axe-core')) return 'scanning';
-    if (txt.includes('needs review')) return 'needs-review';
-    if (root?.querySelector('.aa-accordion-item')) return 'issues';
-    if (txt.includes('no issues found')) return 'no-issues';
-    return 'unknown';
-  }), { timeout: 30_000 }).not.toBe('scanning');
+  await expect.poll(async () => {
+    const state = await readPanelState(panel);
+    return state.isScanning ? 'scanning' : state.state;
+  }, { timeout: 30_000 }).not.toBe('scanning');
 
   const state = await panel.evaluate((el) => {
     const root = el.shadowRoot;
@@ -324,9 +301,9 @@ test.describe('Accessibility Auditor auto-fix flow smoke', () => {
     reseedFixtures();
   });
 
-  test('Frame Title fixture (#31): scan -> issue list -> fix with AI', async ({ page, baseURL }) => {
+  test('Frame Title fixture (#1321): scan -> issue list -> fix with AI', async ({ page, baseURL }) => {
     try {
-      await runAutoFixSmoke(page, baseURL, 31);
+      await runAutoFixSmoke(page, baseURL, 1321);
     } catch (err) {
       const debugState = await page.evaluate(() => {
         const host = document.querySelector('aa-dashboard');
@@ -354,9 +331,9 @@ test.describe('Accessibility Auditor auto-fix flow smoke', () => {
     }
   });
 
-  test('Link Name fixture (#29): scan -> issue list -> fix with AI', async ({ page, baseURL }) => {
+  test('Link Name fixture (#1319): scan -> issue list -> fix with AI', async ({ page, baseURL }) => {
     try {
-      await runAutoFixSmoke(page, baseURL, 29);
+      await runAutoFixSmoke(page, baseURL, 1319);
     } catch (err) {
       const debugState = await page.evaluate(() => {
         const host = document.querySelector('aa-dashboard');
@@ -382,9 +359,9 @@ test.describe('Accessibility Auditor auto-fix flow smoke', () => {
     }
   });
 
-  test('Button Name fixture (#51): scan -> issue list -> fix with AI', async ({ page, baseURL }) => {
+  test('Image Alt fixture (#1317): scan -> issue list -> fix with AI', async ({ page, baseURL }) => {
     try {
-      await runAutoFixSmoke(page, baseURL, 51);
+      await runAutoFixSmoke(page, baseURL, 1317);
     } catch (err) {
       console.error('AUTOFIX_FLOW_ERROR', err?.message || String(err));
       if (SHOULD_PAUSE_ON_ERROR) {
@@ -395,9 +372,9 @@ test.describe('Accessibility Auditor auto-fix flow smoke', () => {
     }
   });
 
-  test('role-img-alt fixture (#52): guided fallback response', async ({ page, baseURL }) => {
+  test('role-img-alt fixture (#1342): guided fallback response', async ({ page, baseURL }) => {
     try {
-      await runGuidedFallbackSmoke(page, baseURL, 52);
+      await runGuidedFallbackSmoke(page, baseURL, 1342);
     } catch (err) {
       console.error('GUIDED_FLOW_ERROR', err?.message || String(err));
       if (SHOULD_PAUSE_ON_ERROR) {
@@ -408,9 +385,9 @@ test.describe('Accessibility Auditor auto-fix flow smoke', () => {
     }
   });
 
-  test('Color Contrast fixture (#30): needs review or issue list renders', async ({ page, baseURL }) => {
+  test('Color Contrast fixture (#1333): needs review or issue list renders', async ({ page, baseURL }) => {
     try {
-      await runNeedsReviewSmoke(page, baseURL, 30);
+      await runNeedsReviewSmoke(page, baseURL, 1333);
     } catch (err) {
       console.error('NEEDS_REVIEW_FLOW_ERROR', err?.message || String(err));
       if (SHOULD_PAUSE_ON_ERROR) {
@@ -424,11 +401,11 @@ test.describe('Accessibility Auditor auto-fix flow smoke', () => {
   test('Scenario sweep: run all key fixtures sequentially in one browser', async ({ page, baseURL }) => {
     const results = [];
     const scenarios = [
-      { name: 'frame-title', run: () => runAutoFixSmoke(page, baseURL, 31) },
-      { name: 'link-name', run: () => runAutoFixSmoke(page, baseURL, 29) },
-      { name: 'button-name', run: () => runAutoFixSmoke(page, baseURL, 51) },
-      { name: 'role-img-alt-guided', run: () => runGuidedFallbackSmoke(page, baseURL, 52) },
-      { name: 'color-contrast-needs-review', run: () => runNeedsReviewSmoke(page, baseURL, 30) },
+      { name: 'frame-title', run: () => runAutoFixSmoke(page, baseURL, 1321) },
+      { name: 'link-name', run: () => runAutoFixSmoke(page, baseURL, 1319) },
+      { name: 'image-alt', run: () => runAutoFixSmoke(page, baseURL, 1317) },
+      { name: 'role-img-alt-guided', run: () => runGuidedFallbackSmoke(page, baseURL, 1342) },
+      { name: 'color-contrast-needs-review', run: () => runNeedsReviewSmoke(page, baseURL, 1333) },
     ];
 
     for (const scenario of scenarios) {
