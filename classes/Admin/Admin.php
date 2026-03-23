@@ -6,9 +6,32 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Admin {
+    const MENU_SLUG = 'aa-dashboard';
 
     public static function init() {
+        add_action( 'admin_menu', [ __CLASS__, 'registerAdminMenu' ] );
         add_action( 'wp_dashboard_setup', [ __CLASS__, 'addDashboardWidget' ] );
+    }
+
+    public static function registerAdminMenu() {
+        add_menu_page(
+            __( 'Accessibility Auditor', 'accessibility-auditor' ),
+            __( 'Accessibility Auditor', 'accessibility-auditor' ),
+            'edit_pages',
+            self::MENU_SLUG,
+            [ __CLASS__, 'renderOverviewPage' ],
+            'dashicons-universal-access-alt',
+            58
+        );
+
+        add_submenu_page(
+            self::MENU_SLUG,
+            __( 'Overview', 'accessibility-auditor' ),
+            __( 'Overview', 'accessibility-auditor' ),
+            'edit_pages',
+            self::MENU_SLUG,
+            [ __CLASS__, 'renderOverviewPage' ]
+        );
     }
 
     public static function addDashboardWidget() {
@@ -17,6 +40,16 @@ class Admin {
             __( 'Accessibility Auditor Overview', 'accessibility-auditor' ),
             [ __CLASS__, 'renderDashboardWidget' ]
         );
+    }
+
+    public static function renderOverviewPage() {
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__( 'Accessibility Auditor', 'accessibility-auditor' ) . '</h1>';
+        echo '<p style="max-width:900px;">' . esc_html__( 'Use this workspace as the central home for accessibility status, recent scan outcomes, reports, and plugin configuration.', 'accessibility-auditor' ) . '</p>';
+        echo '<div style="max-width:960px;background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:20px 24px;margin-top:16px;">';
+        self::renderDashboardWidget();
+        echo '</div>';
+        echo '</div>';
     }
 
     public static function renderDashboardWidget() {

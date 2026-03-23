@@ -154,9 +154,10 @@ class Settings {
     }
 
     public static function registerSettingsPage() {
-        add_options_page(
+        add_submenu_page(
+            \Accessibility_Auditor\Admin::MENU_SLUG,
             __( 'Accessibility Auditor Settings', 'accessibility-auditor' ),
-            __( 'Accessibility Auditor', 'accessibility-auditor' ),
+            __( 'Settings', 'accessibility-auditor' ),
             'manage_options',
             'aa-settings',
             [ __CLASS__, 'renderSettingsPage' ]

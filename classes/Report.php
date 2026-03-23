@@ -10,9 +10,9 @@ class Report {
 
     public static function register_page() {
         add_submenu_page(
-            'edit.php?post_type=page',
+            \Accessibility_Auditor\Admin::MENU_SLUG,
             __( 'Accessibility Report', 'accessibility-auditor' ),
-            __( 'Accessibility Report', 'accessibility-auditor' ),
+            __( 'Reports', 'accessibility-auditor' ),
             'edit_pages',
             'aa-scan-report',
             [ __CLASS__, 'render_scan_report' ]
