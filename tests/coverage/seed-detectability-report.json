@@ -38,7 +38,7 @@
     "title": "AA Fixture - Input Image Alt",
     "strategy": "auto-fix",
     "expected_rule_ids": [
-      "input-image-alt"
+      "link-name"
     ],
     "components": [
       "image",
@@ -46,19 +46,25 @@
     ],
     "post_id": 1318,
     "slug": "aa-fixture-input-image-alt",
-    "detectable": false,
-    "scan_test_ready": false,
-    "autofix_test_ready": false,
-    "matched_expected_rule_ids": [],
-    "found_rule_ids": [],
-    "note": "Expected rule did not appear inside #brx-content.",
-    "panel_state": "no-issues",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": true,
+    "matched_expected_rule_ids": [
+      "link-name"
+    ],
+    "found_rule_ids": [
+      "link-name"
+    ],
+    "note": "Detected inside page-level content and eligible for auto-fix testing.",
+    "panel_state": "issues",
     "score": 0,
     "grade": "",
     "issue_titles": [],
-    "violation_ids": [],
+    "violation_ids": [
+      "link-name"
+    ],
     "incomplete_ids": [],
-    "html_preview": "<section id=\"brxe-inputimg_sec_01\" class=\"brxe-section\"><div id=\"brxe-inputimg_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Input Image Alt Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><a class=\"brxe-image tag\"><img class=\"css-filter size-large\" src=\"https://via.placeholder.com/200x60?text=Submit\" alt=\"\"></a></div></section>",
+    "html_preview": "<section id=\"brxe-inputimg_sec_01\" class=\"brxe-section\"><div id=\"brxe-inputimg_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Input Image Alt Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><a class=\"brxe-image tag\" href=\"http://localhost:8090/contact/\"><img class=\"css-filter size-large\" src=\"https://via.placeholder.com/200x60?text=Submit\" alt=\"\"></a></div></section>",
     "text_preview": "Input Image Alt Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
   },
   {
@@ -500,7 +506,7 @@
     "title": "AA Fixture - Gallery Image Alt",
     "strategy": "auto-fix",
     "expected_rule_ids": [
-      "role-img-alt"
+      "link-name"
     ],
     "components": [
       "gallery",
@@ -508,19 +514,25 @@
     ],
     "post_id": 1324,
     "slug": "aa-fixture-gallery-image-alt",
-    "detectable": false,
-    "scan_test_ready": false,
-    "autofix_test_ready": false,
-    "matched_expected_rule_ids": [],
-    "found_rule_ids": [],
-    "note": "Expected rule did not appear inside #brx-content.",
-    "panel_state": "no-issues",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": true,
+    "matched_expected_rule_ids": [
+      "link-name"
+    ],
+    "found_rule_ids": [
+      "link-name"
+    ],
+    "note": "Detected inside page-level content and eligible for auto-fix testing.",
+    "panel_state": "issues",
     "score": 0,
     "grade": "",
     "issue_titles": [],
-    "violation_ids": [],
+    "violation_ids": [
+      "link-name"
+    ],
     "incomplete_ids": [],
-    "html_preview": "<section id=\"brxe-galleryalt_sec_01\" class=\"brxe-section\"><div id=\"brxe-galleryalt_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Gallery Image Alt Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><ul id=\"brxe-gallery_01\" data-script-id=\"gallery_01\" class=\"brxe-image-gallery bricks-layout-wrapper\" data-layout=\"grid\"><li class=\"bricks-layout-item\" data-id=\"49\"><figure><img width=\"800\" height=\"171\" src=\"http://localhost:8090/wp-content/uploads/2026/01/bb_website_2026_002.webp\" class=\"image bricks-layout-inner css-filter\" alt=\"\" decoding=\"async\" srcset=\"http://localhost:8090/wp-content/uploads/2026/01/bb_website_2026_002.webp 800w, http://localhost:8090/wp-content/uploads/2026/01/bb_website_2026_002-300x64.webp 300w, http://localhost:8090/wp-content/uploads/2026/01/bb_website_2026_002-768x164.webp 768w\" sizes=\"(max-width: 800px) 100vw, 800px\"></figure></li><li class=\"bricks-layout-item\" data-id=\"90\"><figure><img width=\"600\" height=\"600\" src=\"http://localhost:8090/wp-content/uploads/2026/01/bb_website_2026_003.webp\" class=\"image bricks-layout-inner css-filter\" alt=\"\" decoding=\"async\" srcset=\"http://localho",
+    "html_preview": "<section id=\"brxe-galleryalt_sec_01\" class=\"brxe-section\"><div id=\"brxe-galleryalt_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Gallery Image Alt Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><ul id=\"brxe-gallery_01\" data-script-id=\"gallery_01\" class=\"brxe-image-gallery bricks-layout-wrapper\" data-layout=\"grid\"><li class=\"bricks-layout-item\" data-id=\"49\"><figure><a href=\"http://localhost:8090/wp-content/uploads/2026/01/bb_website_2026_002.webp\" target=\"_blank\"><img width=\"800\" height=\"171\" src=\"http://localhost:8090/wp-content/uploads/2026/01/bb_website_2026_002.webp\" class=\"image bricks-layout-inner css-filter\" alt=\"\" decoding=\"async\" srcset=\"http://localhost:8090/wp-content/uploads/2026/01/bb_website_2026_002.webp 800w, http://localhost:8090/wp-content/uploads/2026/01/bb_website_2026_002-300x64.webp 300w, http://localhost:8090/wp-content/uploads/2026/01/bb_website_2026_002-768x164.webp 768w\" sizes=\"(max-width: 800px) 100vw, 800px\"></a></figure></li><li class=\"bricks-layout-item\" data-id=\"90\"><figure><a href=\"http://localhost:8090/wp-content/uploads/2026/01/bb_website_2026_003.webp\" target=\"_blan",
     "text_preview": "Gallery Image Alt Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
   },
   {
@@ -759,7 +771,7 @@
       "role-img-alt"
     ],
     "incomplete_ids": [],
-    "html_preview": "<section id=\"brxe-carouselfx_sec_01\" class=\"brxe-section\"><div id=\"brxe-carouselfx_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Carousel Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div data-script-id=\"carousel_01\" class=\"brxe-carousel\"><div class=\"bricks-swiper-container swiper-initialized swiper-horizontal swiper-pointer-events swiper-backface-hidden\" data-script-args=\"{&quot;slidesPerView&quot;:1,&quot;slidesPerGroup&quot;:1,&quot;speed&quot;:300,&quot;autoHeight&quot;:false,&quot;effect&quot;:&quot;slide&quot;,&quot;spaceBetween&quot;:0,&quot;initialSlide&quot;:0,&quot;loop&quot;:false,&quot;centeredSlides&quot;:false,&quot;autoplay&quot;:{&quot;delay&quot;:3000,&quot;disableOnInteraction&quot;:true,&quot;pauseOnMouseEnter&quot;:false,&quot;stopOnLastSlide&quot;:false},&quot;navigation&quot;:true}\"><div class=\"swiper-wrapper\" id=\"swiper-wrapper-ecb31e8cab1ad9be\" aria-live=\"off\"><div class=\"repeater-item swiper-slide swiper-slide-active\" role=\"group\" aria-label=\"1 / 2\" style=\"width: 1100px;\"><div class=\"image css-filter\" role=\"img\" style=\"background-image: url(&quot;http://localhost:8090/wp-c",
+    "html_preview": "<section id=\"brxe-carouselfx_sec_01\" class=\"brxe-section\"><div id=\"brxe-carouselfx_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Carousel Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div data-script-id=\"carousel_01\" class=\"brxe-carousel\"><div class=\"bricks-swiper-container swiper-initialized swiper-horizontal swiper-pointer-events swiper-backface-hidden\" data-script-args=\"{&quot;slidesPerView&quot;:1,&quot;slidesPerGroup&quot;:1,&quot;speed&quot;:300,&quot;autoHeight&quot;:false,&quot;effect&quot;:&quot;slide&quot;,&quot;spaceBetween&quot;:0,&quot;initialSlide&quot;:0,&quot;loop&quot;:false,&quot;centeredSlides&quot;:false,&quot;autoplay&quot;:{&quot;delay&quot;:3000,&quot;disableOnInteraction&quot;:true,&quot;pauseOnMouseEnter&quot;:false,&quot;stopOnLastSlide&quot;:false},&quot;navigation&quot;:true}\"><div class=\"swiper-wrapper\" id=\"swiper-wrapper-7aac4275975d57de\" aria-live=\"off\"><div class=\"repeater-item swiper-slide swiper-slide-active\" role=\"group\" aria-label=\"1 / 2\" style=\"width: 1100px;\"><div class=\"image css-filter\" role=\"img\" style=\"background-image: url(&quot;http://localhost:8090/wp-c",
     "text_preview": "Carousel Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
   },
   {
@@ -1146,7 +1158,7 @@
       "color-contrast"
     ],
     "incomplete_ids": [],
-    "html_preview": "<section id=\"brxe-testimonialfx_sec_01\" class=\"brxe-section\"><div id=\"brxe-testimonialfx_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Testimonial Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div>\t\t<div id=\"brxe-testimonials_01\" data-script-id=\"testimonials_01\" class=\"brxe-testimonials\">\n\t\t\t<div class=\"bricks-swiper-container swiper-initialized swiper-horizontal swiper-pointer-events swiper-autoheight swiper-backface-hidden\" data-script-args=\"{&quot;slidesPerView&quot;:1,&quot;slidesPerGroup&quot;:1,&quot;autoHeight&quot;:true,&quot;speed&quot;:300,&quot;effect&quot;:&quot;slide&quot;,&quot;spaceBetween&quot;:0,&quot;initialSlide&quot;:0,&quot;loop&quot;:false,&quot;centeredSlides&quot;:false}\">\n\t\t\t\t<div class=\"swiper-wrapper\" id=\"swiper-wrapper-6bcdb750e6e3ed45\" aria-live=\"polite\" style=\"height: 100px;\">\n\t\t\t\t\t<div class=\"repeater-item swiper-slide swiper-slide-active\" role=\"group\" aria-label=\"1 / 1\" style=\"width: 643px;\"><blockquote class=\"testimonial-content-wrapper\">The support team moved incredibly fast and kept every stakeholder aligned.</blockquote><div class=\"testimonial-meta-wrapper image-posi",
+    "html_preview": "<section id=\"brxe-testimonialfx_sec_01\" class=\"brxe-section\"><div id=\"brxe-testimonialfx_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Testimonial Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div>\t\t<div id=\"brxe-testimonials_01\" data-script-id=\"testimonials_01\" class=\"brxe-testimonials\">\n\t\t\t<div class=\"bricks-swiper-container swiper-initialized swiper-horizontal swiper-pointer-events swiper-autoheight swiper-backface-hidden\" data-script-args=\"{&quot;slidesPerView&quot;:1,&quot;slidesPerGroup&quot;:1,&quot;autoHeight&quot;:true,&quot;speed&quot;:300,&quot;effect&quot;:&quot;slide&quot;,&quot;spaceBetween&quot;:0,&quot;initialSlide&quot;:0,&quot;loop&quot;:false,&quot;centeredSlides&quot;:false}\">\n\t\t\t\t<div class=\"swiper-wrapper\" id=\"swiper-wrapper-50927ed955689dab\" aria-live=\"polite\" style=\"height: 100px;\">\n\t\t\t\t\t<div class=\"repeater-item swiper-slide swiper-slide-active\" role=\"group\" aria-label=\"1 / 1\" style=\"width: 643px;\"><blockquote class=\"testimonial-content-wrapper\">The support team moved incredibly fast and kept every stakeholder aligned.</blockquote><div class=\"testimonial-meta-wrapper image-posi",
     "text_preview": "Testimonial Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing.\n\nThe support team moved incredibly fast and kept every stakeholder aligned.\nJordan\nProduct Lead"
   },
   {

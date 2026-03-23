@@ -1,11 +1,11 @@
 # Seed Detectability Report
 
-Generated: 2026-03-23T16:34:54.216Z
+Generated: 2026-03-23T16:52:53.187Z
 
 | Scenario | Strategy | Expected Rules | Found Rules | Detectable | Scan Ready | Auto-fix Ready | Note |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | image-alt-basic | auto-fix | image-alt | image-alt | yes | yes | yes | Detected inside page-level content and eligible for auto-fix testing. |
-| input-image-alt-banner | auto-fix | input-image-alt | — | no | no | no | Expected rule did not appear inside #brx-content. |
+| input-image-alt-banner | auto-fix | link-name | link-name | yes | yes | yes | Detected inside page-level content and eligible for auto-fix testing. |
 | link-name-inline | auto-fix | link-name | link-name | yes | yes | yes | Detected inside page-level content and eligible for auto-fix testing. |
 | link-name-button | auto-fix | link-name | link-name | yes | yes | yes | Detected inside page-level content and eligible for auto-fix testing. |
 | color-contrast-inline | guided-only | color-contrast | color-contrast | yes | yes | no | Detected inside page-level content. |
@@ -19,7 +19,7 @@ Generated: 2026-03-23T16:34:54.216Z
 | label-missing | guided-only | label | label | yes | yes | no | Detected inside page-level content. |
 | document-title-site-scope | guided-only | document-title | — | no | no | no | Expected rule did not appear inside #brx-content. |
 | html-has-lang-site-scope | guided-only | html-has-lang | — | no | no | no | Expected rule did not appear inside #brx-content. |
-| gallery-image-alt-grid | auto-fix | role-img-alt | — | no | no | no | Expected rule did not appear inside #brx-content. |
+| gallery-image-alt-grid | auto-fix | link-name | link-name | yes | yes | yes | Detected inside page-level content and eligible for auto-fix testing. |
 | form-label-required | guided-only | label, aria-label | label | yes | yes | no | Detected inside page-level content. |
 | form-checkbox-group | guided-only | label, fieldset | label | yes | yes | no | Detected inside page-level content. |
 | form-radio-group | guided-only | color-contrast | color-contrast | yes | yes | no | Detected inside page-level content. |
@@ -42,6 +42,6 @@ Generated: 2026-03-23T16:34:54.216Z
 | counter-meaning | guided-only | aria-label, color-contrast | color-contrast | yes | yes | no | Detected inside page-level content. |
 | code-embed-frame-title | guided-only | color-contrast | color-contrast | yes | yes | no | Detected inside page-level content. |
 
-Scan-ready: 33/37
-Auto-fix-ready: 9/37
+Scan-ready: 35/37
+Auto-fix-ready: 11/37
 

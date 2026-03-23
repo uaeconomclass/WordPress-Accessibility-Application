@@ -20,17 +20,17 @@ Strategy values:
 
 Current detectability snapshot from `tests/coverage/seed-detectability-report.md`:
 
-- `33/37` scenarios are `scan-ready`
-- `9/37` scenarios are `auto-fix-ready`
-- strongest current auto-fix set: `image-alt-basic`, `link-name-inline`, `link-name-button`, `frame-title-inline`, `button-name-empty`, `button-icon-only`, `aria-label-icon`, `logo-image-alt`, `logo-linked-image`
+- `35/37` scenarios are `scan-ready`
+- `11/37` scenarios are `auto-fix-ready`
+- strongest current auto-fix set: `image-alt-basic`, `input-image-alt-banner`, `link-name-inline`, `link-name-button`, `frame-title-inline`, `button-name-empty`, `button-icon-only`, `aria-label-icon`, `logo-image-alt`, `logo-linked-image`, `gallery-image-alt-grid`
 
 | Component Family | Status | Current Strategy | Seeded Scenarios | Notes |
 |---|---|---|---|---|
 | `Heading` | seeded | guided-only | `heading-order-skip` | Good starter coverage for semantic heading issues |
 | `Basic Text / Rich Text` | seeded | auto-fix, guided-only, conditional | `link-name-inline`, `color-contrast-inline`, `frame-title-inline`, `label-missing`, `aria-hidden-focus-inline` | Core fallback and inline-HTML coverage base |
-| `Button` | seeded | auto-fix | `button-name-empty`, `button-icon-only`, `link-name-button`, `input-image-alt-banner` | `button-name-empty`, `button-icon-only`, and `link-name-button` are now scan/auto-fix ready; `input-image-alt-banner` still does not trigger in live Bricks render |
+| `Button` | seeded | auto-fix | `button-name-empty`, `button-icon-only`, `link-name-button`, `input-image-alt-banner` | `button-name-empty`, `button-icon-only`, `link-name-button`, and the linked-image CTA variant are all scan/auto-fix ready |
 | `Icon` | seeded | auto-fix, conditional | `aria-label-icon`, `aria-labelledby-missing` | `aria-label-icon` is auto-fix ready; `aria-labelledby-missing` now reliably detects as an invalid ARIA reference plus empty-link case |
-| `Image` | partial | auto-fix | `image-alt-basic`, `input-image-alt-banner`, `gallery-image-alt-grid` | `image-alt-basic` works; `input-image-alt-banner` and real Bricks gallery still do not yield stable page-level hits |
+| `Image` | seeded | auto-fix | `image-alt-basic`, `input-image-alt-banner`, `gallery-image-alt-grid` | `image-alt-basic` stays a true `image-alt` case; linked image CTA and gallery now give stable `link-name` failures through real Bricks renders |
 | `Video / Embed` | seeded | auto-fix, guided-only | `frame-title-inline`, `code-embed-frame-title`, `map-frame-title` | Inline iframe and map iframe are scan-ready; code/embed is scan-ready through a real low-contrast Bricks code render |
 | `Accordion` | partial | guided-only | `accordion-structure` | Real Bricks accordion now renders and is scan-ready via `heading-order`; still needs a stronger structural failure case |
 | `Tabs` | seeded | guided-only | `tabs-structure` | Real tabs-nested tree now renders and is scan-ready through a live color-contrast issue in the tab menu |

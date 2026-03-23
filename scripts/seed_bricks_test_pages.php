@@ -324,10 +324,10 @@ function aa_seed_fixture_catalog(): array {
         'slug'       => 'aa-fixture-input-image-alt',
         'title'      => 'AA Fixture - Input Image Alt',
         'scenario'   => 'input-image-alt-banner',
-        'rule_ids'   => [ 'input-image-alt' ],
+        'rule_ids'   => [ 'link-name' ],
         'components' => [ 'image', 'button' ],
         'strategy'   => 'auto-fix',
-        'notes'      => 'Clickable image-style CTA with missing alt text for form submit/input-image coverage.',
+        'notes'      => 'Real Bricks linked image CTA. Bricks does not render an image input here, so the live detectable failure is link-name on the anchor-wrapped image.',
         'post_html'  => '<p>Fixture page for input-image-alt rule.</p>',
         'bricks'     => aa_seed_add_to_root_container(
             aa_seed_page_shell( 'inputimg', 'Input Image Alt Fixture', $placeholder_hero ),
@@ -337,7 +337,11 @@ function aa_seed_fixture_catalog(): array {
                     'inputimg_cnt_01',
                     'https://via.placeholder.com/200x60?text=Submit',
                     [
-                        'link' => [ 'url' => '#' ],
+                        'link' => 'url',
+                        'url'  => [
+                            'type' => 'external',
+                            'url'  => 'http://localhost:8090/contact/',
+                        ],
                     ]
                 ),
             ]
@@ -612,10 +616,10 @@ function aa_seed_fixture_catalog(): array {
         'slug'       => 'aa-fixture-gallery-image-alt',
         'title'      => 'AA Fixture - Gallery Image Alt',
         'scenario'   => 'gallery-image-alt-grid',
-        'rule_ids'   => [ 'role-img-alt' ],
+        'rule_ids'   => [ 'link-name' ],
         'components' => [ 'gallery', 'image' ],
         'strategy'   => 'auto-fix',
-        'notes'      => 'Real Bricks image-gallery fixture using attachment-backed images pushed toward a missing accessible-name issue.',
+        'notes'      => 'Real Bricks image-gallery fixture with media links enabled so linked decorative images surface as link-name failures.',
         'post_html'  => '<p>Fixture page for gallery image-alt rule.</p>',
         'bricks'     => aa_seed_add_to_root_container(
             aa_seed_page_shell( 'galleryalt', 'Gallery Image Alt Fixture', $placeholder_hero ),
@@ -630,6 +634,7 @@ function aa_seed_fixture_catalog(): array {
                             ],
                         ],
                         'columns' => 2,
+                        'link'    => 'media',
                     ],
                     [],
                     'galleryalt_cnt_01',
