@@ -55,10 +55,9 @@ class SeedFixturesAdmin {
         self::load_seed_library();
 
         $notice            = null;
-        $fixtures          = aa_seed_fixture_catalog();
-        $catalog_summary   = self::catalog_summary( $fixtures );
-        $filter_values     = self::current_filter_values();
-        $visible_fixtures  = self::filter_fixtures( $fixtures, $filter_values );
+        $fixtures         = aa_seed_fixture_catalog();
+        $filter_values    = self::current_filter_values();
+        $visible_fixtures = self::filter_fixtures( $fixtures, $filter_values );
 
         if ( 'POST' === $_SERVER['REQUEST_METHOD'] ) {
             $notice = self::handle_post( $fixtures );
@@ -68,34 +67,26 @@ class SeedFixturesAdmin {
 
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__( 'Demo Pages', 'accessibility-auditor' ) . '</h1>';
-        echo '<p style="max-width:920px;font-size:14px;">' . esc_html__( 'Create ready-made Bricks demo pages with known accessibility issues. Use them to show scanning, AI suggestions, and AI fixes without touching real client content.', 'accessibility-auditor' ) . '</p>';
+        echo '<p style="max-width:920px;font-size:14px;">' . esc_html__( 'Use this page to prepare safe demo pages for scans and AI fix walkthroughs.', 'accessibility-auditor' ) . '</p>';
 
         if ( is_array( $notice ) ) {
             echo '<div class="' . esc_attr( $notice['class'] ) . '"><p>' . esc_html( $notice['text'] ) . '</p></div>';
         }
 
-        echo '<div style="max-width:1100px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:18px 0;">';
-        self::render_stat_card( __( 'Demo scenarios', 'accessibility-auditor' ), (string) $catalog_summary['total'] );
-        self::render_stat_card( __( 'AI fix demos', 'accessibility-auditor' ), (string) $catalog_summary['auto_fix'] );
-        self::render_stat_card( __( 'Guide-only demos', 'accessibility-auditor' ), (string) $catalog_summary['guided_only'] );
-        self::render_stat_card( __( 'Bricks components', 'accessibility-auditor' ), (string) $catalog_summary['components'] );
-        echo '</div>';
-
         echo '<div style="max-width:1100px;background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:20px 24px;margin:18px 0;">';
-        echo '<h2 style="margin-top:0;">' . esc_html__( 'Quick Start', 'accessibility-auditor' ) . '</h2>';
-        echo '<p>' . esc_html__( 'Use one of these to prepare demo pages fast. Each action refreshes the matching pages and clears old scan results for them.', 'accessibility-auditor' ) . '</p>';
+        echo '<h2 style="margin-top:0;">' . esc_html__( 'Prepare Demo Pages', 'accessibility-auditor' ) . '</h2>';
+        echo '<p>' . esc_html__( 'Start with AI Fix demos for the clearest client walkthrough. These actions refresh the demo pages and clear old scan results.', 'accessibility-auditor' ) . '</p>';
         echo '<div style="display:flex;gap:10px;flex-wrap:wrap;">';
-        self::render_action_form( __( 'Prepare All Demo Pages', 'accessibility-auditor' ), [] );
         self::render_action_form( __( 'Prepare AI Fix Demos', 'accessibility-auditor' ), [ 'strategy' => 'auto-fix' ] );
         self::render_action_form( __( 'Prepare Guide-Only Demos', 'accessibility-auditor' ), [ 'strategy' => 'guided-only' ] );
-        self::render_action_form( __( 'Prepare Advanced Demos', 'accessibility-auditor' ), [ 'strategy' => 'flagged' ] );
+        self::render_action_form( __( 'Prepare All Demo Pages', 'accessibility-auditor' ), [] );
         echo '</div>';
-        echo '<p style="margin:14px 0 0;color:#50575e;">' . esc_html__( 'Recommended demo flow: prepare AI Fix demos -> open one in Bricks -> run scan -> Fix with AI -> review the preview -> Accept or Reject.', 'accessibility-auditor' ) . '</p>';
+        echo '<p style="margin:14px 0 0;color:#50575e;">' . esc_html__( 'Recommended flow: prepare AI Fix demos, open one in Bricks, run scan, click Fix with AI, review the preview, then Accept or Reject.', 'accessibility-auditor' ) . '</p>';
         echo '</div>';
 
         echo '<div style="max-width:1100px;background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:20px 24px;margin:18px 0;">';
         echo '<h2 style="margin-top:0;">' . esc_html__( 'Find a Demo', 'accessibility-auditor' ) . '</h2>';
-        echo '<p style="margin-top:0;">' . esc_html__( 'Use the quick filters below if you know what you want to show. Advanced filters are hidden by default.', 'accessibility-auditor' ) . '</p>';
+        echo '<p style="margin-top:0;">' . esc_html__( 'Use these filters only if you want a specific demo. Otherwise just prepare AI Fix demos and open one in Bricks.', 'accessibility-auditor' ) . '</p>';
         echo '<form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;">';
         echo '<input type="hidden" name="page" value="' . esc_attr( self::PAGE_SLUG ) . '">';
         self::render_select( 'strategy', __( 'Demo type', 'accessibility-auditor' ), self::strategy_options( $fixtures ), $filter_values['strategy'] );
@@ -158,13 +149,6 @@ class SeedFixturesAdmin {
         }
 
         echo '</tbody></table>';
-        echo '</div>';
-    }
-
-    private static function render_stat_card( string $label, string $value ) {
-        echo '<div style="background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:18px 20px;">';
-        echo '<div style="font-size:12px;color:#50575e;text-transform:uppercase;letter-spacing:.04em;">' . esc_html( $label ) . '</div>';
-        echo '<div style="font-size:28px;font-weight:700;line-height:1.1;margin-top:8px;">' . esc_html( $value ) . '</div>';
         echo '</div>';
     }
 
@@ -260,33 +244,6 @@ class SeedFixturesAdmin {
             }
             return true;
         } ) );
-    }
-
-    private static function catalog_summary( array $fixtures ): array {
-        $components = [];
-        $auto_fix = 0;
-        $guided_only = 0;
-
-        foreach ( $fixtures as $fixture ) {
-            foreach ( $fixture['components'] as $component ) {
-                $components[ $component ] = true;
-            }
-
-            if ( ( $fixture['strategy'] ?? '' ) === 'auto-fix' ) {
-                $auto_fix++;
-            }
-
-            if ( ( $fixture['strategy'] ?? '' ) === 'guided-only' ) {
-                $guided_only++;
-            }
-        }
-
-        return [
-            'total'       => count( $fixtures ),
-            'auto_fix'    => $auto_fix,
-            'guided_only' => $guided_only,
-            'components'  => count( $components ),
-        ];
     }
 
     private static function component_options( array $fixtures ): array {
