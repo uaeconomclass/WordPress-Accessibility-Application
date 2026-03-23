@@ -205,8 +205,8 @@ class AI {
             );
         }
 
-        // 5. Snapshot before mutating (supports rollback).
-        Revisions::save_bricks_snapshot( $post_id, $elements, 'pre_fix_backup' );
+        // 5. Snapshot before mutating (supports rollback after accept).
+        $rollback_revision_key = Revisions::save_bricks_snapshot( $post_id, $elements, 'pre_fix_backup' );
 
         $applied = [];
 
@@ -279,20 +279,17 @@ class AI {
             }
         }
 
-        // 7. Persist, flush caches, return.
+        if ( empty( $applied ) ) {
+            return new WP_REST_Response( [
+                'error'   => true,
+                'message' => 'AI did not produce any safe changes to preview.',
+                'trace_id'=> $trace_id,
+            ], 422 );
+        }
+
+        // 7. Save preview snapshot only. Actual persistence happens on explicit accept.
         try {
-            update_post_meta( $post_id, $content_meta_key ?: 'bricks_data', $elements );
-
-            if ( function_exists( 'bricks_flush_post_css' ) ) {
-                bricks_flush_post_css( $post_id );
-            }
-            if ( function_exists( 'bricks_clear_rendered_data' ) ) {
-                bricks_clear_rendered_data( $post_id );
-            }
-
-            do_action( 'bricks_after_save_post', $post_id );
-
-            $revision_key = Revisions::save_bricks_snapshot( $post_id, $elements, 'ai_fix' );
+            $revision_key = Revisions::save_bricks_snapshot( $post_id, $elements, 'pending_fix' );
             $changelog    = Revisions::generate_changelog( $applied );
 
             Loader::aa_log( 'auto_fix.success', [
@@ -301,15 +298,18 @@ class AI {
                 'rule_id'      => $rule_id,
                 'applied_count'=> count( $applied ),
                 'revision'     => $revision_key,
+                'preview_only' => true,
             ] );
-            error_log( sprintf( '[AA:auto-fix] DONE applied=%d revision_key=%s', count( $applied ), $revision_key ) );
+            error_log( sprintf( '[AA:auto-fix] PREVIEW ready applied=%d revision_key=%s rollback=%s', count( $applied ), $revision_key, $rollback_revision_key ) );
 
             return new WP_REST_Response( [
                 'success'   => true,
-                'message'   => 'Accessibility fixes applied successfully.',
+                'message'   => 'Accessibility fix preview generated successfully.',
                 'changes'   => $applied,
                 'revision'  => $revision_key,
                 'revision_key' => $revision_key,
+                'rollback_revision_key' => $rollback_revision_key,
+                'preview_only' => true,
                 'changelog' => $changelog,
                 'trace_id'  => $trace_id,
             ] );
@@ -326,7 +326,7 @@ class AI {
     }
 
     // =========================================================================
-    // Route: /save-fix  (accept — log to audit trail)
+    // Route: /save-fix  (accept — persist preview and log to audit trail)
     // =========================================================================
 
     public function save_fix( WP_REST_Request $request ) {
@@ -337,18 +337,58 @@ class AI {
             return new WP_Error( 'forbidden', 'Unauthorized.', [ 'status' => 403 ] );
         }
 
-        $revision_key = sanitize_text_field( $payload['revision_key'] ?? '' );
+        $revision_key          = sanitize_text_field( $payload['revision_key'] ?? '' );
+        $rollback_revision_key = sanitize_text_field( $payload['rollback_revision_key'] ?? '' );
+        $revision_json         = get_post_meta( $post_id, $revision_key, true );
+
+        if ( ! $revision_key || ! $revision_json ) {
+            return new WP_Error( 'revision_not_found', 'Preview revision not found.', [ 'status' => 404 ] );
+        }
+
+        $revision = json_decode( $revision_json, true );
+        $elements = $revision['elements'] ?? null;
+        if ( empty( $elements ) || ! is_array( $elements ) ) {
+            return new WP_Error( 'invalid_revision', 'Preview revision data is invalid.', [ 'status' => 500 ] );
+        }
+
+        $content_meta_key = ( defined( 'BRICKS_DB_PAGE_CONTENT' ) && is_string( BRICKS_DB_PAGE_CONTENT ) && BRICKS_DB_PAGE_CONTENT !== '' )
+            ? BRICKS_DB_PAGE_CONTENT
+            : 'bricks_data';
+        if ( empty( get_post_meta( $post_id, $content_meta_key, true ) ) && ! empty( get_post_meta( $post_id, 'bricks_data', true ) ) ) {
+            $content_meta_key = 'bricks_data';
+        }
+
+        update_post_meta( $post_id, $content_meta_key, $elements );
+
+        if ( function_exists( 'bricks_flush_post_css' ) ) {
+            bricks_flush_post_css( $post_id );
+        }
+        if ( function_exists( 'bricks_clear_rendered_data' ) ) {
+            bricks_clear_rendered_data( $post_id );
+        }
+
+        do_action( 'bricks_after_save_post', $post_id );
+
+        $accepted_revision_key = Revisions::save_bricks_snapshot( $post_id, $elements, 'ai_fix' );
 
         Revisions::log_autofix( $post_id, [
-            'revision_key' => $revision_key,
-            'action'       => 'accepted',
+            'preview_revision_key'  => $revision_key,
+            'rollback_revision_key' => $rollback_revision_key,
+            'accepted_revision_key' => $accepted_revision_key,
+            'action'                => 'accepted',
         ] );
 
-        return rest_ensure_response( [ 'success' => true ] );
+        delete_post_meta( $post_id, $revision_key );
+
+        return rest_ensure_response( [
+            'success' => true,
+            'revision_key' => $accepted_revision_key,
+            'rollback_revision_key' => $rollback_revision_key,
+        ] );
     }
 
     // =========================================================================
-    // Route: /revert-fix  (reject — restore from snapshot)
+    // Route: /revert-fix  (reject preview or restore from snapshot)
     // =========================================================================
 
     public function revert_fix( WP_REST_Request $request ) {
@@ -369,7 +409,13 @@ class AI {
         }
 
         $revision = json_decode( $revision_json, true );
+        $context  = sanitize_text_field( (string) ( $revision['context'] ?? '' ) );
         $elements = $revision['elements'] ?? null;
+
+        if ( $context === 'pending_fix' ) {
+            delete_post_meta( $post_id, $revision_key );
+            return rest_ensure_response( [ 'success' => true, 'message' => 'Preview changes discarded.' ] );
+        }
 
         if ( empty( $elements ) || ! is_array( $elements ) ) {
             return new WP_Error( 'invalid_revision', 'Revision data is invalid.', [ 'status' => 500 ] );

@@ -701,12 +701,13 @@ this._resultsClickHandler = async (e) => {
         // Rule not auto-fixable — show guided steps inline instead of an error.
         aiTextDiv.innerHTML = result.steps;
       } else if (result?.success) {
-        this._lastRevisionKey = result.revision_key || result.revision || this._lastRevisionKey || null;
+        this._pendingRevisionKey = result.revision_key || result.revision || null;
+        this._rollbackRevisionKey = result.rollback_revision_key || null;
         aiTextDiv.innerHTML = `
            <strong>AI CHANGE MADE SUCCESSFULLY</strong>
-           <span>Fix applied. Reloading editor…</span>
+           <span>Preview ready. Review the proposed change and accept or reject it before saving.</span>
         `;
-        if (aiActions) aiActions.style.display = "none";
+        if (aiActions) aiActions.style.display = "flex";
       } else {
         aiTextDiv.innerHTML = `<p>No automatic changes were necessary or detected.</p>`;
       }
@@ -736,22 +737,27 @@ this._resultsClickHandler = async (e) => {
       const issueId = acceptBtn.dataset.issueId;
       const issue = this._violations.find(v => v.id === issueId);
       await this._saveFix(issue);
+      sessionStorage.setItem('aa_after_fix', '1');
       location.reload();
       return;
     }
 
-    // Reject AI fix — revert Bricks content to pre-fix snapshot
+    // Reject AI fix — discard preview or restore from snapshot
     if (rejectBtn) {
-      if (this._lastRevisionKey) {
+      if (this._pendingRevisionKey) {
         await fetch(`${aaEditor.root}revert-fix`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "X-WP-Nonce": aaEditor.restNonce,
           },
-          body: JSON.stringify({ post_id: aaEditor.postId, revision_key: this._lastRevisionKey })
+          body: JSON.stringify({ post_id: aaEditor.postId, revision_key: this._pendingRevisionKey })
         });
-        location.reload();
+        this._pendingRevisionKey = null;
+        this._rollbackRevisionKey = null;
+        const issueId = rejectBtn.dataset.issueId;
+        const aiPanel = this.shadowRoot.querySelector(`#ai-success-${issueId}`);
+        if (aiPanel) aiPanel.style.display = "none";
       } else {
         const issueId = rejectBtn.dataset.issueId;
         const aiPanel = this.shadowRoot.querySelector(`#ai-success-${issueId}`);
@@ -916,19 +922,6 @@ async _applyAutoFix(issue) {
       return data;
     }
 
-    this._lastRevisionKey = data.revision_key || null;
-
-    // Show reload notice then reload the full builder page so Bricks
-    // picks up the DB changes (iframe-only reloads break the canvas).
-    const container = this.shadowRoot.querySelector('#aa-scan-results');
-    if (container) {
-      container.innerHTML = `<p class="aa-no-issues" style="color:#f0c040;padding:12px;">
-        ✅ Fix applied! Reloading editor…</p>`;
-    }
-    // Flag so connectedCallback auto-reopens the panel after reload (triggering rescan).
-    sessionStorage.setItem('aa_after_fix', '1');
-    setTimeout(() => window.location.reload(), 1500);
-
     console.groupEnd();
     return data;
   } catch (err) {
@@ -953,7 +946,12 @@ async _saveFix(issue) {
         "Content-Type": "application/json",
         "X-WP-Nonce": aaEditor.restNonce,
       },
-      body: JSON.stringify({ issue, post_id: aaEditor.postId, revision_key: this._lastRevisionKey })
+      body: JSON.stringify({
+        issue,
+        post_id: aaEditor.postId,
+        revision_key: this._pendingRevisionKey,
+        rollback_revision_key: this._rollbackRevisionKey
+      })
     });
 
     if (!resp.ok) throw new Error(`Server returned ${resp.status}`);

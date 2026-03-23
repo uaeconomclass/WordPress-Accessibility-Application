@@ -190,6 +190,9 @@ async function runAutoFixSmoke(page, baseURL, pageId, options = {}) {
   expect(['success', 'done', 'reload']).toContain(aiState.state);
 
   if (typeof options.verifyPersisted === 'function') {
+    const acceptBtn = page.locator('aa-dashboard').locator('.aa-accept-btn').first();
+    await expect(acceptBtn).toHaveCount(1);
+    await acceptBtn.click();
     await expect.poll(async () => options.verifyPersisted(pageId), { timeout: 30_000 }).toBeTruthy();
     return { issueId, aiState, autoFixJson, issueTitleBefore, postScan: { state: 'persisted' } };
   }
