@@ -18,12 +18,16 @@ class ScanManager {
             findings LONGTEXT,
             summary VARCHAR(255),
             PRIMARY KEY (scan_id),
-            INDEX (post_id),
-            INDEX (created_at)
+            KEY post_id (post_id),
+            KEY created_at (created_at)
         ) $charset_collate;";
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta( $sql );
+
+        if ( class_exists( '\Accessibility_Auditor\LlmAuditLogger' ) ) {
+            \Accessibility_Auditor\LlmAuditLogger::install();
+        }
     }
 
     public static function save_scan( $post_id, $results ) {

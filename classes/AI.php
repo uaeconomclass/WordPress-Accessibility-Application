@@ -63,21 +63,34 @@ class AI {
         $params  = $request->get_json_params();
         $context = $params['context'] ?? $params;
         $trace_id = sanitize_text_field( (string) ( $params['trace_id'] ?? '' ) );
+        $issue_id = $context['issueId'] ?? ( $context['id'] ?? null );
+        $prompt = $this->build_guided_prompt( $context );
 
         Loader::aa_log( 'guided_fix.start', [
             'trace_id' => $trace_id,
-            'issue_id' => $context['issueId'] ?? ( $context['id'] ?? null ),
+            'issue_id' => $issue_id,
         ] );
 
-        $response = ClaudeClient::request( $this->build_guided_prompt( $context ) );
+        $response = ClaudeClient::request_with_meta( $prompt, false, [
+            'trace_id'       => $trace_id,
+            'call_mode'      => 'guided_fix',
+            'post_id'        => absint( $context['post_id'] ?? $params['post_id'] ?? 0 ),
+            'rule_id'        => sanitize_key( (string) $issue_id ),
+            'prompt_version' => 'guided_v1',
+        ] );
 
         if ( is_wp_error( $response ) ) {
             Loader::aa_log( 'guided_fix.error', [ 'trace_id' => $trace_id, 'message' => $response->get_error_message() ] );
             return rest_ensure_response( [ 'error' => true, 'message' => $response->get_error_message(), 'trace_id' => $trace_id ] );
         }
 
-        Loader::aa_log( 'guided_fix.success', [ 'trace_id' => $trace_id ] );
-        return rest_ensure_response( [ 'steps' => $response, 'trace_id' => $trace_id ] );
+        Loader::aa_log( 'guided_fix.success', [
+            'trace_id'      => $trace_id,
+            'input_tokens'  => $response['input_tokens'] ?? 0,
+            'output_tokens' => $response['output_tokens'] ?? 0,
+            'latency_ms'    => $response['latency_ms'] ?? 0,
+        ] );
+        return rest_ensure_response( [ 'steps' => $response['content'] ?? '', 'trace_id' => $trace_id ] );
     }
 
     // =========================================================================
@@ -273,7 +286,14 @@ Output only the JSON patch.',
 
             try {
                 error_log( sprintf( '[AA:auto-fix] Calling Claude for element_id=%s type=%s', $element['id'] ?? '?', $element['name'] ?? '?' ) );
-                $response = ClaudeClient::request( $prompt, true );
+                $response = ClaudeClient::request_with_meta( $prompt, true, [
+                    'trace_id'       => $trace_id,
+                    'call_mode'      => 'auto_fix',
+                    'post_id'        => $post_id,
+                    'rule_id'        => sanitize_key( (string) $rule_id ),
+                    'component'      => sanitize_key( (string) ( $element['name'] ?? '' ) ),
+                    'prompt_version' => 'autofix_v1',
+                ] );
                 $json     = AiResponseNormalizer::normalize( $response );
                 error_log( '[AA:auto-fix] Claude response (first 300): ' . substr( $json, 0, 300 ) );
 
@@ -464,7 +484,13 @@ Output only the JSON patch.',
     }
 
     private function guided_fallback_response( array $context, string $trace_id, string $fallback_message ) {
-        $steps = ClaudeClient::request( $this->build_guided_prompt( $context ) );
+        $response = ClaudeClient::request_with_meta( $this->build_guided_prompt( $context ), false, [
+            'trace_id'       => $trace_id,
+            'call_mode'      => 'guided_fallback',
+            'rule_id'        => sanitize_key( (string) ( $context['id'] ?? '' ) ),
+            'prompt_version' => 'guided_v1',
+        ] );
+        $steps = is_wp_error( $response ) ? '' : ( $response['content'] ?? '' );
         if ( is_wp_error( $steps ) ) {
             $steps = '<p>' . esc_html( $fallback_message ) . '</p>';
         }
