@@ -128,6 +128,7 @@ class Loader {
                 'summary'        => $summary,
                 'score'          => $score,
                 'wcagLevel'      => $opts['compliance_level'] ?? 'AA',
+                'pageBricksIds'  => self::get_page_bricks_element_ids( $post_id ),
             ] );
     }
 
@@ -214,6 +215,57 @@ class Loader {
         );
 
         @file_put_contents( WP_CONTENT_DIR . '/aa-debug.log', $line, FILE_APPEND );
+    }
+
+    /**
+     * Collect Bricks element IDs that belong to the current post's editable page content.
+     *
+     * These IDs are used client-side to exclude template/global/header/footer nodes from
+     * page-level scan results, score, and auto-fix affordances.
+     *
+     * @param int $post_id Current page/post ID.
+     * @return array<string>
+     */
+    private static function get_page_bricks_element_ids( int $post_id ): array {
+        if ( ! $post_id ) {
+            return [];
+        }
+
+        $content_key_candidates = [];
+        if ( defined( 'BRICKS_DB_PAGE_CONTENT' ) && is_string( BRICKS_DB_PAGE_CONTENT ) && BRICKS_DB_PAGE_CONTENT !== '' ) {
+            $content_key_candidates[] = BRICKS_DB_PAGE_CONTENT;
+        }
+        $content_key_candidates[] = 'bricks_data';
+        $content_key_candidates = array_values( array_unique( $content_key_candidates ) );
+
+        $elements = null;
+        foreach ( $content_key_candidates as $candidate_key ) {
+            $candidate_content  = get_post_meta( $post_id, $candidate_key, true );
+            $candidate_elements = is_array( $candidate_content ) ? $candidate_content : json_decode( $candidate_content, true );
+            if ( ! empty( $candidate_elements ) && is_array( $candidate_elements ) ) {
+                $elements = $candidate_elements;
+                break;
+            }
+        }
+
+        if ( empty( $elements ) || ! is_array( $elements ) ) {
+            return [];
+        }
+
+        $ids = [];
+        $walk = static function( array $nodes ) use ( &$walk, &$ids ): void {
+            foreach ( $nodes as $node ) {
+                if ( ! empty( $node['id'] ) && is_string( $node['id'] ) ) {
+                    $ids[] = $node['id'];
+                }
+                if ( ! empty( $node['children'] ) && is_array( $node['children'] ) ) {
+                    $walk( $node['children'] );
+                }
+            }
+        };
+
+        $walk( $elements );
+        return array_values( array_unique( $ids ) );
     }
 
     /**

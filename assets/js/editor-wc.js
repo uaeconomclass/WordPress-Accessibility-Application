@@ -93,6 +93,66 @@ class AADashboard extends HTMLElement {
     try { return JSON.stringify(obj); } catch(e){ return "[]"; }
   }
 
+  _getPageBricksIds() {
+    const raw = window.aaEditor?.pageBricksIds;
+    return Array.isArray(raw) ? raw.filter(Boolean) : [];
+  }
+
+  _countIssueInstances(issues = []) {
+    if (!Array.isArray(issues)) return 0;
+    return issues.reduce((total, issue) => {
+      const nodes = Array.isArray(issue?.nodes) ? issue.nodes : [];
+      return total + (nodes.length || 1);
+    }, 0);
+  }
+
+  _nodeBelongsToCurrentPage(node, pageIdsSet) {
+    if (!node || !pageIdsSet || pageIdsSet.size === 0) return true;
+
+    const selectors = Array.isArray(node.target) ? node.target.flat().filter(Boolean) : [];
+    for (const selector of selectors) {
+      const matches = selector.match(/#brxe-([\w-]+)/gi) || [];
+      for (const token of matches) {
+        const id = token.replace(/^#brxe-/i, "");
+        if (pageIdsSet.has(id)) return true;
+      }
+    }
+
+    const html = typeof node.html === "string" ? node.html : "";
+    const htmlIds = html.match(/\bid="brxe-([\w-]+)"/gi) || [];
+    for (const token of htmlIds) {
+      const id = token.replace(/\bid="brxe-/i, "").replace(/"$/g, "");
+      if (pageIdsSet.has(id)) return true;
+    }
+
+    return false;
+  }
+
+  _filterIssuesToCurrentPage(issues = []) {
+    const pageIds = this._getPageBricksIds();
+    if (!pageIds.length || !Array.isArray(issues)) return Array.isArray(issues) ? issues : [];
+
+    const pageIdsSet = new Set(pageIds);
+
+    return issues
+      .map((issue) => {
+        const nodes = Array.isArray(issue?.nodes) ? issue.nodes : [];
+        const filteredNodes = nodes.filter((node) => this._nodeBelongsToCurrentPage(node, pageIdsSet));
+        if (!filteredNodes.length) return null;
+        return { ...issue, nodes: filteredNodes };
+      })
+      .filter(Boolean);
+  }
+
+  _filterResultsToCurrentPage(results = {}) {
+    return {
+      ...results,
+      violations: this._filterIssuesToCurrentPage(results?.violations || []),
+      incomplete: this._filterIssuesToCurrentPage(results?.incomplete || []),
+      passes: this._filterIssuesToCurrentPage(results?.passes || []),
+    };
+  }
+
   _makeTraceId(prefix = "aa") {
     return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   }
@@ -1092,6 +1152,8 @@ async _highlightNode(node) {
         results = await runAxeInPreview();
       }
 
+      results = this._filterResultsToCurrentPage(results || {});
+
       console.log("axe results", results);
       console.log("violations:", results.violations);
       await this._postDebugLog("scan.axe.done", traceId, {
@@ -1105,7 +1167,7 @@ async _highlightNode(node) {
       // Render violations (prefer results.violations)
       const violations = results.violations || [];
       this.renderResults(violations, results.incomplete || []);
-      const calcScore = Math.max(0, 100 - violations.length * 5);
+      const calcScore = Math.max(0, 100 - this._countIssueInstances(violations) * 5);
       this.updateAccessibilityUI(calcScore);
 
       // optionally persist results via ajax to server (if aaEditor ajax present)
