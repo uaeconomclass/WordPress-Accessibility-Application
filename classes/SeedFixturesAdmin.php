@@ -39,8 +39,8 @@ class SeedFixturesAdmin {
     public static function register_page() {
         add_submenu_page(
             Admin::MENU_SLUG,
-            __( 'Seed Fixtures', 'accessibility-auditor' ),
-            __( 'Seed Fixtures', 'accessibility-auditor' ),
+            __( 'Demo Pages', 'accessibility-auditor' ),
+            __( 'Demo Pages', 'accessibility-auditor' ),
             'manage_options',
             self::PAGE_SLUG,
             [ __CLASS__, 'render_page' ]
@@ -67,40 +67,40 @@ class SeedFixturesAdmin {
         }
 
         echo '<div class="wrap">';
-        echo '<h1>' . esc_html__( 'Seed Fixtures', 'accessibility-auditor' ) . '</h1>';
-        echo '<p style="max-width:920px;font-size:14px;">' . esc_html__( 'Dev-only Bricks test pages. Use this screen to generate known accessibility problems, open them in Bricks, and test scan or AI-fix flows without touching real content.', 'accessibility-auditor' ) . '</p>';
+        echo '<h1>' . esc_html__( 'Demo Pages', 'accessibility-auditor' ) . '</h1>';
+        echo '<p style="max-width:920px;font-size:14px;">' . esc_html__( 'Create ready-made Bricks demo pages with known accessibility issues. Use them to show scanning, AI suggestions, and AI fixes without touching real client content.', 'accessibility-auditor' ) . '</p>';
 
         if ( is_array( $notice ) ) {
             echo '<div class="' . esc_attr( $notice['class'] ) . '"><p>' . esc_html( $notice['text'] ) . '</p></div>';
         }
 
         echo '<div style="max-width:1100px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:18px 0;">';
-        self::render_stat_card( __( 'Total scenarios', 'accessibility-auditor' ), (string) $catalog_summary['total'] );
-        self::render_stat_card( __( 'Auto-fix ready', 'accessibility-auditor' ), (string) $catalog_summary['auto_fix'] );
-        self::render_stat_card( __( 'Guided only', 'accessibility-auditor' ), (string) $catalog_summary['guided_only'] );
-        self::render_stat_card( __( 'Components covered', 'accessibility-auditor' ), (string) $catalog_summary['components'] );
+        self::render_stat_card( __( 'Demo scenarios', 'accessibility-auditor' ), (string) $catalog_summary['total'] );
+        self::render_stat_card( __( 'AI fix demos', 'accessibility-auditor' ), (string) $catalog_summary['auto_fix'] );
+        self::render_stat_card( __( 'Guide-only demos', 'accessibility-auditor' ), (string) $catalog_summary['guided_only'] );
+        self::render_stat_card( __( 'Bricks components', 'accessibility-auditor' ), (string) $catalog_summary['components'] );
         echo '</div>';
 
         echo '<div style="max-width:1100px;background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:20px 24px;margin:18px 0;">';
-        echo '<h2 style="margin-top:0;">' . esc_html__( 'Start Here', 'accessibility-auditor' ) . '</h2>';
-        echo '<p>' . esc_html__( 'Pick one of these if you just want test pages fast. Each action updates matching fixture pages and clears old scan state for them.', 'accessibility-auditor' ) . '</p>';
+        echo '<h2 style="margin-top:0;">' . esc_html__( 'Quick Start', 'accessibility-auditor' ) . '</h2>';
+        echo '<p>' . esc_html__( 'Use one of these to prepare demo pages fast. Each action refreshes the matching pages and clears old scan results for them.', 'accessibility-auditor' ) . '</p>';
         echo '<div style="display:flex;gap:10px;flex-wrap:wrap;">';
-        self::render_action_form( __( 'Seed All', 'accessibility-auditor' ), [] );
-        self::render_action_form( __( 'Seed Auto-Fix', 'accessibility-auditor' ), [ 'strategy' => 'auto-fix' ] );
-        self::render_action_form( __( 'Seed Guided-Only', 'accessibility-auditor' ), [ 'strategy' => 'guided-only' ] );
-        self::render_action_form( __( 'Seed Flagged', 'accessibility-auditor' ), [ 'strategy' => 'flagged' ] );
+        self::render_action_form( __( 'Prepare All Demo Pages', 'accessibility-auditor' ), [] );
+        self::render_action_form( __( 'Prepare AI Fix Demos', 'accessibility-auditor' ), [ 'strategy' => 'auto-fix' ] );
+        self::render_action_form( __( 'Prepare Guide-Only Demos', 'accessibility-auditor' ), [ 'strategy' => 'guided-only' ] );
+        self::render_action_form( __( 'Prepare Advanced Demos', 'accessibility-auditor' ), [ 'strategy' => 'flagged' ] );
         echo '</div>';
-        echo '<p style="margin:14px 0 0;color:#50575e;">' . esc_html__( 'Recommended flow: Seed Auto-Fix -> open a fixture in Bricks -> run scan -> Fix with AI -> Accept or Reject.', 'accessibility-auditor' ) . '</p>';
+        echo '<p style="margin:14px 0 0;color:#50575e;">' . esc_html__( 'Recommended demo flow: prepare AI Fix demos -> open one in Bricks -> run scan -> Fix with AI -> review the preview -> Accept or Reject.', 'accessibility-auditor' ) . '</p>';
         echo '</div>';
 
         echo '<div style="max-width:1100px;background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:20px 24px;margin:18px 0;">';
-        echo '<h2 style="margin-top:0;">' . esc_html__( 'Find a Scenario', 'accessibility-auditor' ) . '</h2>';
-        echo '<p style="margin-top:0;">' . esc_html__( 'Use the quick filters below if you know exactly what you want to test. Advanced filters are available but hidden by default.', 'accessibility-auditor' ) . '</p>';
+        echo '<h2 style="margin-top:0;">' . esc_html__( 'Find a Demo', 'accessibility-auditor' ) . '</h2>';
+        echo '<p style="margin-top:0;">' . esc_html__( 'Use the quick filters below if you know what you want to show. Advanced filters are hidden by default.', 'accessibility-auditor' ) . '</p>';
         echo '<form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;">';
         echo '<input type="hidden" name="page" value="' . esc_attr( self::PAGE_SLUG ) . '">';
-        self::render_select( 'strategy', __( 'Strategy', 'accessibility-auditor' ), self::strategy_options( $fixtures ), $filter_values['strategy'] );
-        self::render_select( 'scenario', __( 'Scenario', 'accessibility-auditor' ), self::scenario_options( $fixtures ), $filter_values['scenario'] );
-        echo '<p style="margin:0;"><button type="submit" class="button button-primary">' . esc_html__( 'Show Matches', 'accessibility-auditor' ) . '</button> ';
+        self::render_select( 'strategy', __( 'Demo type', 'accessibility-auditor' ), self::strategy_options( $fixtures ), $filter_values['strategy'] );
+        self::render_select( 'scenario', __( 'Demo scenario', 'accessibility-auditor' ), self::scenario_options( $fixtures ), $filter_values['scenario'] );
+        echo '<p style="margin:0;"><button type="submit" class="button button-primary">' . esc_html__( 'Show Demos', 'accessibility-auditor' ) . '</button> ';
         echo '<a class="button" href="' . esc_url( admin_url( 'admin.php?page=' . self::PAGE_SLUG ) ) . '">' . esc_html__( 'Reset', 'accessibility-auditor' ) . '</a></p>';
         echo '</form>';
         echo '<details style="margin-top:16px;">';
@@ -127,8 +127,8 @@ class SeedFixturesAdmin {
 
         echo '<table class="widefat striped" style="max-width:1100px;">';
         echo '<thead><tr>';
-        echo '<th>' . esc_html__( 'Scenario', 'accessibility-auditor' ) . '</th>';
-        echo '<th>' . esc_html__( 'What It Tests', 'accessibility-auditor' ) . '</th>';
+        echo '<th>' . esc_html__( 'Demo Page', 'accessibility-auditor' ) . '</th>';
+        echo '<th>' . esc_html__( 'What It Shows', 'accessibility-auditor' ) . '</th>';
         echo '<th>' . esc_html__( 'Actions', 'accessibility-auditor' ) . '</th>';
         echo '</tr></thead><tbody>';
 
@@ -139,19 +139,19 @@ class SeedFixturesAdmin {
             echo '<td style="width:34%;">';
             echo '<strong>' . esc_html( $fixture['title'] ) . '</strong><br>';
             echo '<code>' . esc_html( $fixture['scenario'] ) . '</code><br>';
-            echo '<span style="display:inline-block;margin-top:8px;padding:3px 8px;border-radius:999px;background:#f0f6fc;color:#0a4b78;">' . esc_html( strtoupper( $fixture['strategy'] ) ) . '</span>';
+            echo '<span style="display:inline-block;margin-top:8px;padding:3px 8px;border-radius:999px;background:#f0f6fc;color:#0a4b78;">' . esc_html( self::strategy_label( (string) $fixture['strategy'] ) ) . '</span>';
             echo '</td>';
             echo '<td>';
             echo '<div><strong>' . esc_html__( 'Rules:', 'accessibility-auditor' ) . '</strong> ' . esc_html( implode( ', ', $fixture['rule_ids'] ) ) . '</div>';
-            echo '<div style="margin-top:6px;"><strong>' . esc_html__( 'Components:', 'accessibility-auditor' ) . '</strong> ' . esc_html( implode( ', ', $fixture['components'] ) ) . '</div>';
+            echo '<div style="margin-top:6px;"><strong>' . esc_html__( 'Bricks components:', 'accessibility-auditor' ) . '</strong> ' . esc_html( implode( ', ', $fixture['components'] ) ) . '</div>';
             echo '<div style="margin-top:8px;color:#50575e;">' . esc_html( $fixture['notes'] ) . '</div>';
             echo '</td>';
             echo '<td>';
-            self::render_action_form( __( 'Seed This Scenario', 'accessibility-auditor' ), [ 'scenario' => $fixture['scenario'] ], true );
+            self::render_action_form( __( 'Prepare This Demo', 'accessibility-auditor' ), [ 'scenario' => $fixture['scenario'] ], true );
             if ( $post instanceof \WP_Post ) {
                 echo '<div style="margin-top:8px;">';
-                echo '<a class="button button-small" href="' . esc_url( get_edit_post_link( $post->ID ) ) . '">' . esc_html__( 'Edit', 'accessibility-auditor' ) . '</a> ';
-                echo '<a class="button button-small" href="' . esc_url( admin_url( 'post.php?post=' . $post->ID . '&action=bricks' ) ) . '">' . esc_html__( 'Bricks', 'accessibility-auditor' ) . '</a>';
+                echo '<a class="button button-small" href="' . esc_url( get_edit_post_link( $post->ID ) ) . '">' . esc_html__( 'Open Page', 'accessibility-auditor' ) . '</a> ';
+                echo '<a class="button button-small" href="' . esc_url( admin_url( 'post.php?post=' . $post->ID . '&action=bricks' ) ) . '">' . esc_html__( 'Open in Bricks', 'accessibility-auditor' ) . '</a>';
                 echo '</div>';
             }
             echo '</td>';
@@ -188,6 +188,16 @@ class SeedFixturesAdmin {
         }
         echo '</select>';
         echo '</label>';
+    }
+
+    private static function strategy_label( string $strategy ): string {
+        $labels = [
+            'auto-fix'    => __( 'AI Fix Demo', 'accessibility-auditor' ),
+            'guided-only' => __( 'Guide-Only Demo', 'accessibility-auditor' ),
+            'flagged'     => __( 'Advanced Demo', 'accessibility-auditor' ),
+        ];
+
+        return $labels[ $strategy ] ?? strtoupper( $strategy );
     }
 
     private static function render_action_form( string $label, array $filters, bool $small = false ) {
