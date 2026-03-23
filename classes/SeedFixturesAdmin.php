@@ -79,7 +79,7 @@ class SeedFixturesAdmin {
         echo '<div style="display:flex;gap:10px;flex-wrap:wrap;">';
         self::render_action_form( __( 'Prepare Proven AI Fix Pages', 'accessibility-auditor' ), [ 'strategy' => 'proven-auto-fix' ] );
         self::render_action_form( __( 'Prepare Planned AI Fix Pages', 'accessibility-auditor' ), [ 'strategy' => 'auto-fix' ] );
-        self::render_action_form( __( 'Prepare Guide-Only Demos', 'accessibility-auditor' ), [ 'strategy' => 'guided-only' ] );
+        self::render_action_form( __( 'Prepare AI Guide Pages', 'accessibility-auditor' ), [ 'strategy' => 'guided-only' ] );
         self::render_action_form( __( 'Prepare All Demo Pages', 'accessibility-auditor' ), [] );
         echo '</div>';
         echo '<p style="margin:14px 0 0;color:#50575e;">' . esc_html__( 'Recommended flow: prepare proven AI fix pages, open one in Bricks, run scan, click Fix with AI, review the preview, then Accept or Reject.', 'accessibility-auditor' ) . '</p>';
@@ -178,7 +178,7 @@ class SeedFixturesAdmin {
         $labels = [
             'proven-auto-fix' => __( 'Proven AI Fix', 'accessibility-auditor' ),
             'auto-fix'    => __( 'Planned AI Fix', 'accessibility-auditor' ),
-            'guided-only' => __( 'Guide-Only Demo', 'accessibility-auditor' ),
+            'guided-only' => __( 'AI Guide', 'accessibility-auditor' ),
         ];
 
         return $labels[ $strategy ] ?? strtoupper( $strategy );
