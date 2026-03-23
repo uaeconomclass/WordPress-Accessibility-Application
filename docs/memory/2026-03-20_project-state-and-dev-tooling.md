@@ -32,7 +32,7 @@ Last updated: 2026-03-23
 
 ## What Still Looks Risky
 
-- Root `README.md` is still effectively empty for onboarding
+- Root onboarding is now much better, but still depends on a sibling WordPress lab repo and should stay aligned with real local workflow changes
 - No obvious CI pipeline is present in the repo root
 - AI flow still remains synchronous from the current docs/code surface
 - Spec alignment docs are older than the extracted-class state now visible in `classes/`
@@ -75,6 +75,6 @@ Useful optional add-ons:
 
 Best next doc improvements:
 
-1. Expand `README.md` into a real onboarding document.
-2. Refresh spec/status docs so they explicitly mention page-level scan filtering, LLM audit logging, and the seeded Bricks fixture system.
-3. Add a short "how to run tests locally" section in the root docs, linking to `tests/run.sh` and `tests/e2e/README.md`.
+1. Keep `README.md` and `docs/onboarding/local-development.md` in sync with the actual `wp-whittemore-lab` workflow.
+2. Refresh spec/status docs whenever fixture coverage or auto-fix readiness numbers move.
+3. Add a short before/after proof section once the automated seeded auto-fix suite exists.
