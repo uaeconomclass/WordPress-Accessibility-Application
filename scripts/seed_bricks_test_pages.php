@@ -155,7 +155,7 @@ function aa_seed_button( string $id, string $parent, array $settings = [] ): arr
         array_merge(
             [
                 'text' => 'Learn more',
-                'url'  => [ 'url' => '#' ],
+                'link' => [ 'type' => 'external', 'url' => '#fixture-link' ],
             ],
             $settings
         ),
@@ -170,8 +170,11 @@ function aa_seed_icon( string $id, string $parent, array $settings = [] ): array
         'icon',
         array_merge(
             [
-                'icon'       => 'ti-star',
-                'url'        => [ 'url' => '#' ],
+                'icon'       => [
+                    'library' => 'themify',
+                    'icon'    => 'ti-star',
+                ],
+                'link'       => [ 'type' => 'external', 'url' => '#fixture-link' ],
                 'attributes' => [],
             ],
             $settings
@@ -289,14 +292,18 @@ function aa_seed_fixture_catalog(): array {
         'title'      => 'AA Fixture - Image Alt',
         'scenario'   => 'image-alt-basic',
         'rule_ids'   => [ 'image-alt' ],
-        'components' => [ 'image' ],
+        'components' => [ 'image', 'text-basic' ],
         'strategy'   => 'auto-fix',
-        'notes'      => 'Image element without altText for direct auto-fix coverage.',
+        'notes'      => 'Raw img without an alt attribute so axe consistently raises image-alt.',
         'post_html'  => '<p>Fixture page for image-alt rule.</p>',
         'bricks'     => aa_seed_add_to_root_container(
             aa_seed_page_shell( 'imgalt', 'Image Alt Fixture', $placeholder_hero ),
             [
-                aa_seed_image( 'img_alt_01', 'imgalt_cnt_01', 'https://via.placeholder.com/640x360?text=Hero+Image' ),
+                aa_seed_text_basic(
+                    'img_alt_01',
+                    'imgalt_cnt_01',
+                    '<img src="https://via.placeholder.com/640x360?text=Hero+Image" width="640" height="360">'
+                ),
             ]
         ),
     ];
@@ -318,7 +325,7 @@ function aa_seed_fixture_catalog(): array {
                     'inputimg_cnt_01',
                     'https://via.placeholder.com/200x60?text=Submit',
                     [
-                        'link' => [ 'type' => 'external', 'url' => '#' ],
+                        'link' => [ 'url' => '#' ],
                     ]
                 ),
             ]
@@ -359,7 +366,7 @@ function aa_seed_fixture_catalog(): array {
                     'linkbtn_cnt_01',
                     [
                         'text' => '',
-                        'url'  => [ 'url' => '#' ],
+                        'link' => [ 'type' => 'external', 'url' => '#empty-link' ],
                     ]
                 ),
             ]
@@ -413,20 +420,17 @@ function aa_seed_fixture_catalog(): array {
         'title'      => 'AA Fixture - Button Name',
         'scenario'   => 'button-name-empty',
         'rule_ids'   => [ 'button-name' ],
-        'components' => [ 'button' ],
+        'components' => [ 'button', 'text-basic' ],
         'strategy'   => 'auto-fix',
-        'notes'      => 'Empty Bricks button for direct button-name patch testing.',
+        'notes'      => 'Raw button with no accessible name so axe consistently raises button-name.',
         'post_html'  => '<p>Fixture page for button-name rule.</p>',
         'bricks'     => aa_seed_add_to_root_container(
             aa_seed_page_shell( 'btnname', 'Button Name Fixture', $placeholder_hero ),
             [
-                aa_seed_button(
+                aa_seed_text_basic(
                     'btn_name_01',
                     'btnname_cnt_01',
-                    [
-                        'text' => '',
-                        'url'  => [ 'url' => '#' ],
-                    ]
+                    '<button type="button"></button>'
                 ),
             ]
         ),
@@ -448,8 +452,13 @@ function aa_seed_fixture_catalog(): array {
                     'btn_icon_01',
                     'btnicon_cnt_01',
                     [
-                        'text' => '<i class="ti-arrow-right"></i>',
-                        'url'  => [ 'url' => '#' ],
+                        'link' => '',
+                        'tag'  => 'button',
+                        'text' => '',
+                        'icon' => [
+                            'library' => 'themify',
+                            'icon'    => 'ti-arrow-right',
+                        ],
                     ]
                 ),
             ]
@@ -460,10 +469,10 @@ function aa_seed_fixture_catalog(): array {
         'slug'       => 'aa-fixture-aria-label',
         'title'      => 'AA Fixture - Aria Label',
         'scenario'   => 'aria-label-icon',
-        'rule_ids'   => [ 'aria-label' ],
+        'rule_ids'   => [ 'aria-label', 'link-name' ],
         'components' => [ 'icon' ],
         'strategy'   => 'auto-fix',
-        'notes'      => 'Icon-only interactive element with empty aria-label.',
+        'notes'      => 'Icon-only interactive element. In live Bricks render this currently surfaces as link-name when the empty aria-label is ignored.',
         'post_html'  => '<p>Fixture page for aria-label rule.</p>',
         'bricks'     => aa_seed_add_to_root_container(
             aa_seed_page_shell( 'arialabel', 'Aria Label Fixture', $placeholder_hero ),
@@ -472,6 +481,11 @@ function aa_seed_fixture_catalog(): array {
                     'icon_link_01',
                     'arialabel_cnt_01',
                     [
+                        'link'       => [ 'type' => 'external', 'url' => '#icon-link' ],
+                        'icon'       => [
+                            'library' => 'themify',
+                            'icon'    => 'ti-star',
+                        ],
                         'attributes' => [
                             'aria-label' => '',
                         ],
@@ -544,12 +558,16 @@ function aa_seed_fixture_catalog(): array {
         'rule_ids'   => [ 'label' ],
         'components' => [ 'form', 'text-basic' ],
         'strategy'   => 'guided-only',
-        'notes'      => 'Form control label issue for guided remediation testing.',
+        'notes'      => 'Visible form control without a label so axe consistently raises label.',
         'post_html'  => '<p>Fixture page for label rule.</p>',
         'bricks'     => aa_seed_add_to_root_container(
             aa_seed_page_shell( 'labelcase', 'Label Fixture', $placeholder_hero ),
             [
-                aa_seed_text_basic( 'txt_label_01', 'labelcase_cnt_01', '<input type="email" placeholder="Email address">' ),
+                aa_seed_text_basic(
+                    'txt_label_01',
+                    'labelcase_cnt_01',
+                    '<form><input id="fixture-email" type="email"></form>'
+                ),
             ]
         ),
     ];
@@ -672,7 +690,7 @@ function aa_seed_fixture_catalog(): array {
                 aa_seed_element(
                     'accordion',
                     [
-                        'items' => [
+                        'accordions' => [
                             [
                                 'title'   => '',
                                 'content' => '<p>Accordion item content without a proper heading/button pattern.</p>',
@@ -704,18 +722,9 @@ function aa_seed_fixture_catalog(): array {
             aa_seed_page_shell( 'tabsfixture', 'Tabs Fixture', $placeholder_hero ),
             [
                 aa_seed_element(
-                    'tabs',
+                    'tabs-nested',
                     [
-                        'items' => [
-                            [
-                                'title'   => '',
-                                'content' => '<p>Unnamed tab panel content.</p>',
-                            ],
-                            [
-                                'title'   => 'Specifications',
-                                'content' => '<p>Tab panel content.</p>',
-                            ],
-                        ],
+                        'openTab' => 0,
                     ],
                     [],
                     'tabsfixture_cnt_01',
@@ -740,8 +749,12 @@ function aa_seed_fixture_catalog(): array {
                 aa_seed_element(
                     'progress-bar',
                     [
-                        'value' => 62,
-                        'label' => '',
+                        'bars' => [
+                            [
+                                'title'      => '',
+                                'percentage' => 62,
+                            ],
+                        ],
                     ],
                     [],
                     'progressbar_cnt_01',
@@ -766,11 +779,13 @@ function aa_seed_fixture_catalog(): array {
                 aa_seed_element(
                     'carousel',
                     [
-                        'slides' => [
-                            [ 'title' => 'Slide one', 'content' => '<p>Slide content one.</p>' ],
-                            [ 'title' => '', 'content' => '<p>Unnamed slide content.</p>' ],
+                        'items' => [
+                            [ 'url' => 'https://via.placeholder.com/800x500?text=Slide+One' ],
+                            [ 'url' => 'https://via.placeholder.com/800x500?text=Slide+Two' ],
                         ],
                         'autoplay' => true,
+                        'slidesToShow' => 1,
+                        'showArrows' => true,
                     ],
                     [],
                     'carouselfx_cnt_01',
@@ -829,18 +844,22 @@ function aa_seed_fixture_catalog(): array {
         'rule_ids'   => [ 'image-alt' ],
         'components' => [ 'logo', 'image' ],
         'strategy'   => 'auto-fix',
-        'notes'      => 'Logo-family fixture using a brand image without alt text.',
+        'notes'      => 'Logo-family fixture using the real Bricks logo component with an external image URL and no alt text.',
         'post_html'  => '<p>Fixture page for logo component coverage.</p>',
         'bricks'     => aa_seed_add_to_root_container(
             aa_seed_page_shell( 'logofx', 'Logo Fixture', $placeholder_hero ),
             [
-                aa_seed_image(
-                    'logo_img_01',
-                    'logofx_cnt_01',
-                    'https://via.placeholder.com/260x120?text=Brand+Logo',
+                aa_seed_element(
+                    'logo',
                     [
-                        'link' => [ 'type' => 'external', 'url' => '/' ],
-                    ]
+                        'logo' => [
+                            'external' => true,
+                            'url'      => 'https://via.placeholder.com/260x120?text=Brand+Logo',
+                        ],
+                    ],
+                    [],
+                    'logofx_cnt_01',
+                    'logo_img_01'
                 ),
             ]
         ),
@@ -1191,8 +1210,16 @@ function aa_seed_upsert_fixture_page( array $fixture, string $bricks_content_key
 
     update_post_meta( (int) $post_id, '_bricks_editor_mode', 'bricks' );
     update_post_meta( (int) $post_id, '_bricks_template_type', 'content' );
-    update_post_meta( (int) $post_id, $bricks_content_key, $fixture['bricks'] );
-    update_post_meta( (int) $post_id, 'bricks_data', $fixture['bricks'] );
+
+    // Bricks content meta can get stuck with stale serialized rows when updated in place,
+    // so replace both sources explicitly to keep builder render and plugin reads aligned.
+    delete_post_meta( (int) $post_id, $bricks_content_key );
+    add_post_meta( (int) $post_id, $bricks_content_key, $fixture['bricks'], true );
+
+    delete_post_meta( (int) $post_id, 'bricks_data' );
+    add_post_meta( (int) $post_id, 'bricks_data', $fixture['bricks'], true );
+
+    update_post_meta( (int) $post_id, '_aa_fixture_bricks_meta_key', $bricks_content_key );
     update_post_meta( (int) $post_id, '_aa_fixture_rule_ids', $fixture['rule_ids'] );
     update_post_meta( (int) $post_id, '_aa_fixture_components', $fixture['components'] );
     update_post_meta( (int) $post_id, '_aa_fixture_strategy', $fixture['strategy'] );

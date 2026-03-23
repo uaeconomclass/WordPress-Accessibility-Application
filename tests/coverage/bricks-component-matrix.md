@@ -18,34 +18,40 @@ Strategy values:
 
 ## Current Component Coverage
 
+Current detectability snapshot from `tests/coverage/seed-detectability-report.md`:
+
+- `25/37` scenarios are `scan-ready`
+- `9/37` scenarios are `auto-fix-ready`
+- strongest current auto-fix set: `image-alt-basic`, `link-name-inline`, `link-name-button`, `frame-title-inline`, `button-name-empty`, `button-icon-only`, `aria-label-icon`, `logo-image-alt`, `logo-linked-image`
+
 | Component Family | Status | Current Strategy | Seeded Scenarios | Notes |
 |---|---|---|---|---|
 | `Heading` | seeded | guided-only | `heading-order-skip` | Good starter coverage for semantic heading issues |
 | `Basic Text / Rich Text` | seeded | auto-fix, guided-only, flagged | `link-name-inline`, `color-contrast-inline`, `frame-title-inline`, `label-missing`, `aria-hidden-focus-inline` | Core fallback and inline-HTML coverage base |
-| `Button` | seeded | auto-fix | `button-name-empty`, `button-icon-only`, `link-name-button`, `input-image-alt-banner` | Strong current auto-fix target family with plain and icon-only variants |
-| `Icon` | seeded | auto-fix, flagged | `aria-label-icon`, `aria-labelledby-missing` | Needs stricter ID/reference validation for flagged cases |
-| `Image` | seeded | auto-fix | `image-alt-basic`, `input-image-alt-banner`, `gallery-image-alt-grid` | Strongest deterministic family so far |
+| `Button` | seeded | auto-fix | `button-name-empty`, `button-icon-only`, `link-name-button`, `input-image-alt-banner` | `button-name-empty`, `button-icon-only`, and `link-name-button` are now scan/auto-fix ready; `input-image-alt-banner` still does not trigger in live Bricks render |
+| `Icon` | partial | auto-fix, flagged | `aria-label-icon`, `aria-labelledby-missing` | `aria-label-icon` now renders and triggers `link-name`; `aria-labelledby-missing` still needs stricter ID/reference validation |
+| `Image` | partial | auto-fix | `image-alt-basic`, `input-image-alt-banner`, `gallery-image-alt-grid` | `image-alt-basic` works; real Bricks image/gallery variants currently normalize to decorative `alt=\"\"` and do not trigger expected rules |
 | `Video / Embed` | seeded | auto-fix, guided-only | `frame-title-inline`, `code-embed-frame-title` | Embed/code edge cases still need noise control |
-| `Accordion` | seeded | guided-only | `accordion-structure` | Initial family fixture added; still needs richer keyboard and state coverage |
-| `Tabs` | seeded | guided-only | `tabs-structure` | Initial family fixture added; still needs tab order and selection-state coverage |
-| `Form` | seeded | guided-only | `label-missing`, `form-label-required`, `form-checkbox-group`, `form-radio-group` | Better variant coverage across basic, checkbox, and radio group patterns |
+| `Accordion` | partial | guided-only | `accordion-structure` | Real Bricks accordion now renders and is scan-ready via `heading-order`; still needs a stronger structural failure case |
+| `Tabs` | partial | guided-only | `tabs-structure` | Real tabs container now renders, but current seed does not generate a detectable rule yet |
+| `Form` | partial | guided-only | `label-missing`, `form-label-required`, `form-checkbox-group`, `form-radio-group` | Three scenarios are scan-ready; `form-radio-group` still needs a real failing radiogroup case |
 | `Map` | seeded | guided-only | `map-frame-title` | Starter fixture added via embedded map iframe |
 | `Alert` | seeded | guided-only | `alert-live-region` | Starter fixture added for live-region semantics |
 | `Countdown` | seeded | guided-only | `countdown-announcement` | Starter fixture added for time-based announcements |
 | `Counter` | seeded | guided-only | `counter-meaning` | Starter fixture added for meaningful metric labeling |
 | `Pricing Tables` | seeded | guided-only | `pricing-table-structure` | Starter fixture added for heading/list semantics |
-| `Progress Bar` | seeded | guided-only | `progressbar-name` | Initial progress semantics fixture added; still needs real re-scan validation |
+| `Progress Bar` | partial | guided-only | `progressbar-name` | Real Bricks progress-bar now renders, but current blank-label setup still does not trigger expected axe output |
 | `Pie Chart` | seeded | guided-only | `piechart-summary` | Starter fixture added for chart alternative text guidance |
-| `Team Members` | seeded | guided-only | `team-members-profile` | Starter fixture added for profile image and heading semantics |
-| `Testimonials` | seeded | guided-only | `testimonials-quote` | Starter fixture added for quote/citation structure |
-| `Logo` | seeded | auto-fix | `logo-image-alt`, `logo-linked-image` | Safe branding coverage for standalone and linked logo variants |
-| `Gallery` | seeded | auto-fix | `gallery-image-alt-grid` | Good initial image-heavy coverage |
-| `Audio` | seeded | guided-only | `audio-controls` | Starter fixture added for transcript/control guidance |
-| `Carousel` | seeded | guided-only | `carousel-structure`, `carousel-controls` | Added controls variant for next/prev naming guidance |
+| `Team Members` | partial | guided-only | `team-members-profile` | Current team-member seed is scan-ready via heading structure, but not yet via image-alt |
+| `Testimonials` | partial | guided-only | `testimonials-quote` | Seed exists, but current render does not yet produce the expected blockquote/image rule pair |
+| `Logo` | seeded | auto-fix | `logo-image-alt`, `logo-linked-image` | Real Bricks logo component is now auto-fix ready for `logo-image-alt`; linked variant stays useful for link-name flow |
+| `Gallery` | partial | auto-fix | `gallery-image-alt-grid` | Seed exists, but real Bricks gallery render currently normalizes images to decorative `alt=\"\"` |
+| `Audio` | partial | guided-only | `audio-controls` | Seed exists, but the current audio scenario does not yet yield a stable axe rule |
+| `Carousel` | partial | guided-only | `carousel-structure`, `carousel-controls` | Controls variant is scan-ready; structural carousel seed still does not render a detectable issue |
 | `Slider` | seeded | guided-only | `carousel-structure`, `carousel-controls` | Shared starter fixtures with carousel family |
 | `SVG` | seeded | flagged | `svg-accessible-name` | Starter fixture added for future accessible-name and title strategies |
 | `Code / Embed` | seeded | guided-only | `code-embed-frame-title` | Mostly useful for editor noise and fallback handling |
-| `Site Scope` | seeded | guided-only | `document-title-site-scope`, `html-has-lang-site-scope` | Not a Bricks patch target, but important to keep in catalog |
+| `Site Scope` | partial | guided-only | `document-title-site-scope`, `html-has-lang-site-scope` | Intentionally outside `#brx-content` page-level sweep; useful as out-of-scope controls, not scan-ready fixtures |
 
 ## Next Component Families To Seed
 

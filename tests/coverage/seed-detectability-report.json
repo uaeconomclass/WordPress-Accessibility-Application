@@ -1,0 +1,1206 @@
+[
+  {
+    "scenario": "image-alt-basic",
+    "title": "AA Fixture - Image Alt",
+    "strategy": "auto-fix",
+    "expected_rule_ids": [
+      "image-alt"
+    ],
+    "components": [
+      "image",
+      "text-basic"
+    ],
+    "post_id": 1317,
+    "slug": "aa-fixture-image-alt",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": true,
+    "matched_expected_rule_ids": [
+      "image-alt"
+    ],
+    "found_rule_ids": [
+      "image-alt"
+    ],
+    "note": "Detected inside page-level content and eligible for auto-fix testing.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "image-alt"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-imgalt_sec_01\" class=\"brxe-section\"><div id=\"brxe-imgalt_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Image Alt Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div class=\"brxe-text-basic\"><img src=\"https://via.placeholder.com/640x360?text=Hero+Image\" width=\"640\" height=\"360\"></div></div></section>",
+    "text_preview": "Image Alt Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+  },
+  {
+    "scenario": "input-image-alt-banner",
+    "title": "AA Fixture - Input Image Alt",
+    "strategy": "auto-fix",
+    "expected_rule_ids": [
+      "input-image-alt"
+    ],
+    "components": [
+      "image",
+      "button"
+    ],
+    "post_id": 1318,
+    "slug": "aa-fixture-input-image-alt",
+    "detectable": false,
+    "scan_test_ready": false,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [],
+    "found_rule_ids": [],
+    "note": "Expected rule did not appear inside #brx-content.",
+    "panel_state": "no-issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-inputimg_sec_01\" class=\"brxe-section\"><div id=\"brxe-inputimg_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Input Image Alt Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><a class=\"brxe-image tag\"><img class=\"css-filter size-large\" src=\"https://via.placeholder.com/200x60?text=Submit\" alt=\"\"></a></div></section>",
+    "text_preview": "Input Image Alt Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+  },
+  {
+    "scenario": "link-name-inline",
+    "title": "AA Fixture - Link Name",
+    "strategy": "auto-fix",
+    "expected_rule_ids": [
+      "link-name"
+    ],
+    "components": [
+      "text-basic"
+    ],
+    "post_id": 1319,
+    "slug": "aa-fixture-link-name",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": true,
+    "matched_expected_rule_ids": [
+      "link-name"
+    ],
+    "found_rule_ids": [
+      "link-name"
+    ],
+    "note": "Detected inside page-level content and eligible for auto-fix testing.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "link-name"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-linkname_sec_01\" class=\"brxe-section\"><div id=\"brxe-linkname_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Link Name Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div class=\"brxe-text-basic\"><p>Call to action: <a href=\"#empty-link\"></a></p></div></div></section>",
+    "text_preview": "Link Name Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing.\n\nCall to action:"
+  },
+  {
+    "scenario": "link-name-button",
+    "title": "AA Fixture - Link Name Button",
+    "strategy": "auto-fix",
+    "expected_rule_ids": [
+      "link-name"
+    ],
+    "components": [
+      "button"
+    ],
+    "post_id": 1316,
+    "slug": "aa-fixture-link-name-button",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": true,
+    "matched_expected_rule_ids": [
+      "link-name"
+    ],
+    "found_rule_ids": [
+      "link-name"
+    ],
+    "note": "Detected inside page-level content and eligible for auto-fix testing.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "link-name"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-linkbtn_sec_01\" class=\"brxe-section\"><div id=\"brxe-linkbtn_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Link Name Button Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><a class=\"brxe-button bricks-button\" href=\"#empty-link\" data-brx-anchor=\"true\"></a></div></section>",
+    "text_preview": "Link Name Button Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+  },
+  {
+    "scenario": "color-contrast-inline",
+    "title": "AA Fixture - Color Contrast",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "color-contrast"
+    ],
+    "components": [
+      "text-basic"
+    ],
+    "post_id": 1333,
+    "slug": "aa-fixture-color-contrast",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [
+      "color-contrast"
+    ],
+    "found_rule_ids": [
+      "color-contrast"
+    ],
+    "note": "Detected inside page-level content.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "color-contrast"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-contrast_sec_01\" class=\"brxe-section\"><div id=\"brxe-contrast_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Color Contrast Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div class=\"brxe-text-basic\"><p style=\"color:#cfcfcf;background:#ffffff;padding:8px\">Low contrast text fixture</p></div></div></section>",
+    "text_preview": "Color Contrast Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing.\n\nLow contrast text fixture"
+  },
+  {
+    "scenario": "frame-title-inline",
+    "title": "AA Fixture - Frame Title",
+    "strategy": "auto-fix",
+    "expected_rule_ids": [
+      "frame-title"
+    ],
+    "components": [
+      "text-basic",
+      "video"
+    ],
+    "post_id": 1321,
+    "slug": "aa-fixture-frame-title",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": true,
+    "matched_expected_rule_ids": [
+      "frame-title"
+    ],
+    "found_rule_ids": [
+      "frame-title",
+      "frame-tested"
+    ],
+    "note": "Detected inside page-level content and eligible for auto-fix testing.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "frame-title"
+    ],
+    "incomplete_ids": [
+      "frame-tested"
+    ],
+    "html_preview": "<section id=\"brxe-frame_sec_01\" class=\"brxe-section\"><div id=\"brxe-frame_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Frame Title Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div class=\"brxe-text-basic\"><iframe src=\"https://example.com\" width=\"300\" height=\"150\"></iframe></div></div></section>",
+    "text_preview": "Frame Title Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+  },
+  {
+    "scenario": "button-name-empty",
+    "title": "AA Fixture - Button Name",
+    "strategy": "auto-fix",
+    "expected_rule_ids": [
+      "button-name"
+    ],
+    "components": [
+      "button",
+      "text-basic"
+    ],
+    "post_id": 1322,
+    "slug": "aa-fixture-button-name",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": true,
+    "matched_expected_rule_ids": [
+      "button-name"
+    ],
+    "found_rule_ids": [
+      "button-name"
+    ],
+    "note": "Detected inside page-level content and eligible for auto-fix testing.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "button-name"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-btnname_sec_01\" class=\"brxe-section\"><div id=\"brxe-btnname_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Button Name Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div class=\"brxe-text-basic\"><button type=\"button\"></button></div></div></section>",
+    "text_preview": "Button Name Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+  },
+  {
+    "scenario": "button-icon-only",
+    "title": "AA Fixture - Button Icon Only",
+    "strategy": "auto-fix",
+    "expected_rule_ids": [
+      "button-name",
+      "aria-label"
+    ],
+    "components": [
+      "button",
+      "icon"
+    ],
+    "post_id": 1334,
+    "slug": "aa-fixture-button-icon-only",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": true,
+    "matched_expected_rule_ids": [
+      "button-name"
+    ],
+    "found_rule_ids": [
+      "button-name"
+    ],
+    "note": "Detected inside page-level content and eligible for auto-fix testing.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "button-name"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-btnicon_sec_01\" class=\"brxe-section\"><div id=\"brxe-btnicon_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Button Icon Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><button class=\"brxe-button bricks-button\"><i class=\"ti-arrow-right\"></i></button></div></section>",
+    "text_preview": "Button Icon Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+  },
+  {
+    "scenario": "aria-label-icon",
+    "title": "AA Fixture - Aria Label",
+    "strategy": "auto-fix",
+    "expected_rule_ids": [
+      "aria-label",
+      "link-name"
+    ],
+    "components": [
+      "icon"
+    ],
+    "post_id": 1323,
+    "slug": "aa-fixture-aria-label",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": true,
+    "matched_expected_rule_ids": [
+      "link-name"
+    ],
+    "found_rule_ids": [
+      "link-name"
+    ],
+    "note": "Detected inside page-level content and eligible for auto-fix testing.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "link-name"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-arialabel_sec_01\" class=\"brxe-section\"><div id=\"brxe-arialabel_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Aria Label Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><a href=\"#icon-link\" data-brx-anchor=\"true\" class=\"bricks-link-wrapper\"><i class=\"ti-star brxe-icon\"></i></a></div></section>",
+    "text_preview": "Aria Label Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+  },
+  {
+    "scenario": "aria-labelledby-missing",
+    "title": "AA Fixture - Aria Labelledby",
+    "strategy": "flagged",
+    "expected_rule_ids": [
+      "aria-labelledby"
+    ],
+    "components": [
+      "icon",
+      "text-basic"
+    ],
+    "post_id": 1335,
+    "slug": "aa-fixture-aria-labelledby",
+    "detectable": false,
+    "scan_test_ready": false,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [],
+    "found_rule_ids": [
+      "link-name"
+    ],
+    "note": "Expected rule did not appear inside #brx-content.",
+    "panel_state": "no-issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "link-name"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-arialby_sec_01\" class=\"brxe-section\"><div id=\"brxe-arialby_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Aria Labelledby Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div class=\"brxe-text-basic\"><p id=\"feature-label\">Featured service</p></div><div class=\"brxe-text-basic\"><a href=\"#\" aria-labelledby=\"\"></a></div></div></section>",
+    "text_preview": "Aria Labelledby Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing.\n\nFeatured service"
+  },
+  {
+    "scenario": "aria-hidden-focus-inline",
+    "title": "AA Fixture - Aria Hidden Focus",
+    "strategy": "flagged",
+    "expected_rule_ids": [
+      "aria-hidden-focus"
+    ],
+    "components": [
+      "text-basic"
+    ],
+    "post_id": 1336,
+    "slug": "aa-fixture-aria-hidden-focus",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [
+      "aria-hidden-focus"
+    ],
+    "found_rule_ids": [
+      "aria-hidden-focus",
+      "color-contrast"
+    ],
+    "note": "Detected inside page-level content.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "aria-hidden-focus",
+      "color-contrast"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-hiddenfocus_sec_01\" class=\"brxe-section\"><div id=\"brxe-hiddenfocus_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Aria Hidden Focus Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div class=\"brxe-text-basic\"><div aria-hidden=\"true\"><a href=\"#focusable\">Focusable hidden link</a></div></div></div></section>",
+    "text_preview": "Aria Hidden Focus Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing.\n\nFocusable hidden link"
+  },
+  {
+    "scenario": "heading-order-skip",
+    "title": "AA Fixture - Heading Order",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "heading-order"
+    ],
+    "components": [
+      "heading"
+    ],
+    "post_id": 1337,
+    "slug": "aa-fixture-heading-order",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [
+      "heading-order"
+    ],
+    "found_rule_ids": [
+      "heading-order"
+    ],
+    "note": "Detected inside page-level content.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "heading-order"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-headingord_sec_01\" class=\"brxe-section\"><div id=\"brxe-headingord_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Heading Order Fixture</h1><div class=\"brxe-text-basic\"><p>This fixture intentionally skips from H1 to H4.</p></div><h4 class=\"brxe-heading\">Subsection rendered as H4</h4></div></section>",
+    "text_preview": "Heading Order Fixture\n\nThis fixture intentionally skips from H1 to H4.\n\nSubsection rendered as H4"
+  },
+  {
+    "scenario": "label-missing",
+    "title": "AA Fixture - Label",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "label"
+    ],
+    "components": [
+      "form",
+      "text-basic"
+    ],
+    "post_id": 1329,
+    "slug": "aa-fixture-label",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [
+      "label"
+    ],
+    "found_rule_ids": [
+      "label"
+    ],
+    "note": "Detected inside page-level content.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "label"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-labelcase_sec_01\" class=\"brxe-section\"><div id=\"brxe-labelcase_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Label Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div class=\"brxe-text-basic\"><form><input id=\"fixture-email\" type=\"email\"></form></div></div></section>",
+    "text_preview": "Label Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+  },
+  {
+    "scenario": "document-title-site-scope",
+    "title": "AA Fixture - Document Title",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "document-title"
+    ],
+    "components": [
+      "site-scope"
+    ],
+    "post_id": 1338,
+    "slug": "aa-fixture-document-title",
+    "detectable": false,
+    "scan_test_ready": false,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [],
+    "found_rule_ids": [],
+    "note": "Expected rule did not appear inside #brx-content.",
+    "panel_state": "no-issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-doctitle_sec_01\" class=\"brxe-section\"><div id=\"brxe-doctitle_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Document Title Fixture</h1><div class=\"brxe-text-basic\"><p>Used to confirm guided-only handling for site-scope issues.</p></div></div></section>",
+    "text_preview": "Document Title Fixture\n\nUsed to confirm guided-only handling for site-scope issues."
+  },
+  {
+    "scenario": "html-has-lang-site-scope",
+    "title": "AA Fixture - HTML Lang",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "html-has-lang"
+    ],
+    "components": [
+      "site-scope"
+    ],
+    "post_id": 1339,
+    "slug": "aa-fixture-html-lang",
+    "detectable": false,
+    "scan_test_ready": false,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [],
+    "found_rule_ids": [],
+    "note": "Expected rule did not appear inside #brx-content.",
+    "panel_state": "no-issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-htmllang_sec_01\" class=\"brxe-section\"><div id=\"brxe-htmllang_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">HTML Lang Fixture</h1><div class=\"brxe-text-basic\"><p>Used to confirm guided-only handling for site-scope issues.</p></div></div></section>",
+    "text_preview": "HTML Lang Fixture\n\nUsed to confirm guided-only handling for site-scope issues."
+  },
+  {
+    "scenario": "gallery-image-alt-grid",
+    "title": "AA Fixture - Gallery Image Alt",
+    "strategy": "auto-fix",
+    "expected_rule_ids": [
+      "image-alt"
+    ],
+    "components": [
+      "gallery",
+      "image"
+    ],
+    "post_id": 1324,
+    "slug": "aa-fixture-gallery-image-alt",
+    "detectable": false,
+    "scan_test_ready": false,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [],
+    "found_rule_ids": [],
+    "note": "Expected rule did not appear inside #brx-content.",
+    "panel_state": "no-issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-galleryalt_sec_01\" class=\"brxe-section\"><div id=\"brxe-galleryalt_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Gallery Image Alt Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div id=\"brxe-gallery_block_01\" class=\"brxe-block\"><img class=\"brxe-image\" src=\"https://via.placeholder.com/300x180?text=Gallery+1\" alt=\"\"><img class=\"brxe-image\" src=\"https://via.placeholder.com/300x180?text=Gallery+2\" alt=\"\"></div><img class=\"brxe-image\" src=\"https://via.placeholder.com/300x180?text=Gallery+1\" alt=\"\"><img class=\"brxe-image\" src=\"https://via.placeholder.com/300x180?text=Gallery+2\" alt=\"\"></div></section>",
+    "text_preview": "Gallery Image Alt Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+  },
+  {
+    "scenario": "form-label-required",
+    "title": "AA Fixture - Form Labels",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "label",
+      "aria-label"
+    ],
+    "components": [
+      "form"
+    ],
+    "post_id": 1330,
+    "slug": "aa-fixture-form-labels",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [
+      "label"
+    ],
+    "found_rule_ids": [
+      "label"
+    ],
+    "note": "Detected inside page-level content.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "label"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-formlabels_sec_01\" class=\"brxe-section\"><div id=\"brxe-formlabels_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Form Labels Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div class=\"brxe-text-basic\"><input type=\"text\" aria-label=\"\"><input type=\"checkbox\"></div></div></section>",
+    "text_preview": "Form Labels Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+  },
+  {
+    "scenario": "form-checkbox-group",
+    "title": "AA Fixture - Form Checkbox Group",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "label",
+      "fieldset"
+    ],
+    "components": [
+      "form"
+    ],
+    "post_id": 1331,
+    "slug": "aa-fixture-form-checkbox-group",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [
+      "label"
+    ],
+    "found_rule_ids": [
+      "label"
+    ],
+    "note": "Detected inside page-level content.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "label"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-formcheck_sec_01\" class=\"brxe-section\"><div id=\"brxe-formcheck_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Checkbox Group Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div class=\"brxe-text-basic\"><div><input type=\"checkbox\" id=\"updates\"><span>Receive updates</span></div><div><input type=\"checkbox\" id=\"offers\"><span>Receive offers</span></div></div></div></section>",
+    "text_preview": "Checkbox Group Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing.\n\nReceive updates\nReceive offers"
+  },
+  {
+    "scenario": "form-radio-group",
+    "title": "AA Fixture - Form Radio Group",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "label",
+      "radiogroup"
+    ],
+    "components": [
+      "form"
+    ],
+    "post_id": 1332,
+    "slug": "aa-fixture-form-radio-group",
+    "detectable": false,
+    "scan_test_ready": false,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [],
+    "found_rule_ids": [
+      "color-contrast"
+    ],
+    "note": "Expected rule did not appear inside #brx-content.",
+    "panel_state": "no-issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "color-contrast"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-formradio_sec_01\" class=\"brxe-section\"><div id=\"brxe-formradio_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Radio Group Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div class=\"brxe-text-basic\"><div role=\"radiogroup\"><label><input type=\"radio\" name=\"plan\"> Basic</label><label><input type=\"radio\" name=\"plan\"> Pro</label></div></div></div></section>",
+    "text_preview": "Radio Group Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing.\n\n Basic\n Pro"
+  },
+  {
+    "scenario": "accordion-structure",
+    "title": "AA Fixture - Accordion Structure",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "aria-required-children",
+      "heading-order"
+    ],
+    "components": [
+      "accordion"
+    ],
+    "post_id": 1325,
+    "slug": "aa-fixture-accordion-structure",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [
+      "heading-order"
+    ],
+    "found_rule_ids": [
+      "heading-order"
+    ],
+    "note": "Detected inside page-level content.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "heading-order"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-accordion_sec_01\" class=\"brxe-section\"><div id=\"brxe-accordion_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Accordion Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><ul data-script-id=\"accordion_01\" class=\"brxe-accordion\" role=\"presentation\"><li class=\"accordion-item listening\"><div class=\"accordion-content-wrapper\" role=\"region\" aria-labelledby=\"accordion-accordion_01-0\" id=\"panel-accordion-accordion_01-0\"><p>Accordion item content without a proper heading/button pattern.</p>\n</div></li><li class=\"accordion-item listening\"><div class=\"accordion-title-wrapper\" aria-controls=\"panel-accordion-accordion_01-1\" aria-expanded=\"false\" id=\"accordion-accordion_01-1\" role=\"button\" tabindex=\"0\"><div class=\"accordion-title\"><h5 class=\"title\">Second item</h5></div></div><div class=\"accordion-content-wrapper\" role=\"region\" aria-labelledby=\"accordion-accordion_01-1\" id=\"panel-accordion-accordion_01-1\"><p>Additional accordion content.</p>\n</div></li></ul></div></section>",
+    "text_preview": "Accordion Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing.\n\nSecond item"
+  },
+  {
+    "scenario": "tabs-structure",
+    "title": "AA Fixture - Tabs Structure",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "aria-required-children",
+      "aria-required-parent"
+    ],
+    "components": [
+      "tabs"
+    ],
+    "post_id": 1340,
+    "slug": "aa-fixture-tabs-structure",
+    "detectable": false,
+    "scan_test_ready": false,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [],
+    "found_rule_ids": [],
+    "note": "Expected rule did not appear inside #brx-content.",
+    "panel_state": "no-issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-tabsfixture_sec_01\" class=\"brxe-section\"><div id=\"brxe-tabsfixture_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Tabs Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><!--?xml encoding=\"UTF-8\"--><div data-script-id=\"tabs_01\" class=\"brxe-tabs-nested\" data-open-tab=\"0\"></div>\n</div></section>",
+    "text_preview": "Tabs Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+  },
+  {
+    "scenario": "progressbar-name",
+    "title": "AA Fixture - Progress Bar Name",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "aria-progressbar-name",
+      "color-contrast"
+    ],
+    "components": [
+      "progress-bar"
+    ],
+    "post_id": 1341,
+    "slug": "aa-fixture-progressbar-name",
+    "detectable": false,
+    "scan_test_ready": false,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [],
+    "found_rule_ids": [],
+    "note": "Expected rule did not appear inside #brx-content.",
+    "panel_state": "no-issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-progressbar_sec_01\" class=\"brxe-section\"><div id=\"brxe-progressbar_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Progress Bar Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div data-script-id=\"progress_01\" class=\"brxe-progress-bar\"><div class=\"bar-wrapper\"><label><span class=\"label\"></span></label><div class=\"bar\"><span data-width=\"62%\" style=\"width: 62%;\"></span></div></div></div></div></section>",
+    "text_preview": "Progress Bar Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+  },
+  {
+    "scenario": "carousel-structure",
+    "title": "AA Fixture - Carousel Structure",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "aria-required-children",
+      "scrollable-region-focusable"
+    ],
+    "components": [
+      "carousel",
+      "slider"
+    ],
+    "post_id": 1342,
+    "slug": "aa-fixture-carousel-structure",
+    "detectable": false,
+    "scan_test_ready": false,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [],
+    "found_rule_ids": [],
+    "note": "Expected rule did not appear inside #brx-content.",
+    "panel_state": "no-issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-carouselfx_sec_01\" class=\"brxe-section\"><div id=\"brxe-carouselfx_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Carousel Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div></div></section>",
+    "text_preview": "Carousel Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+  },
+  {
+    "scenario": "carousel-controls",
+    "title": "AA Fixture - Carousel Controls",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "button-name",
+      "aria-label"
+    ],
+    "components": [
+      "carousel",
+      "slider",
+      "button"
+    ],
+    "post_id": 1343,
+    "slug": "aa-fixture-carousel-controls",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [
+      "button-name"
+    ],
+    "found_rule_ids": [
+      "button-name"
+    ],
+    "note": "Detected inside page-level content.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "button-name"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-carctrl_sec_01\" class=\"brxe-section\"><div id=\"brxe-carctrl_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Carousel Controls Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div class=\"brxe-text-basic\"><div class=\"carousel-controls\"><button type=\"button\"></button><button type=\"button\"></button></div></div></div></section>",
+    "text_preview": "Carousel Controls Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+  },
+  {
+    "scenario": "svg-accessible-name",
+    "title": "AA Fixture - SVG Accessible Name",
+    "strategy": "flagged",
+    "expected_rule_ids": [
+      "svg-img-alt",
+      "aria-label"
+    ],
+    "components": [
+      "svg"
+    ],
+    "post_id": 1326,
+    "slug": "aa-fixture-svg-accessible-name",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [
+      "svg-img-alt"
+    ],
+    "found_rule_ids": [
+      "svg-img-alt"
+    ],
+    "note": "Detected inside page-level content.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "svg-img-alt"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-svgfixture_sec_01\" class=\"brxe-section\"><div id=\"brxe-svgfixture_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">SVG Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div class=\"brxe-text-basic\"><svg role=\"img\" aria-label=\"\" width=\"120\" height=\"120\" viewBox=\"0 0 120 120\"><circle cx=\"60\" cy=\"60\" r=\"50\" fill=\"#cccccc\"></circle></svg></div></div></section>",
+    "text_preview": "SVG Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+  },
+  {
+    "scenario": "logo-image-alt",
+    "title": "AA Fixture - Logo Image Alt",
+    "strategy": "auto-fix",
+    "expected_rule_ids": [
+      "image-alt"
+    ],
+    "components": [
+      "logo",
+      "image"
+    ],
+    "post_id": 1344,
+    "slug": "aa-fixture-logo-image-alt",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": true,
+    "matched_expected_rule_ids": [
+      "image-alt"
+    ],
+    "found_rule_ids": [
+      "image-alt",
+      "link-name"
+    ],
+    "note": "Detected inside page-level content and eligible for auto-fix testing.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "image-alt",
+      "link-name"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-logofx_sec_01\" class=\"brxe-section\"><div id=\"brxe-logofx_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Logo Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><a class=\"brxe-logo\" href=\"http://localhost:8090\"><img class=\"bricks-site-logo\" src=\"https://via.placeholder.com/260x120?text=Brand+Logo\"></a></div></section>",
+    "text_preview": "Logo Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+  },
+  {
+    "scenario": "logo-linked-image",
+    "title": "AA Fixture - Logo Linked Image",
+    "strategy": "auto-fix",
+    "expected_rule_ids": [
+      "image-alt",
+      "link-name"
+    ],
+    "components": [
+      "logo",
+      "image",
+      "link"
+    ],
+    "post_id": 1345,
+    "slug": "aa-fixture-logo-linked-image",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": true,
+    "matched_expected_rule_ids": [
+      "link-name"
+    ],
+    "found_rule_ids": [
+      "link-name"
+    ],
+    "note": "Detected inside page-level content and eligible for auto-fix testing.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "link-name"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-logolink_sec_01\" class=\"brxe-section\"><div id=\"brxe-logolink_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Linked Logo Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div class=\"brxe-text-basic\"><a href=\"/\"><img src=\"https://via.placeholder.com/220x100?text=Logo\" alt=\"\"></a></div></div></section>",
+    "text_preview": "Linked Logo Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+  },
+  {
+    "scenario": "map-frame-title",
+    "title": "AA Fixture - Map Frame Title",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "frame-title"
+    ],
+    "components": [
+      "map"
+    ],
+    "post_id": 1327,
+    "slug": "aa-fixture-map-frame-title",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [
+      "frame-title"
+    ],
+    "found_rule_ids": [
+      "frame-title",
+      "frame-tested"
+    ],
+    "note": "Detected inside page-level content.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "frame-title"
+    ],
+    "incomplete_ids": [
+      "frame-tested"
+    ],
+    "html_preview": "<section id=\"brxe-mapfixture_sec_01\" class=\"brxe-section\"><div id=\"brxe-mapfixture_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Map Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div class=\"brxe-text-basic\"><iframe src=\"https://example.com/map\" width=\"640\" height=\"320\"></iframe></div></div></section>",
+    "text_preview": "Map Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+  },
+  {
+    "scenario": "alert-live-region",
+    "title": "AA Fixture - Alert Live Region",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "aria-required-attr",
+      "aria-valid-attr-value"
+    ],
+    "components": [
+      "alert"
+    ],
+    "post_id": 1346,
+    "slug": "aa-fixture-alert-live-region",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [
+      "aria-valid-attr-value"
+    ],
+    "found_rule_ids": [
+      "aria-valid-attr-value"
+    ],
+    "note": "Detected inside page-level content.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [],
+    "incomplete_ids": [
+      "aria-valid-attr-value"
+    ],
+    "html_preview": "<section id=\"brxe-alertfixture_sec_01\" class=\"brxe-section\"><div id=\"brxe-alertfixture_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Alert Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div class=\"brxe-text-basic\"><div role=\"alert\" aria-live=\"\">System maintenance starts soon.</div></div></div></section>",
+    "text_preview": "Alert Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing.\n\nSystem maintenance starts soon."
+  },
+  {
+    "scenario": "audio-controls",
+    "title": "AA Fixture - Audio Controls",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "audio-caption",
+      "aria-label"
+    ],
+    "components": [
+      "audio"
+    ],
+    "post_id": 1347,
+    "slug": "aa-fixture-audio-controls",
+    "detectable": false,
+    "scan_test_ready": false,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [],
+    "found_rule_ids": [],
+    "note": "Expected rule did not appear inside #brx-content.",
+    "panel_state": "no-issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-audiofixture_sec_01\" class=\"brxe-section\"><div id=\"brxe-audiofixture_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Audio Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div class=\"brxe-text-basic\"><audio controls=\"\" aria-label=\"\"><source src=\"sample.mp3\" type=\"audio/mpeg\"></audio></div></div></section>",
+    "text_preview": "Audio Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+  },
+  {
+    "scenario": "pricing-table-structure",
+    "title": "AA Fixture - Pricing Table Structure",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "heading-order",
+      "listitem"
+    ],
+    "components": [
+      "pricing-tables"
+    ],
+    "post_id": 1348,
+    "slug": "aa-fixture-pricing-table-structure",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [
+      "heading-order"
+    ],
+    "found_rule_ids": [
+      "heading-order"
+    ],
+    "note": "Detected inside page-level content.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "heading-order"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-pricingfx_sec_01\" class=\"brxe-section\"><div id=\"brxe-pricingfx_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Pricing Table Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div class=\"brxe-text-basic\"><div class=\"pricing-card\"><h4>Pro Plan</h4><div>Unlimited projects</div><div>Priority support</div></div></div></div></section>",
+    "text_preview": "Pricing Table Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing.\n\nPro Plan\nUnlimited projects\nPriority support"
+  },
+  {
+    "scenario": "piechart-summary",
+    "title": "AA Fixture - Pie Chart Summary",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "svg-img-alt",
+      "aria-label"
+    ],
+    "components": [
+      "pie-chart"
+    ],
+    "post_id": 1349,
+    "slug": "aa-fixture-piechart-summary",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [
+      "svg-img-alt"
+    ],
+    "found_rule_ids": [
+      "svg-img-alt"
+    ],
+    "note": "Detected inside page-level content.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "svg-img-alt"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-piechartfx_sec_01\" class=\"brxe-section\"><div id=\"brxe-piechartfx_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Pie Chart Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div class=\"brxe-text-basic\"><svg role=\"img\" aria-label=\"\" width=\"180\" height=\"180\" viewBox=\"0 0 180 180\"><circle cx=\"90\" cy=\"90\" r=\"70\" fill=\"#e5e7eb\"></circle><path d=\"M90 90 L90 20 A70 70 0 0 1 155 120 Z\" fill=\"#f59e0b\"></path></svg></div></div></section>",
+    "text_preview": "Pie Chart Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+  },
+  {
+    "scenario": "team-members-profile",
+    "title": "AA Fixture - Team Members Profile",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "image-alt",
+      "heading-order"
+    ],
+    "components": [
+      "team-members",
+      "image",
+      "heading"
+    ],
+    "post_id": 1328,
+    "slug": "aa-fixture-team-members-profile",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [
+      "heading-order"
+    ],
+    "found_rule_ids": [
+      "heading-order"
+    ],
+    "note": "Detected inside page-level content.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "heading-order"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-teamfx_sec_01\" class=\"brxe-section\"><div id=\"brxe-teamfx_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Team Member Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><img class=\"brxe-image\" src=\"https://via.placeholder.com/260x260?text=Profile\" alt=\"\"><h4 class=\"brxe-heading\">Operations Lead</h4><div class=\"brxe-text-basic\"><p>Builds strong systems and supports delivery.</p></div></div></section>",
+    "text_preview": "Team Member Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing.\n\nOperations Lead\n\nBuilds strong systems and supports delivery."
+  },
+  {
+    "scenario": "testimonials-quote",
+    "title": "AA Fixture - Testimonials Quote",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "image-alt",
+      "blockquote"
+    ],
+    "components": [
+      "testimonials",
+      "image"
+    ],
+    "post_id": 1350,
+    "slug": "aa-fixture-testimonials-quote",
+    "detectable": false,
+    "scan_test_ready": false,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [],
+    "found_rule_ids": [],
+    "note": "Expected rule did not appear inside #brx-content.",
+    "panel_state": "no-issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-testimonialfx_sec_01\" class=\"brxe-section\"><div id=\"brxe-testimonialfx_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Testimonial Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><img class=\"brxe-image\" src=\"https://via.placeholder.com/180x180?text=Author\" alt=\"\"><div class=\"brxe-text-basic\"><div>\"The support team moved incredibly fast.\"</div><div>Jordan, Product Lead</div></div></div></section>",
+    "text_preview": "Testimonial Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing.\n\n\"The support team moved incredibly fast.\"\nJordan, Product Lead"
+  },
+  {
+    "scenario": "countdown-announcement",
+    "title": "AA Fixture - Countdown Announcement",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "aria-live-region",
+      "aria-valid-attr-value"
+    ],
+    "components": [
+      "countdown"
+    ],
+    "post_id": 1351,
+    "slug": "aa-fixture-countdown-announcement",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [
+      "aria-valid-attr-value"
+    ],
+    "found_rule_ids": [
+      "aria-valid-attr-value"
+    ],
+    "note": "Detected inside page-level content.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [],
+    "incomplete_ids": [
+      "aria-valid-attr-value"
+    ],
+    "html_preview": "<section id=\"brxe-countdownfx_sec_01\" class=\"brxe-section\"><div id=\"brxe-countdownfx_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Countdown Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div class=\"brxe-text-basic\"><div role=\"timer\" aria-live=\"\">03:59:54</div></div></div></section>",
+    "text_preview": "Countdown Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing.\n\n03:59:54"
+  },
+  {
+    "scenario": "counter-meaning",
+    "title": "AA Fixture - Counter Meaning",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "aria-label",
+      "color-contrast"
+    ],
+    "components": [
+      "counter"
+    ],
+    "post_id": 1352,
+    "slug": "aa-fixture-counter-meaning",
+    "detectable": true,
+    "scan_test_ready": true,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [
+      "color-contrast"
+    ],
+    "found_rule_ids": [
+      "color-contrast"
+    ],
+    "note": "Detected inside page-level content.",
+    "panel_state": "issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [
+      "color-contrast"
+    ],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-counterfx_sec_01\" class=\"brxe-section\"><div id=\"brxe-counterfx_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Counter Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div class=\"brxe-text-basic\"><div aria-label=\"\"><span style=\"color:#d1d5db\">250</span><span>Projects delivered</span></div></div></div></section>",
+    "text_preview": "Counter Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing.\n\n250Projects delivered"
+  },
+  {
+    "scenario": "code-embed-frame-title",
+    "title": "AA Fixture - Code Embed Frame",
+    "strategy": "guided-only",
+    "expected_rule_ids": [
+      "frame-title"
+    ],
+    "components": [
+      "code"
+    ],
+    "post_id": 1353,
+    "slug": "aa-fixture-code-embed-frame",
+    "detectable": false,
+    "scan_test_ready": false,
+    "autofix_test_ready": false,
+    "matched_expected_rule_ids": [],
+    "found_rule_ids": [],
+    "note": "Expected rule did not appear inside #brx-content.",
+    "panel_state": "no-issues",
+    "score": 0,
+    "grade": "",
+    "issue_titles": [],
+    "violation_ids": [],
+    "incomplete_ids": [],
+    "html_preview": "<section id=\"brxe-codeframe_sec_01\" class=\"brxe-section\"><div id=\"brxe-codeframe_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Code Embed Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div data-script-id=\"code_frame_01\" class=\"brxe-code\"></div></div></section>",
+    "text_preview": "Code Embed Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+  }
+]
