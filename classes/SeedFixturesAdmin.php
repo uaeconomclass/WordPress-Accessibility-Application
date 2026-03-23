@@ -229,6 +229,9 @@ class SeedFixturesAdmin {
 
     private static function filter_fixtures( array $fixtures, array $filters ): array {
         return array_values( array_filter( $fixtures, static function( array $fixture ) use ( $filters ): bool {
+            if ( ( $fixture['strategy'] ?? '' ) === 'flagged' ) {
+                return false;
+            }
             if ( ! empty( $filters['scenario'] ) && $fixture['scenario'] !== $filters['scenario'] ) {
                 return false;
             }
