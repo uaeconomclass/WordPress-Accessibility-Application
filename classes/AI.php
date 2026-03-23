@@ -212,77 +212,11 @@ class AI {
 
         // 6. Per-element: build prompt → call Claude → validate → apply patch.
         foreach ( $target_elements as $element ) {
-
-            // Extract color data from axe checks (color-contrast issues).
-            $color_context = '';
-            foreach ( $issue['nodes'] ?? [] as $node ) {
-                foreach ( array_merge( $node['any'] ?? [], $node['all'] ?? [] ) as $check ) {
-                    if ( ! empty( $check['data']['fgColor'] ) ) {
-                        $color_context = sprintf(
-                            "\n\n🎨 Computed color data:\n- Foreground: %s\n- Background: %s\n- Ratio: %s (required: %s)\n- Font: %s / weight: %s",
-                            $check['data']['fgColor'],
-                            $check['data']['bgColor'] ?? 'unknown',
-                            $check['data']['contrastRatio'] ?? 'unknown',
-                            $check['data']['expectedContrastRatio'] ?? '4.5:1',
-                            $check['data']['fontSize'] ?? 'unknown',
-                            $check['data']['fontWeight'] ?? 'unknown'
-                        );
-                        break 2;
-                    }
-                }
-            }
-
-            $prompt = sprintf(
-                'You are an AI accessibility assistant for WordPress using the Bricks Builder framework and AutomaticCSS.
-
-You are provided with:
-1️⃣ An accessibility issue (axe-core JSON).
-2️⃣ The Bricks element JSON responsible for that issue.
-3️⃣ The element type name: **%s**%s
-
-Your task:
-- Analyze the accessibility issue and generate the *minimal JSON patch* to fix it.
-- If any attribute or key should be removed (e.g., invalid aria, redundant role), include it under `removed_keys` using nested JSON.
-- If new attributes or keys are required, include them under `added_keys`.
-- If existing attributes should be updated, include them under `changes`.
-- Do NOT return the full element — only the patch object.
-
-⚙️ Output must be the minimal patch object in this exact format:
-{
-  "element_id": "<same ID as provided>",
-  "changes":      { "settings": { ... } },
-  "added_keys":   { "settings": { ... } },
-  "removed_keys": { "settings": { ... } }
-}
-
-📘 Accessibility guidance:
-- Links/buttons → add meaningful aria-labels, remove duplicate or empty attributes.
-- Images → for alt text use settings.altText ONLY. Example: {"added_keys": {"settings": {"altText": "Descriptive text"}}}. Never use settings.image.alt.
-- Iframes/videos → add a title or aria-label; remove redundant attributes.
-- Text/headings → fix tag hierarchy (settings.tag), remove unnecessary roles.
-- Color contrast → use `settings._cssCustom` with the LITERAL element selector (NOT %%root%%).
-  The element ID is in the Bricks Element JSON as "id". Prefix it with "#brxe-".
-  Example for element id "abc123": {"added_keys": {"settings": {"_cssCustom": "#brxe-abc123 { color: #1a1a1a; }"}}}
-  Target at least 5:1 contrast ratio. If _cssCustom already exists, use "changes" not "added_keys".
-
-⚙️ Output Rules:
-- Must be valid JSON (no markdown, comments, or explanations).
-- Use only nested JSON objects (no dot-notation paths).
-- Must include only changed, added, or removed keys.
-- Always include the `element_id` copied exactly from the provided element JSON.
-
-=== Accessibility Issue JSON ===
-%s
-
-=== Bricks Element JSON ===
-%s
-
-Output only the JSON patch.',
-                strtoupper( $element['name'] ?? 'UNKNOWN' ),
-                $color_context,
-                json_encode( $issue, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ),
-                json_encode( $element, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES )
-            );
+            $prompt_package = $this->build_auto_fix_prompt_package( $issue, $element );
+            $prompt = $prompt_package['prompt'];
+            $prompt_version = $prompt_package['prompt_version'];
+            $max_tokens = $prompt_package['max_tokens'];
+            $system_prompt = $prompt_package['system_prompt'];
 
             try {
                 error_log( sprintf( '[AA:auto-fix] Calling Claude for element_id=%s type=%s', $element['id'] ?? '?', $element['name'] ?? '?' ) );
@@ -292,7 +226,9 @@ Output only the JSON patch.',
                     'post_id'        => $post_id,
                     'rule_id'        => sanitize_key( (string) $rule_id ),
                     'component'      => sanitize_key( (string) ( $element['name'] ?? '' ) ),
-                    'prompt_version' => 'autofix_v1',
+                    'prompt_version' => $prompt_version,
+                    'max_tokens'     => $max_tokens,
+                    'system_prompt'  => $system_prompt,
                 ] );
                 $json     = AiResponseNormalizer::normalize( $response );
                 error_log( '[AA:auto-fix] Claude response (first 300): ' . substr( $json, 0, 300 ) );
@@ -462,6 +398,139 @@ Output only the JSON patch.',
     // =========================================================================
     // Private helpers
     // =========================================================================
+
+    private function build_auto_fix_prompt_package( array $issue, array $element ): array {
+        $rule_id = sanitize_key( (string) ( $issue['id'] ?? '' ) );
+
+        switch ( $rule_id ) {
+            case 'image-alt':
+                return $this->build_image_alt_prompt_package( $issue, $element );
+            case 'link-name':
+                return $this->build_link_name_prompt_package( $issue, $element );
+            default:
+                return $this->build_generic_auto_fix_prompt_package( $issue, $element );
+        }
+    }
+
+    private function build_link_name_prompt_package( array $issue, array $element ): array {
+        $compact_issue = [
+            'rule_id'       => $issue['id'] ?? '',
+            'help'          => $issue['help'] ?? '',
+            'description'   => $issue['description'] ?? '',
+            'wcag_tags'     => $this->filter_wcag_tags( $issue['tags'] ?? [] ),
+            'failing_node'  => $this->compact_issue_node( $issue['nodes'][0] ?? [] ),
+        ];
+        $element_summary = $this->compact_element_for_prompt( $element );
+
+        $prompt = sprintf(
+            "Task: return a minimal Bricks JSON patch for a page-level link-name issue.\n\nRule summary:\n%s\n\nBricks element:\n%s\n\nAllowed fix intent:\n- Update only settings.text when the empty link lives inside HTML text content.\n- Add meaningful visible link text and an aria-label.\n- Keep the existing href unchanged.\n- Do not touch unrelated markup.\n- Return only a JSON object with: element_id, changes, added_keys, removed_keys.\n\nPatch shape example:\n{\n  \"element_id\": \"%s\",\n  \"changes\": {\"settings\": {\"text\": \"...updated html...\"}},\n  \"added_keys\": {},\n  \"removed_keys\": {}\n}\n",
+            wp_json_encode( $compact_issue, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ),
+            wp_json_encode( $element_summary, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ),
+            (string) ( $element['id'] ?? '' )
+        );
+
+        return [
+            'prompt'         => $prompt,
+            'prompt_version' => 'autofix_link_name_v2',
+            'max_tokens'     => 900,
+            'system_prompt'  => 'Return only valid JSON for a minimal Bricks patch. No markdown. No explanations. No extra keys.',
+        ];
+    }
+
+    private function build_image_alt_prompt_package( array $issue, array $element ): array {
+        $compact_issue = [
+            'rule_id'       => $issue['id'] ?? '',
+            'help'          => $issue['help'] ?? '',
+            'description'   => $issue['description'] ?? '',
+            'wcag_tags'     => $this->filter_wcag_tags( $issue['tags'] ?? [] ),
+            'failing_node'  => $this->compact_issue_node( $issue['nodes'][0] ?? [] ),
+        ];
+        $element_summary = $this->compact_element_for_prompt( $element );
+
+        $prompt = sprintf(
+            "Task: return a minimal Bricks JSON patch for a page-level image-alt issue.\n\nRule summary:\n%s\n\nBricks element:\n%s\n\nAllowed fix intent:\n- Add or update a meaningful text alternative for the image.\n- Prefer the existing HTML structure and only change the minimum required field.\n- For image components use settings.altText only.\n- For text-based embeds containing an <img>, update only settings.text with the smallest possible HTML change.\n- Do not rewrite unrelated content.\n- Return only a JSON object with: element_id, changes, added_keys, removed_keys.\n\nPatch shape example:\n{\n  \"element_id\": \"%s\",\n  \"changes\": {\"settings\": {\"altText\": \"Descriptive alt text\"}},\n  \"added_keys\": {},\n  \"removed_keys\": {}\n}\n",
+            wp_json_encode( $compact_issue, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ),
+            wp_json_encode( $element_summary, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ),
+            (string) ( $element['id'] ?? '' )
+        );
+
+        return [
+            'prompt'         => $prompt,
+            'prompt_version' => 'autofix_image_alt_v2',
+            'max_tokens'     => 900,
+            'system_prompt'  => 'Return only valid JSON for a minimal Bricks patch. No markdown. No explanations. No extra keys.',
+        ];
+    }
+
+    private function build_generic_auto_fix_prompt_package( array $issue, array $element ): array {
+        $compact_issue = [
+            'rule_id'      => $issue['id'] ?? '',
+            'impact'       => $issue['impact'] ?? '',
+            'help'         => $issue['help'] ?? '',
+            'description'  => $issue['description'] ?? '',
+            'wcag_tags'    => $this->filter_wcag_tags( $issue['tags'] ?? [] ),
+            'failing_node' => $this->compact_issue_node( $issue['nodes'][0] ?? [] ),
+        ];
+        $element_summary = $this->compact_element_for_prompt( $element );
+
+        $prompt = sprintf(
+            "Task: return a minimal Bricks JSON patch for this page-level accessibility issue.\n\nIssue summary:\n%s\n\nBricks element:\n%s\n\nRules:\n- Modify only what is needed to fix the issue.\n- Return only JSON with element_id, changes, added_keys, removed_keys.\n- Use nested JSON objects only.\n- Never return the full element.\n",
+            wp_json_encode( $compact_issue, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ),
+            wp_json_encode( $element_summary, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES )
+        );
+
+        return [
+            'prompt'         => $prompt,
+            'prompt_version' => 'autofix_v2_generic',
+            'max_tokens'     => 1100,
+            'system_prompt'  => 'Return only valid JSON for a minimal Bricks patch. No markdown. No explanations. No extra keys.',
+        ];
+    }
+
+    private function compact_issue_node( array $node ): array {
+        return [
+            'target'          => $node['target'] ?? [],
+            'html'            => $node['html'] ?? '',
+            'failure_summary' => $node['failureSummary'] ?? '',
+            'checks'          => $this->compact_checks( array_merge( $node['any'] ?? [], $node['all'] ?? [] ) ),
+        ];
+    }
+
+    private function compact_checks( array $checks ): array {
+        $result = [];
+        foreach ( $checks as $check ) {
+            $result[] = [
+                'id'      => $check['id'] ?? '',
+                'message' => $check['message'] ?? '',
+                'data'    => $check['data'] ?? null,
+            ];
+        }
+        return $result;
+    }
+
+    private function compact_element_for_prompt( array $element ): array {
+        $settings = is_array( $element['settings'] ?? null ) ? $element['settings'] : [];
+        $allowed_setting_keys = [ 'text', 'altText', 'url', 'attributes', '_cssCustom', 'tag', 'image', 'icon' ];
+        $settings_subset = [];
+        foreach ( $allowed_setting_keys as $key ) {
+            if ( array_key_exists( $key, $settings ) ) {
+                $settings_subset[ $key ] = $settings[ $key ];
+            }
+        }
+
+        return [
+            'id'       => $element['id'] ?? '',
+            'name'     => $element['name'] ?? '',
+            'parent'   => $element['parent'] ?? '',
+            'settings' => $settings_subset,
+        ];
+    }
+
+    private function filter_wcag_tags( array $tags ): array {
+        return array_values( array_filter( $tags, static function ( $tag ) {
+            return is_string( $tag ) && ( strpos( $tag, 'wcag' ) === 0 || strpos( $tag, 'EN-' ) === 0 );
+        } ) );
+    }
 
     private function build_guided_prompt( array $context ): string {
         return "You are an accessibility assistant. The site uses Bricks Builder and AutomaticCSS.\n"

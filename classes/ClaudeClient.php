@@ -43,9 +43,17 @@ class ClaudeClient {
      */
     public static function request_with_meta( string $prompt, bool $json_mode = false, array $audit_context = [] ) {
         $api_key = Settings::getClaudeKey();
+        $model = is_string( $audit_context['model'] ?? null ) && $audit_context['model'] !== ''
+            ? $audit_context['model']
+            : self::MODEL;
+        $max_tokens = isset( $audit_context['max_tokens'] ) ? max( 128, (int) $audit_context['max_tokens'] ) : self::MAX_TOKENS;
+        $system_prompt = is_string( $audit_context['system_prompt'] ?? null ) && $audit_context['system_prompt'] !== ''
+            ? $audit_context['system_prompt']
+            : '';
+
         if ( empty( $api_key ) ) {
             $audit_id = LlmAuditLogger::start_call( array_merge( $audit_context, [
-                'model'  => self::MODEL,
+                'model'  => $model,
                 'prompt' => $prompt,
                 'status' => 'started',
             ] ) );
@@ -58,19 +66,21 @@ class ClaudeClient {
         }
 
         $body = [
-            'model'      => self::MODEL,
-            'max_tokens' => self::MAX_TOKENS,
+            'model'      => $model,
+            'max_tokens' => $max_tokens,
             'messages'   => [
                 [ 'role' => 'user', 'content' => $prompt ],
             ],
         ];
 
-        if ( $json_mode ) {
+        if ( $system_prompt !== '' ) {
+            $body['system'] = $system_prompt;
+        } elseif ( $json_mode ) {
             $body['system'] = 'Respond ONLY with valid JSON.';
         }
 
         $audit_id = LlmAuditLogger::start_call( array_merge( $audit_context, [
-            'model'           => self::MODEL,
+            'model'           => $model,
             'prompt'          => $prompt,
             'request_payload' => [
                 'headers' => [
@@ -157,7 +167,7 @@ class ClaudeClient {
 
         $result = [
             'content'       => $content,
-            'model'         => (string) ( $decoded['model'] ?? self::MODEL ),
+            'model'         => (string) ( $decoded['model'] ?? $model ),
             'stop_reason'   => (string) ( $decoded['stop_reason'] ?? '' ),
             'input_tokens'  => (int) ( $usage['input_tokens'] ?? 0 ),
             'output_tokens' => (int) ( $usage['output_tokens'] ?? 0 ),
