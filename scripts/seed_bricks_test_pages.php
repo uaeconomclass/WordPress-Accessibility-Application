@@ -433,6 +433,30 @@ function aa_seed_fixture_catalog(): array {
     ];
 
     $catalog[] = [
+        'slug'       => 'aa-fixture-button-icon-only',
+        'title'      => 'AA Fixture - Button Icon Only',
+        'scenario'   => 'button-icon-only',
+        'rule_ids'   => [ 'button-name', 'aria-label' ],
+        'components' => [ 'button', 'icon' ],
+        'strategy'   => 'auto-fix',
+        'notes'      => 'Icon-only CTA button variant for accessible-name auto-fix coverage.',
+        'post_html'  => '<p>Fixture page for icon-only button coverage.</p>',
+        'bricks'     => aa_seed_add_to_root_container(
+            aa_seed_page_shell( 'btnicon', 'Button Icon Fixture', $placeholder_hero ),
+            [
+                aa_seed_button(
+                    'btn_icon_01',
+                    'btnicon_cnt_01',
+                    [
+                        'text' => '<i class="ti-arrow-right"></i>',
+                        'url'  => [ 'url' => '#' ],
+                    ]
+                ),
+            ]
+        ),
+    ];
+
+    $catalog[] = [
         'slug'       => 'aa-fixture-aria-label',
         'title'      => 'AA Fixture - Aria Label',
         'scenario'   => 'aria-label-icon',
@@ -592,6 +616,48 @@ function aa_seed_fixture_catalog(): array {
     ];
 
     $catalog[] = [
+        'slug'       => 'aa-fixture-form-checkbox-group',
+        'title'      => 'AA Fixture - Form Checkbox Group',
+        'scenario'   => 'form-checkbox-group',
+        'rule_ids'   => [ 'label', 'fieldset' ],
+        'components' => [ 'form' ],
+        'strategy'   => 'guided-only',
+        'notes'      => 'Checkbox-group form variant for label and grouping semantics.',
+        'post_html'  => '<p>Fixture page for checkbox-group form coverage.</p>',
+        'bricks'     => aa_seed_add_to_root_container(
+            aa_seed_page_shell( 'formcheck', 'Checkbox Group Fixture', $placeholder_hero ),
+            [
+                aa_seed_text_basic(
+                    'form_checkbox_01',
+                    'formcheck_cnt_01',
+                    '<div><input type="checkbox" id="updates"><span>Receive updates</span></div><div><input type="checkbox" id="offers"><span>Receive offers</span></div>'
+                ),
+            ]
+        ),
+    ];
+
+    $catalog[] = [
+        'slug'       => 'aa-fixture-form-radio-group',
+        'title'      => 'AA Fixture - Form Radio Group',
+        'scenario'   => 'form-radio-group',
+        'rule_ids'   => [ 'label', 'radiogroup' ],
+        'components' => [ 'form' ],
+        'strategy'   => 'guided-only',
+        'notes'      => 'Radio-group form variant for fieldset/legend and label guidance.',
+        'post_html'  => '<p>Fixture page for radio-group form coverage.</p>',
+        'bricks'     => aa_seed_add_to_root_container(
+            aa_seed_page_shell( 'formradio', 'Radio Group Fixture', $placeholder_hero ),
+            [
+                aa_seed_text_basic(
+                    'form_radio_01',
+                    'formradio_cnt_01',
+                    '<div role="radiogroup"><label><input type="radio" name="plan"> Basic</label><label><input type="radio" name="plan"> Pro</label></div>'
+                ),
+            ]
+        ),
+    ];
+
+    $catalog[] = [
         'slug'       => 'aa-fixture-accordion-structure',
         'title'      => 'AA Fixture - Accordion Structure',
         'scenario'   => 'accordion-structure',
@@ -715,6 +781,27 @@ function aa_seed_fixture_catalog(): array {
     ];
 
     $catalog[] = [
+        'slug'       => 'aa-fixture-carousel-controls',
+        'title'      => 'AA Fixture - Carousel Controls',
+        'scenario'   => 'carousel-controls',
+        'rule_ids'   => [ 'button-name', 'aria-label' ],
+        'components' => [ 'carousel', 'slider', 'button' ],
+        'strategy'   => 'guided-only',
+        'notes'      => 'Carousel controls variant for previous/next button naming and state guidance.',
+        'post_html'  => '<p>Fixture page for carousel controls coverage.</p>',
+        'bricks'     => aa_seed_add_to_root_container(
+            aa_seed_page_shell( 'carctrl', 'Carousel Controls Fixture', $placeholder_hero ),
+            [
+                aa_seed_text_basic(
+                    'carousel_ctrl_01',
+                    'carctrl_cnt_01',
+                    '<div class="carousel-controls"><button type="button"></button><button type="button"></button></div>'
+                ),
+            ]
+        ),
+    ];
+
+    $catalog[] = [
         'slug'       => 'aa-fixture-svg-accessible-name',
         'title'      => 'AA Fixture - SVG Accessible Name',
         'scenario'   => 'svg-accessible-name',
@@ -754,6 +841,27 @@ function aa_seed_fixture_catalog(): array {
                     [
                         'link' => [ 'type' => 'external', 'url' => '/' ],
                     ]
+                ),
+            ]
+        ),
+    ];
+
+    $catalog[] = [
+        'slug'       => 'aa-fixture-logo-linked-image',
+        'title'      => 'AA Fixture - Logo Linked Image',
+        'scenario'   => 'logo-linked-image',
+        'rule_ids'   => [ 'image-alt', 'link-name' ],
+        'components' => [ 'logo', 'image', 'link' ],
+        'strategy'   => 'auto-fix',
+        'notes'      => 'Linked logo variant for alt text and discernible-link naming coverage.',
+        'post_html'  => '<p>Fixture page for linked logo coverage.</p>',
+        'bricks'     => aa_seed_add_to_root_container(
+            aa_seed_page_shell( 'logolink', 'Linked Logo Fixture', $placeholder_hero ),
+            [
+                aa_seed_text_basic(
+                    'logo_link_01',
+                    'logolink_cnt_01',
+                    '<a href="/"><img src="https://via.placeholder.com/220x100?text=Logo" alt=""></a>'
                 ),
             ]
         ),
