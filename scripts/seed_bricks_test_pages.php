@@ -775,74 +775,76 @@ function aa_seed_log( string $message, string $level = 'log' ): void {
     echo sprintf( '[%s] %s', $prefix, $message ) . "\n";
 }
 
-$args              = aa_seed_cli_args();
-$all_fixtures      = aa_seed_fixture_catalog();
-$selected_fixtures = array_values(
-    array_filter(
-        $all_fixtures,
-        static function ( array $fixture ) use ( $args ): bool {
-            return aa_seed_fixture_matches_filters( $fixture, $args );
-        }
-    )
-);
+if ( ! defined( 'AA_SEED_LIBRARY_ONLY' ) ) {
+    $args              = aa_seed_cli_args();
+    $all_fixtures      = aa_seed_fixture_catalog();
+    $selected_fixtures = array_values(
+        array_filter(
+            $all_fixtures,
+            static function ( array $fixture ) use ( $args ): bool {
+                return aa_seed_fixture_matches_filters( $fixture, $args );
+            }
+        )
+    );
 
-if ( ! empty( $args['list'] ) ) {
-    aa_seed_list_fixtures( $all_fixtures );
-    return;
-}
-
-if ( empty( $selected_fixtures ) ) {
-    aa_seed_log( 'No fixture scenarios matched the provided filters.', 'warning' );
-    aa_seed_log( 'Try -- --list to see available scenarios.', 'log' );
-    return;
-}
-
-$bricks_content_key = aa_seed_detect_bricks_content_meta_key();
-$results            = [];
-
-foreach ( $selected_fixtures as $fixture ) {
-    $results[] = aa_seed_upsert_fixture_page( $fixture, $bricks_content_key );
-}
-
-foreach ( $results as $row ) {
-    if ( ! $row['ok'] ) {
-        aa_seed_log( sprintf( '[%s] %s', $row['slug'], $row['message'] ), 'warning' );
-        continue;
+    if ( ! empty( $args['list'] ) ) {
+        aa_seed_list_fixtures( $all_fixtures );
+        return;
     }
 
-    aa_seed_log(
-        sprintf(
-            '%s #%d %s (%s) | scenario=%s | rules=%s | components=%s | strategy=%s | bricks=%d | key=%s',
-            strtoupper( $row['action'] ),
-            $row['post_id'],
-            $row['title'],
-            $row['slug'],
-            $row['scenario'],
-            implode( ',', $row['rule_ids'] ),
-            implode( ',', $row['components'] ),
-            $row['strategy'],
-            $row['bricks_ct'],
-            $row['bricks_key']
-        ),
-        'success'
-    );
+    if ( empty( $selected_fixtures ) ) {
+        aa_seed_log( 'No fixture scenarios matched the provided filters.', 'warning' );
+        aa_seed_log( 'Try -- --list to see available scenarios.', 'log' );
+        return;
+    }
+
+    $bricks_content_key = aa_seed_detect_bricks_content_meta_key();
+    $results            = [];
+
+    foreach ( $selected_fixtures as $fixture ) {
+        $results[] = aa_seed_upsert_fixture_page( $fixture, $bricks_content_key );
+    }
+
+    foreach ( $results as $row ) {
+        if ( ! $row['ok'] ) {
+            aa_seed_log( sprintf( '[%s] %s', $row['slug'], $row['message'] ), 'warning' );
+            continue;
+        }
+
+        aa_seed_log(
+            sprintf(
+                '%s #%d %s (%s) | scenario=%s | rules=%s | components=%s | strategy=%s | bricks=%d | key=%s',
+                strtoupper( $row['action'] ),
+                $row['post_id'],
+                $row['title'],
+                $row['slug'],
+                $row['scenario'],
+                implode( ',', $row['rule_ids'] ),
+                implode( ',', $row['components'] ),
+                $row['strategy'],
+                $row['bricks_ct'],
+                $row['bricks_key']
+            ),
+            'success'
+        );
+    }
+
+    $seeded_rules      = [];
+    $seeded_components = [];
+
+    foreach ( $selected_fixtures as $fixture ) {
+        $seeded_rules      = array_merge( $seeded_rules, $fixture['rule_ids'] );
+        $seeded_components = array_merge( $seeded_components, $fixture['components'] );
+    }
+
+    $seeded_rules      = array_values( array_unique( $seeded_rules ) );
+    $seeded_components = array_values( array_unique( $seeded_components ) );
+    sort( $seeded_rules );
+    sort( $seeded_components );
+
+    aa_seed_log( sprintf( 'Seeded %d fixture page(s).', count( $selected_fixtures ) ) );
+    aa_seed_log( 'Rules covered: ' . implode( ', ', $seeded_rules ) );
+    aa_seed_log( 'Components covered: ' . implode( ', ', $seeded_components ) );
+    aa_seed_log( 'Open Pages and test in Bricks editor with Accessibility Auditor.' );
+    aa_seed_log( 'Use AA_SEED_LIST=1, AA_SEED_RULE, AA_SEED_COMPONENT, AA_SEED_SCENARIO, or AA_SEED_STRATEGY for targeted seeding.' );
 }
-
-$seeded_rules      = [];
-$seeded_components = [];
-
-foreach ( $selected_fixtures as $fixture ) {
-    $seeded_rules      = array_merge( $seeded_rules, $fixture['rule_ids'] );
-    $seeded_components = array_merge( $seeded_components, $fixture['components'] );
-}
-
-$seeded_rules      = array_values( array_unique( $seeded_rules ) );
-$seeded_components = array_values( array_unique( $seeded_components ) );
-sort( $seeded_rules );
-sort( $seeded_components );
-
-aa_seed_log( sprintf( 'Seeded %d fixture page(s).', count( $selected_fixtures ) ) );
-aa_seed_log( 'Rules covered: ' . implode( ', ', $seeded_rules ) );
-aa_seed_log( 'Components covered: ' . implode( ', ', $seeded_components ) );
-aa_seed_log( 'Open Pages and test in Bricks editor with Accessibility Auditor.' );
-aa_seed_log( 'Use AA_SEED_LIST=1, AA_SEED_RULE, AA_SEED_COMPONENT, AA_SEED_SCENARIO, or AA_SEED_STRATEGY for targeted seeding.' );

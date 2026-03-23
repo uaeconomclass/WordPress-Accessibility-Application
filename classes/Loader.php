@@ -13,6 +13,7 @@ class Loader {
         require_once AA_PLUGIN_DIR . 'classes/Report.php';
         require_once AA_PLUGIN_DIR . 'classes/Revisions.php';
         require_once AA_PLUGIN_DIR . 'classes/Settings.php';
+        require_once AA_PLUGIN_DIR . 'classes/SeedFixturesAdmin.php';
         require_once AA_PLUGIN_DIR . 'classes/Admin/Admin.php';
         require_once AA_PLUGIN_DIR . 'classes/BricksElementFinder.php';
         require_once AA_PLUGIN_DIR . 'classes/BricksPatchApplier.php';
@@ -82,6 +83,7 @@ class Loader {
         // settings
 
         Settings::init();
+        SeedFixturesAdmin::init();
         Admin::init(); // 👈 Add this line to register the dashboard widget
 
 
