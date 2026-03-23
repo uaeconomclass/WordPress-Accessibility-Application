@@ -234,7 +234,7 @@ class AI {
                 error_log( '[AA:auto-fix] Claude response (first 300): ' . substr( $json, 0, 300 ) );
 
                 try {
-                    $patch = json_decode( $json, true, 512, JSON_THROW_ON_ERROR );
+                    $patch = $this->decode_ai_patch_json( $json );
 
                     $id = $patch['element_id'] ?? null;
                     if ( ! $id ) {
@@ -407,6 +407,8 @@ class AI {
                 return $this->build_image_alt_prompt_package( $issue, $element );
             case 'link-name':
                 return $this->build_link_name_prompt_package( $issue, $element );
+            case 'frame-title':
+                return $this->build_frame_title_prompt_package( $issue, $element );
             default:
                 return $this->build_generic_auto_fix_prompt_package( $issue, $element );
         }
@@ -459,6 +461,31 @@ class AI {
             'prompt_version' => 'autofix_image_alt_v2',
             'max_tokens'     => 900,
             'system_prompt'  => 'Return only valid JSON for a minimal Bricks patch. No markdown. No explanations. No extra keys.',
+        ];
+    }
+
+    private function build_frame_title_prompt_package( array $issue, array $element ): array {
+        $compact_issue = [
+            'rule_id'       => $issue['id'] ?? '',
+            'help'          => $issue['help'] ?? '',
+            'description'   => $issue['description'] ?? '',
+            'wcag_tags'     => $this->filter_wcag_tags( $issue['tags'] ?? [] ),
+            'failing_node'  => $this->compact_issue_node( $issue['nodes'][0] ?? [] ),
+        ];
+        $element_summary = $this->compact_element_for_prompt( $element );
+
+        $prompt = sprintf(
+            "Task: return a minimal Bricks JSON patch for a page-level frame-title issue.\n\nRule summary:\n%s\n\nBricks element:\n%s\n\nAllowed fix intent:\n- Add a descriptive title to the iframe.\n- If the iframe lives inside settings.text HTML, update only settings.text with the smallest possible HTML change.\n- Keep src, width, height, and existing structure unchanged.\n- Use empty objects {} for added_keys and removed_keys when nothing is added or removed.\n- Return only a JSON object with: element_id, changes, added_keys, removed_keys.\n\nPatch shape example:\n{\n  \"element_id\": \"%s\",\n  \"changes\": {\"settings\": {\"text\": \"<iframe src=\\\"https://example.com\\\" title=\\\"Descriptive title\\\"></iframe>\"}},\n  \"added_keys\": {},\n  \"removed_keys\": {}\n}\n",
+            wp_json_encode( $compact_issue, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ),
+            wp_json_encode( $element_summary, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ),
+            (string) ( $element['id'] ?? '' )
+        );
+
+        return [
+            'prompt'         => $prompt,
+            'prompt_version' => 'autofix_frame_title_v2',
+            'max_tokens'     => 900,
+            'system_prompt'  => 'Return only valid JSON for a minimal Bricks patch. No markdown fences. added_keys and removed_keys must be JSON objects, never arrays.',
         ];
     }
 
@@ -550,6 +577,44 @@ class AI {
              . "- Return ONLY the HTML block.\n\n"
              . "Accessibility issue to fix:\n"
              . json_encode( $context, JSON_PRETTY_PRINT );
+    }
+
+    private function decode_ai_patch_json( string $json ): array {
+        try {
+            $decoded = json_decode( $json, true, 512, JSON_THROW_ON_ERROR );
+            if ( is_array( $decoded ) ) {
+                return $this->normalize_patch_shape( $decoded );
+            }
+        } catch ( \JsonException $e ) {
+            $salvaged = trim( preg_replace( '/^```(?:json)?\s*/i', '', $json ) ?? $json );
+            $salvaged = trim( preg_replace( '/\s*```$/', '', $salvaged ) ?? $salvaged );
+            $salvaged = preg_replace( '/"added_keys"\s*:\s*\[\s*\]/', '"added_keys": {}', $salvaged ) ?? $salvaged;
+            $salvaged = preg_replace( '/"removed_keys"\s*:\s*\[\s*\]/', '"removed_keys": {}', $salvaged ) ?? $salvaged;
+            $salvaged = preg_replace( '/"changes"\s*:\s*\[\s*\]/', '"changes": {}', $salvaged ) ?? $salvaged;
+
+            if ( preg_match( '/\{.*\}/s', $salvaged, $match ) ) {
+                $salvaged = $match[0];
+            }
+
+            $decoded = json_decode( $salvaged, true, 512, JSON_THROW_ON_ERROR );
+            if ( is_array( $decoded ) ) {
+                return $this->normalize_patch_shape( $decoded );
+            }
+
+            throw $e;
+        }
+
+        throw new \JsonException( 'Claude patch did not decode to an object.' );
+    }
+
+    private function normalize_patch_shape( array $patch ): array {
+        foreach ( [ 'changes', 'added_keys', 'removed_keys' ] as $section ) {
+            if ( isset( $patch[ $section ] ) && ! is_array( $patch[ $section ] ) ) {
+                $patch[ $section ] = [];
+            }
+        }
+
+        return $patch;
     }
 
     private function guided_fallback_response( array $context, string $trace_id, string $fallback_message ) {
