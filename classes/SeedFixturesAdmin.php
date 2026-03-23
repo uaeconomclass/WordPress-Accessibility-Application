@@ -75,18 +75,18 @@ class SeedFixturesAdmin {
 
         echo '<div style="max-width:1100px;background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:20px 24px;margin:18px 0;">';
         echo '<h2 style="margin-top:0;">' . esc_html__( 'Prepare Demo Pages', 'accessibility-auditor' ) . '</h2>';
-        echo '<p>' . esc_html__( 'Start with AI Fix demos for the clearest client walkthrough. These actions refresh the demo pages and clear old scan results.', 'accessibility-auditor' ) . '</p>';
+        echo '<p>' . esc_html__( 'Start with planned AI fix pages for the clearest client walkthrough. These actions refresh the demo pages and clear old scan results.', 'accessibility-auditor' ) . '</p>';
         echo '<div style="display:flex;gap:10px;flex-wrap:wrap;">';
-        self::render_action_form( __( 'Prepare AI Fix Demos', 'accessibility-auditor' ), [ 'strategy' => 'auto-fix' ] );
+        self::render_action_form( __( 'Prepare Planned AI Fix Pages', 'accessibility-auditor' ), [ 'strategy' => 'auto-fix' ] );
         self::render_action_form( __( 'Prepare Guide-Only Demos', 'accessibility-auditor' ), [ 'strategy' => 'guided-only' ] );
         self::render_action_form( __( 'Prepare All Demo Pages', 'accessibility-auditor' ), [] );
         echo '</div>';
-        echo '<p style="margin:14px 0 0;color:#50575e;">' . esc_html__( 'Recommended flow: prepare AI Fix demos, open one in Bricks, run scan, click Fix with AI, review the preview, then Accept or Reject.', 'accessibility-auditor' ) . '</p>';
+        echo '<p style="margin:14px 0 0;color:#50575e;">' . esc_html__( 'Recommended flow: prepare planned AI fix pages, open one in Bricks, run scan, click Fix with AI, review the preview, then Accept or Reject.', 'accessibility-auditor' ) . '</p>';
         echo '</div>';
 
         echo '<div style="max-width:1100px;background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:20px 24px;margin:18px 0;">';
         echo '<h2 style="margin-top:0;">' . esc_html__( 'Find a Demo', 'accessibility-auditor' ) . '</h2>';
-        echo '<p style="margin-top:0;">' . esc_html__( 'Use these filters only if you want a specific demo. Otherwise just prepare AI Fix demos and open one in Bricks.', 'accessibility-auditor' ) . '</p>';
+        echo '<p style="margin-top:0;">' . esc_html__( 'Use these filters only if you want a specific demo. Otherwise just prepare planned AI fix pages and open one in Bricks.', 'accessibility-auditor' ) . '</p>';
         echo '<form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;">';
         echo '<input type="hidden" name="page" value="' . esc_attr( self::PAGE_SLUG ) . '">';
         self::render_select( 'strategy', __( 'Demo type', 'accessibility-auditor' ), self::strategy_options( $fixtures ), $filter_values['strategy'] );
@@ -175,9 +175,8 @@ class SeedFixturesAdmin {
 
     private static function strategy_label( string $strategy ): string {
         $labels = [
-            'auto-fix'    => __( 'AI Fix Demo', 'accessibility-auditor' ),
+            'auto-fix'    => __( 'Planned AI Fix', 'accessibility-auditor' ),
             'guided-only' => __( 'Guide-Only Demo', 'accessibility-auditor' ),
-            'flagged'     => __( 'Advanced Demo', 'accessibility-auditor' ),
         ];
 
         return $labels[ $strategy ] ?? strtoupper( $strategy );
@@ -272,6 +271,9 @@ class SeedFixturesAdmin {
         $options = [];
         foreach ( $fixtures as $fixture ) {
             $strategy = (string) $fixture['strategy'];
+            if ( $strategy === 'flagged' ) {
+                continue;
+            }
             $options[ $strategy ] = self::strategy_label( $strategy );
         }
         ksort( $options );
