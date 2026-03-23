@@ -147,6 +147,14 @@ class AADashboard extends HTMLElement {
     return ids.filter(Boolean);
   }
 
+  _normalizeHtmlSnippet(html = "") {
+    return String(html || "")
+      .replace(/\s+style="[^"]*"/gi, "")
+      .replace(/\s+data-[^=]+="[^"]*"/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
   _nodeBelongsToCurrentPage(node, pageIdsSet) {
     if (!node || !pageIdsSet || pageIdsSet.size === 0) return true;
 
@@ -168,12 +176,31 @@ class AADashboard extends HTMLElement {
 
     const previewDoc = this._getPreviewDocument();
     if (!previewDoc) return false;
+    const expectedHtml = this._normalizeHtmlSnippet(node?.html || "");
 
     for (const selector of selectors) {
       try {
         const elements = Array.from(previewDoc.querySelectorAll(selector));
         for (const el of elements) {
           const candidateIds = this._extractPageBricksIdsFromElement(el);
+          if (!candidateIds.some((id) => pageIdsSet.has(id))) {
+            continue;
+          }
+
+          if (expectedHtml) {
+            const outer = this._normalizeHtmlSnippet(el.outerHTML || "");
+            const inner = this._normalizeHtmlSnippet(el.innerHTML || "");
+            const htmlMatches =
+              outer.includes(expectedHtml) ||
+              expectedHtml.includes(outer) ||
+              inner.includes(expectedHtml) ||
+              expectedHtml.includes(inner);
+
+            if (!htmlMatches) {
+              continue;
+            }
+          }
+
           if (candidateIds.some((id) => pageIdsSet.has(id))) {
             return true;
           }
@@ -739,7 +766,17 @@ this._resultsClickHandler = async (e) => {
 
     try {
       // 🔹 Call API
-      const result = await this._applyAutoFix(issue);
+      let result = await this._applyAutoFix(issue);
+
+      if (result?.queued && result?.job_id) {
+        aiTextDiv.innerHTML = `
+          <div class="aa-loading" style="padding:10px;">
+            <strong>Queued for AI processing…</strong><br>
+            <small>Claude is preparing a preview in the background.</small>
+          </div>
+        `;
+        result = await this._pollAutoFixJob(result.job_id);
+      }
 
       if (result?.error) {
         aiTextDiv.innerHTML = `<p class="aa-error">AI Fix failed: ${result.error}</p>`;
@@ -977,6 +1014,38 @@ async _applyAutoFix(issue) {
     console.groupEnd();
     return { error: err.message };
   }
+}
+
+async _pollAutoFixJob(jobId) {
+  const maxAttempts = 45;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const resp = await fetch(`${aaEditor.root}fix-status`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-WP-Nonce": aaEditor.restNonce,
+      },
+      body: JSON.stringify({ job_id: jobId, post_id: aaEditor.postId })
+    });
+
+    if (!resp.ok) {
+      throw new Error(`Status polling failed with ${resp.status}`);
+    }
+
+    const data = await resp.json();
+    if (data?.status === 'ready') {
+      return data.result || data;
+    }
+
+    if (data?.status === 'error') {
+      return { error: data.error || 'Background auto-fix failed.' };
+    }
+
+    await new Promise((resolve) => window.setTimeout(resolve, 1200));
+  }
+
+  return { error: 'Background auto-fix timed out before preview was ready.' };
 }
 
 

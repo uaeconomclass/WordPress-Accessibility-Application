@@ -22,8 +22,10 @@ class Loader {
         require_once AA_PLUGIN_DIR . 'classes/LlmAuditLogger.php';
         require_once AA_PLUGIN_DIR . 'classes/ClaudeClient.php';
         require_once AA_PLUGIN_DIR . 'classes/AiResponseNormalizer.php';
+        require_once AA_PLUGIN_DIR . 'classes/AsyncAutoFixQueue.php';
         require_once AA_PLUGIN_DIR . 'classes/AI.php';
         new \Accessibility_Auditor\AI();
+        AsyncAutoFixQueue::init();
 
 
 

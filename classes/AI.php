@@ -19,9 +19,19 @@ use WP_REST_Response;
  *   Revisions              — Bricks snapshots, changelog, audit history
  */
 class AI {
+    private static $instance = null;
 
     public function __construct() {
+        self::$instance = $this;
         add_action( 'rest_api_init', [ $this, 'register_routes' ] );
+    }
+
+    public static function instance(): self {
+        if ( self::$instance instanceof self ) {
+            return self::$instance;
+        }
+
+        return new self();
     }
 
     public function register_routes() {
@@ -40,6 +50,12 @@ class AI {
         register_rest_route( 'aa/v1', '/save-fix', [
             'methods'             => 'POST',
             'callback'            => [ $this, 'save_fix' ],
+            'permission_callback' => [ $this, 'check_permissions' ],
+        ] );
+
+        register_rest_route( 'aa/v1', '/fix-status', [
+            'methods'             => 'POST',
+            'callback'            => [ $this, 'get_fix_status' ],
             'permission_callback' => [ $this, 'check_permissions' ],
         ] );
 
@@ -100,15 +116,12 @@ class AI {
     public function apply_auto_fix( WP_REST_Request $request ) {
         $payload = $request->get_json_params();
         $trace_id = sanitize_text_field( (string) ( $payload['trace_id'] ?? '' ) );
-
-        // 1. Input validation.
-        $issue = $payload['issue'] ?? null;
-        if ( ! $issue ) {
-            Loader::aa_log( 'auto_fix.missing_issue', [ 'trace_id' => $trace_id ] );
-            return new WP_Error( 'missing_issue', 'Missing issue data.' );
-        }
-
         $post_id = intval( $payload['post_id'] ?? 0 );
+
+        if ( empty( $payload['issue'] ?? null ) ) {
+            Loader::aa_log( 'auto_fix.missing_issue', [ 'trace_id' => $trace_id ] );
+            return new WP_Error( 'missing_issue', 'Missing issue data.', [ 'status' => 400 ] );
+        }
         if ( ! $post_id ) {
             Loader::aa_log( 'auto_fix.missing_post', [ 'trace_id' => $trace_id ] );
             return new WP_Error( 'missing_post', 'post_id is required.', [ 'status' => 400 ] );
@@ -118,211 +131,77 @@ class AI {
             return new WP_Error( 'forbidden', 'You do not have permission to edit this post.', [ 'status' => 403 ] );
         }
 
-        // 2. Issue whitelist — only auto-fix supported axe rule IDs.
-        $supported_rules = [
-            'color-contrast',    // CSS color fix via _cssCustom
-            'image-alt',         // settings.altText
-            'link-name',         // settings.url.ariaLabel / aria-label attribute
-            'button-name',       // aria-label attribute
-            'frame-title',       // title / aria-label attribute
-            'input-image-alt',   // settings.altText on input[type=image]
-            'aria-label',        // generic aria-label fixes
-            'aria-labelledby',   // aria-labelledby attribute
-            'aria-hidden-focus', // remove aria-hidden from focusable elements
+        $job = AsyncAutoFixQueue::enqueue( $payload );
+        Loader::aa_log( 'auto_fix.queued', [
+            'trace_id' => $trace_id,
+            'post_id'  => $post_id,
+            'job_id'   => $job['job_id'],
+        ] );
+
+        return rest_ensure_response( [
+            'success' => true,
+            'queued'  => true,
+            'job_id'  => $job['job_id'],
+            'status'  => 'queued',
+            'trace_id'=> $trace_id,
+            'message' => 'Auto-fix was queued for background processing.',
+        ] );
+    }
+
+    public function get_fix_status( WP_REST_Request $request ) {
+        $payload = $request->get_json_params();
+        $job_id  = sanitize_text_field( (string) ( $payload['job_id'] ?? '' ) );
+
+        if ( $job_id === '' ) {
+            return new WP_Error( 'missing_job_id', 'job_id is required.', [ 'status' => 400 ] );
+        }
+
+        $job = AsyncAutoFixQueue::get_job( $job_id );
+        if ( ! is_array( $job ) ) {
+            return new WP_Error( 'job_not_found', 'Auto-fix job not found.', [ 'status' => 404 ] );
+        }
+
+        $post_id = absint( $job['post_id'] ?? 0 );
+        if ( ! $post_id || ! current_user_can( 'edit_post', $post_id ) ) {
+            return new WP_Error( 'forbidden', 'You do not have permission to view this job.', [ 'status' => 403 ] );
+        }
+
+        $status = (string) ( $job['status'] ?? 'queued' );
+        if ( $status === 'queued' ) {
+            AsyncAutoFixQueue::redispatch_if_stalled( $job_id );
+            $job = AsyncAutoFixQueue::get_job( $job_id ) ?: $job;
+            $status = (string) ( $job['status'] ?? 'queued' );
+        }
+
+        $created_at_ts = (int) ( $job['created_at_ts'] ?? 0 );
+        $attempts = (int) ( $job['attempts'] ?? 0 );
+        if ( $status === 'queued' && $attempts === 0 && $created_at_ts > 0 && ( time() - $created_at_ts ) >= 3 ) {
+            AsyncAutoFixQueue::process_job( $job_id );
+            $job = AsyncAutoFixQueue::get_job( $job_id ) ?: $job;
+            $status = (string) ( $job['status'] ?? 'queued' );
+        }
+
+        $response = [
+            'success' => $status !== 'error',
+            'job_id'  => $job_id,
+            'status'  => $status,
+            'post_id' => $post_id,
         ];
-        $rule_id = $issue['id'] ?? '';
-        if ( ! in_array( $rule_id, $supported_rules, true ) ) {
-            Loader::aa_log( 'auto_fix.guided_fallback', [ 'trace_id' => $trace_id, 'post_id' => $post_id, 'rule_id' => $rule_id ] );
-            // Log so unsupported rules can be identified and promoted to the whitelist later.
-            error_log( sprintf(
-                '[AA:auto-fix] UNSUPPORTED_RULE rule_id="%s" impact="%s" nodes=%d description="%s" — falling back to guided fix',
-                $rule_id,
-                $issue['impact'] ?? 'unknown',
-                count( $issue['nodes'] ?? [] ),
-                substr( $issue['description'] ?? '', 0, 120 )
-            ) );
 
-            // Unsupported rule — fall back to guided instructions instead of an error.
-            return $this->guided_fallback_response(
-                $issue,
-                $trace_id,
-                'Auto-fix is not supported for this issue type. Please review and fix manually.'
-            );
+        if ( $status === 'ready' && is_array( $job['result'] ?? null ) ) {
+            $response['result'] = $job['result'];
+            $response['message'] = 'AI preview is ready.';
+        } elseif ( $status === 'error' ) {
+            $response['success'] = false;
+            $response['error'] = $job['error_message'] ?: 'Background auto-fix failed.';
+            $response['error_code'] = $job['error_code'] ?: 'job_failed';
+        } else {
+            $response['message'] = $status === 'processing'
+                ? 'AI is preparing your fix preview.'
+                : 'Auto-fix is queued.';
         }
 
-        Loader::aa_log( 'auto_fix.start', [ 'trace_id' => $trace_id, 'post_id' => $post_id, 'rule_id' => $rule_id, 'nodes' => count( $issue['nodes'] ?? [] ) ] );
-        error_log( sprintf( '[AA:auto-fix] START post_id=%d issue_id=%s nodes=%d', $post_id, $issue['id'] ?? '?', count( $issue['nodes'] ?? [] ) ) );
-
-        // 3. Load Bricks content. Bricks constant may be unavailable (or point to a different key)
-        // in some contexts, so fall back to the common `bricks_data` meta key used by fixtures.
-        $content_key_candidates = [];
-        if ( defined( 'BRICKS_DB_PAGE_CONTENT' ) && is_string( BRICKS_DB_PAGE_CONTENT ) && BRICKS_DB_PAGE_CONTENT !== '' ) {
-            $content_key_candidates[] = BRICKS_DB_PAGE_CONTENT;
-        }
-        $content_key_candidates[] = 'bricks_data';
-        $content_key_candidates = array_values( array_unique( $content_key_candidates ) );
-
-        $content          = null;
-        $elements         = null;
-        $content_meta_key = null;
-        foreach ( $content_key_candidates as $candidate_key ) {
-            $candidate_content  = get_post_meta( $post_id, $candidate_key, true );
-            $candidate_elements = is_array( $candidate_content ) ? $candidate_content : json_decode( $candidate_content, true );
-            if ( ! empty( $candidate_elements ) && is_array( $candidate_elements ) ) {
-                $content          = $candidate_content;
-                $elements         = $candidate_elements;
-                $content_meta_key = $candidate_key;
-                break;
-            }
-        }
-
-        if ( empty( $elements ) || ! is_array( $elements ) ) {
-            Loader::aa_log( 'auto_fix.invalid_content', [
-                'trace_id'    => $trace_id,
-                'post_id'     => $post_id,
-                'tried_keys'  => $content_key_candidates,
-                'bricks_const' => defined( 'BRICKS_DB_PAGE_CONTENT' ) ? BRICKS_DB_PAGE_CONTENT : 'UNDEF',
-            ] );
-            return new WP_Error( 'invalid_content', 'Invalid or empty Bricks content.' );
-        }
-        Loader::aa_log( 'auto_fix.content_loaded', [ 'trace_id' => $trace_id, 'post_id' => $post_id, 'meta_key' => $content_meta_key ] );
-
-        // 4. Map issue to affected Bricks elements.
-        $target_elements = BricksElementFinder::from_issue( $elements, $issue );
-        error_log( sprintf( '[AA:auto-fix] elements=%d targets=%d', count( $elements ), count( $target_elements ) ) );
-
-        if ( empty( $target_elements ) ) {
-            Loader::aa_log( 'auto_fix.missing_elements', [
-                'trace_id' => $trace_id,
-                'post_id'  => $post_id,
-                'rule_id'  => $rule_id,
-            ] );
-            error_log( '[AA:auto-fix] No matching Bricks elements found — falling back to guided fix' );
-            return $this->guided_fallback_response(
-                $issue,
-                $trace_id,
-                'Auto-fix could not map this issue to editable page-level Bricks elements. It may belong to a template, global element, or rendered wrapper.'
-            );
-        }
-
-        // 5. Snapshot before mutating (supports rollback after accept).
-        $rollback_revision_key = Revisions::save_bricks_snapshot( $post_id, $elements, 'pre_fix_backup' );
-
-        $applied = [];
-
-        // 6. Per-element: build prompt → call Claude → validate → apply patch.
-        foreach ( $target_elements as $element ) {
-            $prompt_package = $this->build_auto_fix_prompt_package( $issue, $element );
-            $prompt = $prompt_package['prompt'];
-            $prompt_version = $prompt_package['prompt_version'];
-            $max_tokens = $prompt_package['max_tokens'];
-            $system_prompt = $prompt_package['system_prompt'];
-
-            try {
-                error_log( sprintf( '[AA:auto-fix] Calling Claude for element_id=%s type=%s', $element['id'] ?? '?', $element['name'] ?? '?' ) );
-                $response = ClaudeClient::request_with_meta( $prompt, true, [
-                    'trace_id'       => $trace_id,
-                    'call_mode'      => 'auto_fix',
-                    'post_id'        => $post_id,
-                    'rule_id'        => sanitize_key( (string) $rule_id ),
-                    'component'      => sanitize_key( (string) ( $element['name'] ?? '' ) ),
-                    'prompt_version' => $prompt_version,
-                    'max_tokens'     => $max_tokens,
-                    'system_prompt'  => $system_prompt,
-                ] );
-                $json     = AiResponseNormalizer::normalize( $response );
-                error_log( '[AA:auto-fix] Claude response (first 300): ' . substr( $json, 0, 300 ) );
-
-                try {
-                    $patch = $this->decode_ai_patch_json( $json );
-
-                    $id = $patch['element_id'] ?? null;
-                    if ( ! $id ) {
-                        error_log( '[AAI] Skipping patch: no element_id in response' );
-                        continue;
-                    }
-
-                    $validation_error = BricksPatchValidator::validate( $patch, $element['id'] );
-                    if ( $validation_error !== null ) {
-                        error_log( "[AA:auto-fix] Patch rejected: {$validation_error}" );
-                        continue;
-                    }
-
-                    $original = BricksElementFinder::find( $elements, $id );
-                    if ( ! $original ) {
-                        error_log( "[AAI] Element not found in tree: {$id}" );
-                        continue;
-                    }
-
-                    $updated = BricksPatchApplier::apply( $original, $patch );
-
-                    if ( BricksElementFinder::update( $elements, $id, $updated ) ) {
-                        $applied[] = $updated;
-                    } else {
-                        error_log( "[AAI] Failed to update element {$id} in tree" );
-                    }
-
-                } catch ( \JsonException $e ) {
-                    error_log( '[AAI] JSON decode failed: ' . $e->getMessage() );
-                    error_log( 'Bad JSON: ' . substr( $json, 0, 300 ) );
-                    return new WP_REST_Response( [
-                        'error'   => true,
-                        'message' => 'AI returned invalid JSON.',
-                        'details' => $e->getMessage(),
-                        'raw'     => substr( $json, 0, 300 ),
-                    ], 500 );
-                }
-
-            } catch ( \Throwable $e ) {
-                error_log( '[AAI] Unexpected error during AI fix: ' . $e->getMessage() );
-                continue;
-            }
-        }
-
-        if ( empty( $applied ) ) {
-            return new WP_REST_Response( [
-                'error'   => true,
-                'message' => 'AI did not produce any safe changes to preview.',
-                'trace_id'=> $trace_id,
-            ], 422 );
-        }
-
-        // 7. Save preview snapshot only. Actual persistence happens on explicit accept.
-        try {
-            $revision_key = Revisions::save_bricks_snapshot( $post_id, $elements, 'pending_fix' );
-            $changelog    = Revisions::generate_changelog( $applied );
-
-            Loader::aa_log( 'auto_fix.success', [
-                'trace_id'     => $trace_id,
-                'post_id'      => $post_id,
-                'rule_id'      => $rule_id,
-                'applied_count'=> count( $applied ),
-                'revision'     => $revision_key,
-                'preview_only' => true,
-            ] );
-            error_log( sprintf( '[AA:auto-fix] PREVIEW ready applied=%d revision_key=%s rollback=%s', count( $applied ), $revision_key, $rollback_revision_key ) );
-
-            return new WP_REST_Response( [
-                'success'   => true,
-                'message'   => 'Accessibility fix preview generated successfully.',
-                'changes'   => $applied,
-                'revision'  => $revision_key,
-                'revision_key' => $revision_key,
-                'rollback_revision_key' => $rollback_revision_key,
-                'preview_only' => true,
-                'changelog' => $changelog,
-                'trace_id'  => $trace_id,
-            ] );
-
-        } catch ( \Throwable $e ) {
-            Loader::aa_log( 'auto_fix.save_error', [ 'trace_id' => $trace_id, 'post_id' => $post_id, 'message' => $e->getMessage() ] );
-            error_log( '[AAI] Failed to save Bricks content: ' . $e->getMessage() );
-            return new WP_REST_Response( [
-                'error'   => true,
-                'message' => 'Failed to save updated Bricks content.',
-                'details' => $e->getMessage(),
-            ], 500 );
-        }
+        return rest_ensure_response( $response );
     }
 
     // =========================================================================
@@ -440,6 +319,201 @@ class AI {
         delete_post_meta( $post_id, $revision_key );
 
         return rest_ensure_response( [ 'success' => true, 'message' => 'Fix reverted successfully.' ] );
+    }
+
+    public function process_auto_fix_payload( array $payload ) {
+        $trace_id = sanitize_text_field( (string) ( $payload['trace_id'] ?? '' ) );
+        $issue    = is_array( $payload['issue'] ?? null ) ? $payload['issue'] : null;
+        $post_id  = intval( $payload['post_id'] ?? 0 );
+
+        if ( ! $issue ) {
+            Loader::aa_log( 'auto_fix.missing_issue', [ 'trace_id' => $trace_id ] );
+            return new WP_Error( 'missing_issue', 'Missing issue data.' );
+        }
+        if ( ! $post_id ) {
+            Loader::aa_log( 'auto_fix.missing_post', [ 'trace_id' => $trace_id ] );
+            return new WP_Error( 'missing_post', 'post_id is required.' );
+        }
+
+        $supported_rules = [
+            'color-contrast',
+            'image-alt',
+            'link-name',
+            'button-name',
+            'frame-title',
+            'input-image-alt',
+            'aria-label',
+            'aria-labelledby',
+            'aria-hidden-focus',
+        ];
+        $rule_id = $issue['id'] ?? '';
+        if ( ! in_array( $rule_id, $supported_rules, true ) ) {
+            Loader::aa_log( 'auto_fix.guided_fallback', [ 'trace_id' => $trace_id, 'post_id' => $post_id, 'rule_id' => $rule_id ] );
+            error_log( sprintf(
+                '[AA:auto-fix] UNSUPPORTED_RULE rule_id="%s" impact="%s" nodes=%d description="%s" — falling back to guided fix',
+                $rule_id,
+                $issue['impact'] ?? 'unknown',
+                count( $issue['nodes'] ?? [] ),
+                substr( $issue['description'] ?? '', 0, 120 )
+            ) );
+
+            return $this->build_guided_fallback_payload(
+                $issue,
+                $trace_id,
+                'Auto-fix is not supported for this issue type. Please review and fix manually.'
+            );
+        }
+
+        Loader::aa_log( 'auto_fix.start', [ 'trace_id' => $trace_id, 'post_id' => $post_id, 'rule_id' => $rule_id, 'nodes' => count( $issue['nodes'] ?? [] ) ] );
+        error_log( sprintf( '[AA:auto-fix] START post_id=%d issue_id=%s nodes=%d', $post_id, $issue['id'] ?? '?', count( $issue['nodes'] ?? [] ) ) );
+
+        $content_key_candidates = [];
+        if ( defined( 'BRICKS_DB_PAGE_CONTENT' ) && is_string( BRICKS_DB_PAGE_CONTENT ) && BRICKS_DB_PAGE_CONTENT !== '' ) {
+            $content_key_candidates[] = BRICKS_DB_PAGE_CONTENT;
+        }
+        $content_key_candidates[] = 'bricks_data';
+        $content_key_candidates = array_values( array_unique( $content_key_candidates ) );
+
+        $elements         = null;
+        $content_meta_key = null;
+        foreach ( $content_key_candidates as $candidate_key ) {
+            $candidate_content  = get_post_meta( $post_id, $candidate_key, true );
+            $candidate_elements = is_array( $candidate_content ) ? $candidate_content : json_decode( $candidate_content, true );
+            if ( ! empty( $candidate_elements ) && is_array( $candidate_elements ) ) {
+                $elements         = $candidate_elements;
+                $content_meta_key = $candidate_key;
+                break;
+            }
+        }
+
+        if ( empty( $elements ) || ! is_array( $elements ) ) {
+            Loader::aa_log( 'auto_fix.invalid_content', [
+                'trace_id'     => $trace_id,
+                'post_id'      => $post_id,
+                'tried_keys'   => $content_key_candidates,
+                'bricks_const' => defined( 'BRICKS_DB_PAGE_CONTENT' ) ? BRICKS_DB_PAGE_CONTENT : 'UNDEF',
+            ] );
+            return new WP_Error( 'invalid_content', 'Invalid or empty Bricks content.' );
+        }
+        Loader::aa_log( 'auto_fix.content_loaded', [ 'trace_id' => $trace_id, 'post_id' => $post_id, 'meta_key' => $content_meta_key ] );
+
+        $target_elements = BricksElementFinder::from_issue( $elements, $issue );
+        error_log( sprintf( '[AA:auto-fix] elements=%d targets=%d', count( $elements ), count( $target_elements ) ) );
+
+        if ( empty( $target_elements ) ) {
+            Loader::aa_log( 'auto_fix.missing_elements', [
+                'trace_id' => $trace_id,
+                'post_id'  => $post_id,
+                'rule_id'  => $rule_id,
+            ] );
+            error_log( '[AA:auto-fix] No matching Bricks elements found — falling back to guided fix' );
+            return $this->build_guided_fallback_payload(
+                $issue,
+                $trace_id,
+                'Auto-fix could not map this issue to editable page-level Bricks elements. It may belong to a template, global element, or rendered wrapper.'
+            );
+        }
+
+        $rollback_revision_key = Revisions::save_bricks_snapshot( $post_id, $elements, 'pre_fix_backup' );
+        $applied = [];
+
+        foreach ( $target_elements as $element ) {
+            $prompt_package = $this->build_auto_fix_prompt_package( $issue, $element );
+            $prompt = $prompt_package['prompt'];
+            $prompt_version = $prompt_package['prompt_version'];
+            $max_tokens = $prompt_package['max_tokens'];
+            $system_prompt = $prompt_package['system_prompt'];
+
+            try {
+                error_log( sprintf( '[AA:auto-fix] Calling Claude for element_id=%s type=%s', $element['id'] ?? '?', $element['name'] ?? '?' ) );
+                $response = ClaudeClient::request_with_meta( $prompt, true, [
+                    'trace_id'       => $trace_id,
+                    'call_mode'      => 'auto_fix',
+                    'post_id'        => $post_id,
+                    'rule_id'        => sanitize_key( (string) $rule_id ),
+                    'component'      => sanitize_key( (string) ( $element['name'] ?? '' ) ),
+                    'prompt_version' => $prompt_version,
+                    'max_tokens'     => $max_tokens,
+                    'system_prompt'  => $system_prompt,
+                ] );
+
+                if ( is_wp_error( $response ) ) {
+                    return $response;
+                }
+
+                $json = AiResponseNormalizer::normalize( $response );
+                error_log( '[AA:auto-fix] Claude response (first 300): ' . substr( $json, 0, 300 ) );
+
+                $patch = $this->decode_ai_patch_json( $json );
+
+                $id = $patch['element_id'] ?? null;
+                if ( ! $id ) {
+                    error_log( '[AAI] Skipping patch: no element_id in response' );
+                    continue;
+                }
+
+                $validation_error = BricksPatchValidator::validate( $patch, $element['id'] );
+                if ( $validation_error !== null ) {
+                    error_log( "[AA:auto-fix] Patch rejected: {$validation_error}" );
+                    continue;
+                }
+
+                $original = BricksElementFinder::find( $elements, $id );
+                if ( ! $original ) {
+                    error_log( "[AAI] Element not found in tree: {$id}" );
+                    continue;
+                }
+
+                $updated = BricksPatchApplier::apply( $original, $patch );
+                if ( BricksElementFinder::update( $elements, $id, $updated ) ) {
+                    $applied[] = $updated;
+                } else {
+                    error_log( "[AAI] Failed to update element {$id} in tree" );
+                }
+            } catch ( \JsonException $e ) {
+                error_log( '[AAI] JSON decode failed: ' . $e->getMessage() );
+                error_log( 'Bad JSON: ' . substr( $json ?? '', 0, 300 ) );
+                return new WP_Error( 'invalid_ai_json', 'AI returned invalid JSON.' );
+            } catch ( \Throwable $e ) {
+                error_log( '[AAI] Unexpected error during AI fix: ' . $e->getMessage() );
+                continue;
+            }
+        }
+
+        if ( empty( $applied ) ) {
+            return new WP_Error( 'no_safe_changes', 'AI did not produce any safe changes to preview.' );
+        }
+
+        try {
+            $revision_key = Revisions::save_bricks_snapshot( $post_id, $elements, 'pending_fix' );
+            $changelog    = Revisions::generate_changelog( $applied );
+
+            Loader::aa_log( 'auto_fix.success', [
+                'trace_id'      => $trace_id,
+                'post_id'       => $post_id,
+                'rule_id'       => $rule_id,
+                'applied_count' => count( $applied ),
+                'revision'      => $revision_key,
+                'preview_only'  => true,
+            ] );
+            error_log( sprintf( '[AA:auto-fix] PREVIEW ready applied=%d revision_key=%s rollback=%s', count( $applied ), $revision_key, $rollback_revision_key ) );
+
+            return [
+                'success'   => true,
+                'message'   => 'Accessibility fix preview generated successfully.',
+                'changes'   => $applied,
+                'revision'  => $revision_key,
+                'revision_key' => $revision_key,
+                'rollback_revision_key' => $rollback_revision_key,
+                'preview_only' => true,
+                'changelog' => $changelog,
+                'trace_id'  => $trace_id,
+            ];
+        } catch ( \Throwable $e ) {
+            Loader::aa_log( 'auto_fix.save_error', [ 'trace_id' => $trace_id, 'post_id' => $post_id, 'message' => $e->getMessage() ] );
+            error_log( '[AAI] Failed to save updated Bricks content: ' . $e->getMessage() );
+            return new WP_Error( 'preview_save_failed', 'Failed to save updated Bricks preview.' );
+        }
     }
 
     // =========================================================================
@@ -664,7 +738,7 @@ class AI {
         return $patch;
     }
 
-    private function guided_fallback_response( array $context, string $trace_id, string $fallback_message ) {
+    private function build_guided_fallback_payload( array $context, string $trace_id, string $fallback_message ): array {
         $response = ClaudeClient::request_with_meta( $this->build_guided_prompt( $context ), false, [
             'trace_id'       => $trace_id,
             'call_mode'      => 'guided_fallback',
@@ -672,14 +746,14 @@ class AI {
             'prompt_version' => 'guided_v1',
         ] );
         $steps = is_wp_error( $response ) ? '' : ( $response['content'] ?? '' );
-        if ( is_wp_error( $steps ) ) {
+        if ( is_wp_error( $response ) ) {
             $steps = '<p>' . esc_html( $fallback_message ) . '</p>';
         }
 
-        return rest_ensure_response( [
+        return [
             'guided_fallback' => true,
             'steps'           => $steps,
             'trace_id'        => $trace_id,
-        ] );
+        ];
     }
 }
