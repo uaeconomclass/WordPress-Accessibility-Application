@@ -131,7 +131,7 @@ class SeedFixturesAdmin {
             echo '<td style="width:34%;">';
             echo '<strong>' . esc_html( $fixture['title'] ) . '</strong><br>';
             echo '<code>' . esc_html( $fixture['scenario'] ) . '</code><br>';
-            echo '<span style="display:inline-block;margin-top:8px;padding:3px 8px;border-radius:999px;background:#f0f6fc;color:#0a4b78;">' . esc_html( self::strategy_label( (string) $fixture['strategy'] ) ) . '</span>';
+            echo '<span style="display:inline-block;margin-top:8px;padding:3px 8px;border-radius:999px;background:#f0f6fc;color:#0a4b78;">' . esc_html( self::strategy_label( self::effective_strategy( $fixture ) ) ) . '</span>';
             echo '</td>';
             echo '<td>';
             echo '<div><strong>' . esc_html__( 'Rules:', 'accessibility-auditor' ) . '</strong> ' . esc_html( implode( ', ', $fixture['rule_ids'] ) ) . '</div>';
