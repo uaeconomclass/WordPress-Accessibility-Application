@@ -309,6 +309,7 @@ class AI {
                 'message'   => 'Accessibility fixes applied successfully.',
                 'changes'   => $applied,
                 'revision'  => $revision_key,
+                'revision_key' => $revision_key,
                 'changelog' => $changelog,
                 'trace_id'  => $trace_id,
             ] );

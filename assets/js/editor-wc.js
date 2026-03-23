@@ -700,16 +700,13 @@ this._resultsClickHandler = async (e) => {
       } else if (result?.guided_fallback) {
         // Rule not auto-fixable — show guided steps inline instead of an error.
         aiTextDiv.innerHTML = result.steps;
-      } else if (result?.changelog?.length) {
-        // 🔹 Show changelog summary
-        const logHtml = result.changelog
-          .map(item => `<li>${this.escapeHTML(item)}</li>`)
-          .join("");
+      } else if (result?.success) {
+        this._lastRevisionKey = result.revision_key || result.revision || this._lastRevisionKey || null;
         aiTextDiv.innerHTML = `
            <strong>AI CHANGE MADE SUCCESSFULLY</strong>
-           <span>Validate changes and confirm or reject.</span>
+           <span>Fix applied. Reloading editor…</span>
         `;
-        if (aiActions) aiActions.style.display = "flex";
+        if (aiActions) aiActions.style.display = "none";
       } else {
         aiTextDiv.innerHTML = `<p>No automatic changes were necessary or detected.</p>`;
       }

@@ -18,9 +18,9 @@ This repo is the plugin code. The local WordPress lab lives in the sibling repo 
 - Page-level filtering now correctly keeps nested preview targets that belong to current-page Bricks elements
 - LLM audit logging is in place, including raw request/response payloads with API key redacted
 - `Seed Fixtures` exists in wp-admin for local/dev environments
-- Bricks smoke coverage now has 2 confirmed visible proof cases:
+- Bricks smoke coverage now has 1 stable proof case backed by persisted Bricks JSON verification:
   - `link-name-inline` (`#1319`)
-  - `image-alt-basic` (`#1317`)
+- Additional seeded cases still need fixture/runtime hardening before they can stay enabled in committed smoke coverage
 - Fixture detectability currently sits at:
   - `35/37` page-level `scan-ready`
   - `11/37` page-level `auto-fix-ready`
@@ -78,6 +78,7 @@ Notes:
 
 - `Seed Fixtures` is dev-gated
 - `LLM Calls` stores usage, latency, estimated cost, plus raw request/response payloads for new calls
+- current estimated cost is backfilled and calculated correctly for logged Claude calls
 
 ## Seeding Bricks Fixtures
 
@@ -138,7 +139,6 @@ Targeted visible smoke examples:
 ```powershell
 cd tests/e2e
 npx playwright test tests/autofix-flow.smoke.spec.js --project=chromium --headed --no-deps --grep "Link Name fixture"
-npx playwright test tests/autofix-flow.smoke.spec.js --project=chromium --headed --no-deps --grep "Image Alt fixture"
 ```
 
 ## Debugging and Observability
@@ -153,6 +153,8 @@ npx playwright test tests/autofix-flow.smoke.spec.js --project=chromium --headed
   - estimated cost
   - raw request
   - raw response
+- auto-fix prompt `v2` is now live for `link-name` and `image-alt`, with materially lower input token usage than the original generic prompt
+- the committed smoke proof verifies the saved `_bricks_page_content_2` payload, not just transient panel state
 
 ## Important Constraints
 

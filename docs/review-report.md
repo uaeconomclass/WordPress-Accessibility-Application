@@ -95,6 +95,8 @@ The codebase is functional and demonstrates reasonable WordPress development pra
 
 3. **Model ID hardcoded** in `ClaudeClient.php` (`const MODEL = 'claude-sonnet-4-20250514'`). Should be a configurable setting so it doesn't require a code change when the model is updated.
 
+4. **Prompt architecture is only partially specialized.** `link-name` and `image-alt` now use slimmer `v2` prompt packages with materially lower input token usage, but the wider rule set still depends on broader fallback prompts and needs the same treatment.
+
 ### `Pages_Column.php`
 Clean and correct. Reads `_aa_scan_status`, `_aa_last_scan_id`, `_aa_scan_score`, `_aa_scan_summary` — consistent with what `ScanManager` writes. No issues.
 
@@ -109,7 +111,8 @@ The asset enqueue guard was recently fixed (current engagement). Now correctly h
 - `LlmAuditLogger.php` + `LlmCallsAdmin.php` give real visibility into prompt volume, token usage, latency, and failures.
 - Admin IA is now more coherent: top-level `Accessibility Auditor` menu with `Overview`, `Reports`, `Settings`, `Seed Fixtures`, and `LLM Calls`.
 - `Seed Fixtures` is dev-gated and gives a practical path to repeatable Bricks regression work.
-- Bricks smoke harness is now stable enough to prove visible end-to-end auto-fix on at least two seeded scenarios: `link-name-inline` and `image-alt-basic`.
+- Bricks smoke harness now has one stable end-to-end auto-fix proof: `link-name-inline`, verified against persisted Bricks JSON rather than only panel state.
+- Other seeded scenarios remain useful for manual/debug verification, but are still too flaky to present as committed smoke proof coverage.
 
 ---
 
@@ -180,8 +183,10 @@ A realistic next scope would be: auto-fix covering the current high-confidence p
 - [x] Score now counts page-level issue instances correctly
 - [x] Template/global issues no longer pollute page-level scan results
 - [x] LLM audit logging + admin visibility added
+- [x] LLM estimated cost now calculates and backfills correctly in `LLM Calls`
+- [x] Auto-fix prompt `v2` is live for `link-name` and `image-alt`
 - [x] Real Bricks fixture sweep now covers `35/37` scenarios (`11/37` auto-fix-ready)
-- [x] Bricks panel smoke harness stabilized enough for visible proof runs on `link-name-inline` and `image-alt-basic`
+- [x] Bricks panel smoke harness stabilized enough for one committed visible proof run on `link-name-inline`
 
 ### Critical (must fix before Phase 2)
 - [ ] Synchronous Claude calls — will time out on real pages
