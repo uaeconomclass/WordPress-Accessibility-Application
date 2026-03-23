@@ -13,3 +13,6 @@ local/https/
 
 # local AI assistant state
 .serena/
+
+# local Playwright/browser session state
+.playwright-cli/
