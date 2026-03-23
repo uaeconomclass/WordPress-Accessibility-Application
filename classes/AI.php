@@ -130,11 +130,11 @@ class AI {
             ) );
 
             // Unsupported rule — fall back to guided instructions instead of an error.
-            $steps = ClaudeClient::request( $this->build_guided_prompt( $issue ) );
-            if ( is_wp_error( $steps ) ) {
-                $steps = '<p>Auto-fix is not supported for this issue type. Please review and fix manually.</p>';
-            }
-            return rest_ensure_response( [ 'guided_fallback' => true, 'steps' => $steps, 'trace_id' => $trace_id ] );
+            return $this->guided_fallback_response(
+                $issue,
+                $trace_id,
+                'Auto-fix is not supported for this issue type. Please review and fix manually.'
+            );
         }
 
         Loader::aa_log( 'auto_fix.start', [ 'trace_id' => $trace_id, 'post_id' => $post_id, 'rule_id' => $rule_id, 'nodes' => count( $issue['nodes'] ?? [] ) ] );
@@ -179,8 +179,17 @@ class AI {
         error_log( sprintf( '[AA:auto-fix] elements=%d targets=%d', count( $elements ), count( $target_elements ) ) );
 
         if ( empty( $target_elements ) ) {
-            error_log( '[AA:auto-fix] No matching Bricks elements found — returning error' );
-            return new WP_Error( 'missing_elements', 'No matching Bricks elements found.' );
+            Loader::aa_log( 'auto_fix.missing_elements', [
+                'trace_id' => $trace_id,
+                'post_id'  => $post_id,
+                'rule_id'  => $rule_id,
+            ] );
+            error_log( '[AA:auto-fix] No matching Bricks elements found — falling back to guided fix' );
+            return $this->guided_fallback_response(
+                $issue,
+                $trace_id,
+                'Auto-fix could not map this issue to editable page-level Bricks elements. It may belong to a template, global element, or rendered wrapper.'
+            );
         }
 
         // 5. Snapshot before mutating (supports rollback).
@@ -452,5 +461,18 @@ Output only the JSON patch.',
              . "- Return ONLY the HTML block.\n\n"
              . "Accessibility issue to fix:\n"
              . json_encode( $context, JSON_PRETTY_PRINT );
+    }
+
+    private function guided_fallback_response( array $context, string $trace_id, string $fallback_message ) {
+        $steps = ClaudeClient::request( $this->build_guided_prompt( $context ) );
+        if ( is_wp_error( $steps ) ) {
+            $steps = '<p>' . esc_html( $fallback_message ) . '</p>';
+        }
+
+        return rest_ensure_response( [
+            'guided_fallback' => true,
+            'steps'           => $steps,
+            'trace_id'        => $trace_id,
+        ] );
     }
 }

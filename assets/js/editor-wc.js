@@ -534,6 +534,7 @@ this._resultsClickHandler = async (e) => {
     const issueId = aiBtn.dataset.issueId;
     const aiPanel = this.shadowRoot.querySelector(`#ai-success-${issueId}`);
     const stepsPanel = this.shadowRoot.querySelector(`#resolution-steps-${issueId}`);
+    const aiActions = aiPanel?.querySelector('.aa-ai-actions');
 
 
 
@@ -545,6 +546,7 @@ this._resultsClickHandler = async (e) => {
     stepsPanel.style.display = "none";
     aiPanel.style.display = "block";
     const aiTextDiv = aiPanel?.querySelector('.aa-ai-text');
+    if (aiActions) aiActions.style.display = "none";
 
     // 🔹 Get the issue data
     const issue = this._violations.find(v => v.id === issueId);
@@ -589,6 +591,7 @@ this._resultsClickHandler = async (e) => {
            <strong>AI CHANGE MADE SUCCESSFULLY</strong>
            <span>Validate changes and confirm or reject.</span>
         `;
+        if (aiActions) aiActions.style.display = "flex";
       } else {
         aiTextDiv.innerHTML = `<p>No automatic changes were necessary or detected.</p>`;
       }
