@@ -32,6 +32,8 @@ class LlmAuditLogger {
             latency_ms INT UNSIGNED DEFAULT 0,
             prompt_preview TEXT NULL,
             response_preview TEXT NULL,
+            request_payload LONGTEXT NULL,
+            response_payload LONGTEXT NULL,
             started_at DATETIME NOT NULL,
             finished_at DATETIME NULL,
             PRIMARY KEY (id),
@@ -66,10 +68,11 @@ class LlmAuditLogger {
                 'prompt_version'  => sanitize_text_field( (string) ( $context['prompt_version'] ?? '' ) ),
                 'status'          => sanitize_key( (string) ( $context['status'] ?? 'started' ) ),
                 'prompt_chars'    => strlen( (string) ( $context['prompt'] ?? '' ) ),
-                'prompt_preview'  => self::should_store_verbose_payloads() ? self::preview( (string) ( $context['prompt'] ?? '' ) ) : '',
+                'prompt_preview'  => self::preview( (string) ( $context['prompt'] ?? '' ) ),
+                'request_payload' => self::format_payload( $context['request_payload'] ?? ( $context['prompt'] ?? '' ) ),
                 'started_at'      => current_time( 'mysql' ),
             ],
-            [ '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s' ]
+            [ '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s' ]
         );
 
         return (int) $wpdb->insert_id;
@@ -96,26 +99,47 @@ class LlmAuditLogger {
                     (int) ( $result['output_tokens'] ?? 0 )
                 ),
                 'latency_ms'         => absint( $result['latency_ms'] ?? 0 ),
-                'response_preview'   => self::should_store_verbose_payloads() ? self::preview( (string) ( $result['content'] ?? '' ) ) : '',
+                'response_preview'   => self::preview( (string) ( $result['content'] ?? '' ) ),
+                'response_payload'   => self::format_payload( $result['response_payload'] ?? ( $result['content'] ?? '' ) ),
                 'finished_at'        => current_time( 'mysql' ),
             ],
             [ 'id' => $audit_id ],
-            [ '%s', '%s', '%d', '%d', '%f', '%d', '%s', '%s' ],
+            [ '%s', '%s', '%d', '%d', '%f', '%d', '%s', '%s', '%s' ],
             [ '%d' ]
         );
-    }
-
-    public static function should_store_verbose_payloads(): bool {
-        if ( defined( 'AA_ENABLE_LLM_AUDIT_VERBOSE' ) ) {
-            return (bool) AA_ENABLE_LLM_AUDIT_VERBOSE;
-        }
-
-        return defined( 'WP_DEBUG' ) && WP_DEBUG;
     }
 
     private static function preview( string $value, int $limit = 1000 ): string {
         $value = trim( preg_replace( '/\s+/', ' ', $value ) ?? '' );
         return mb_substr( $value, 0, $limit );
+    }
+
+    private static function format_payload( $payload ): string {
+        if ( is_array( $payload ) || is_object( $payload ) ) {
+            $json = wp_json_encode(
+                $payload,
+                JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+            );
+
+            return is_string( $json ) ? $json : '';
+        }
+
+        $payload = trim( (string) $payload );
+        if ( $payload === '' ) {
+            return '';
+        }
+
+        $decoded = json_decode( $payload, true );
+        if ( json_last_error() === JSON_ERROR_NONE ) {
+            $json = wp_json_encode(
+                $decoded,
+                JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+            );
+
+            return is_string( $json ) ? $json : $payload;
+        }
+
+        return $payload;
     }
 
     private static function estimate_cost_usd( string $model, int $input_tokens, int $output_tokens ): float {

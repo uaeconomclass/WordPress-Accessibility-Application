@@ -28,6 +28,8 @@ class LlmCallsAdmin {
             return;
         }
 
+        LlmAuditLogger::install();
+
         global $wpdb;
         $table   = LlmAuditLogger::table_name();
         $filters = self::current_filters();
@@ -85,7 +87,7 @@ class LlmCallsAdmin {
 
         $query = "SELECT id, trace_id, call_mode, post_id, rule_id, component, model, prompt_version, status, error_code,
                          prompt_chars, response_chars, input_tokens, output_tokens, estimated_cost_usd, latency_ms,
-                         prompt_preview, response_preview, started_at, finished_at
+                         prompt_preview, response_preview, request_payload, response_payload, started_at, finished_at
                   FROM {$table}
                   WHERE {$where_sql}
                   ORDER BY id DESC
@@ -139,6 +141,12 @@ class LlmCallsAdmin {
             echo '<td style="max-width:380px;">';
             echo '<details><summary>' . esc_html__( 'Prompt', 'accessibility-auditor' ) . '</summary><pre style="white-space:pre-wrap;">' . esc_html( (string) $row['prompt_preview'] ) . '</pre></details>';
             echo '<details><summary>' . esc_html__( 'Response', 'accessibility-auditor' ) . '</summary><pre style="white-space:pre-wrap;">' . esc_html( (string) $row['response_preview'] ) . '</pre></details>';
+            if ( ! empty( $row['request_payload'] ) ) {
+                echo '<details><summary>' . esc_html__( 'Raw Request', 'accessibility-auditor' ) . '</summary><pre style="white-space:pre-wrap;max-height:320px;overflow:auto;">' . esc_html( (string) $row['request_payload'] ) . '</pre></details>';
+            }
+            if ( ! empty( $row['response_payload'] ) ) {
+                echo '<details><summary>' . esc_html__( 'Raw Response', 'accessibility-auditor' ) . '</summary><pre style="white-space:pre-wrap;max-height:320px;overflow:auto;">' . esc_html( (string) $row['response_payload'] ) . '</pre></details>';
+            }
             echo '</td>';
             echo '</tr>';
         }
