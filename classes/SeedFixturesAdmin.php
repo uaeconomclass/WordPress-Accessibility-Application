@@ -305,6 +305,8 @@ class SeedFixturesAdmin {
     private static function is_proven_ai_fix( array $fixture ): bool {
         $proven_scenarios = [
             'link-name-inline',
+            'image-alt-basic',
+            'frame-title-inline',
         ];
 
         return in_array( (string) ( $fixture['scenario'] ?? '' ), $proven_scenarios, true );
