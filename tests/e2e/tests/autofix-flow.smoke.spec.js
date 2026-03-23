@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const LAB_DIR = path.resolve(HERE, '../../../../wp-whittemore-lab');
+const PRE_ACCEPT_PAUSE_MS = Number(process.env.E2E_PRE_ACCEPT_PAUSE_MS || 0);
 
 function reseedFixtures() {
   execSync(
@@ -192,6 +193,10 @@ async function runAutoFixSmoke(page, baseURL, pageId, options = {}) {
   if (typeof options.verifyPersisted === 'function') {
     const acceptBtn = page.locator('aa-dashboard').locator('.aa-accept-btn').first();
     await expect(acceptBtn).toHaveCount(1);
+    if (PRE_ACCEPT_PAUSE_MS > 0) {
+      console.log(`Pausing ${PRE_ACCEPT_PAUSE_MS}ms before accepting AI preview for page ${pageId}...`);
+      await page.waitForTimeout(PRE_ACCEPT_PAUSE_MS);
+    }
     await acceptBtn.click();
     await expect.poll(async () => options.verifyPersisted(pageId), { timeout: 30_000 }).toBeTruthy();
     return { issueId, aiState, autoFixJson, issueTitleBefore, postScan: { state: 'persisted' } };

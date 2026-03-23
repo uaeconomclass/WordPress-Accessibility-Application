@@ -215,6 +215,44 @@ class AADashboard extends HTMLElement {
     return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   }
 
+  _formatAiPreviewList(items = []) {
+    if (!Array.isArray(items) || !items.length) {
+      return `<p class="aa-ai-preview-note">Claude returned a preview, but no human-readable change summary was provided.</p>`;
+    }
+
+    const html = items
+      .filter(Boolean)
+      .map((item) => `<li>${this.escapeHTML(item)}</li>`)
+      .join("");
+
+    return `<ol class="aa-ai-preview-list">${html}</ol>`;
+  }
+
+  _buildAiPreviewHtml(result = {}) {
+    const changelog = Array.isArray(result?.changelog) ? result.changelog : [];
+    const rawChanges = Array.isArray(result?.changes) ? result.changes : [];
+    const compactChanges = rawChanges.map((change) => ({
+      element_id: change?.id || change?.element_id || null,
+      element_type: change?.name || change?.element_type || null,
+      settings: change?.changes?.settings || change?.settings || null,
+      attributes: change?.changes?.attributes || change?.attributes || null,
+    }));
+
+    return `
+      <div class="aa-ai-preview">
+        <div class="aa-ai-preview-title">Pending Changes</div>
+        ${this._formatAiPreviewList(changelog)}
+        <details class="aa-ai-preview-card">
+          <summary>Full change payload</summary>
+          <pre>${this.escapeHTML(JSON.stringify(compactChanges, null, 2))}</pre>
+        </details>
+        <div class="aa-ai-preview-note">
+          Nothing is saved yet. Review this preview, inspect the highlighted element in Bricks, then click <strong>Accept Changes</strong> only if it looks right.
+        </div>
+      </div>
+    `;
+  }
+
   async _postDebugLog(event, traceId, data = {}) {
     try {
       if (!window.aaEditor?.ajaxurl) return;
@@ -360,6 +398,14 @@ class AADashboard extends HTMLElement {
         .aa-ai-success { border-radius:8px; margin-top:18px; color:#fff; font-size:12px; border:none; box-shadow:0 1px 2px #0002; text-align:left; }
         .aa-ai-success strong { background:#232527; padding:18px; color:#FFFFFF; font-weight:700; display:block; border-bottom:solid 1px #16191B; border-radius:5px 5px 0 0; }
         .aa-ai-success span { padding:18px; font-size:13px; font-weight:400; line-height:130%; color:#DEE2E6; display:block; background:#232527; border-radius:0 0 5px 5px; }
+        .aa-ai-preview { padding:14px 18px 18px; background:#232527; border-top:1px solid #16191B; color:#DEE2E6; }
+        .aa-ai-preview-title { font-size:11px; font-weight:700; letter-spacing:.08em; color:#A7B0B8; text-transform:uppercase; margin-bottom:10px; }
+        .aa-ai-preview-list { margin:0 0 14px 18px; padding:0; }
+        .aa-ai-preview-list li { margin:0 0 8px; line-height:1.45; }
+        .aa-ai-preview-card { border:1px solid #3A4046; border-radius:6px; background:#1A1D20; overflow:hidden; }
+        .aa-ai-preview-card summary { cursor:pointer; padding:10px 12px; font-weight:600; color:#F8F9FA; }
+        .aa-ai-preview-card pre { margin:0; padding:12px; white-space:pre-wrap; word-break:break-word; overflow:auto; max-height:220px; background:#111315; color:#DCE0E4; font-size:11px; line-height:1.45; border-top:1px solid #2A2F34; }
+        .aa-ai-preview-note { font-size:12px; color:#A7B0B8; margin-top:10px; line-height:1.45; }
         .aa-ai-actions { display:flex; flex-direction:column; gap:10px; margin:18px 0 0 0; }
         .aa-accept-btn { background:#FDD042; color:#181A1B; border:none; border-radius:6px; padding:9px 0; font-size:9px; font-weight:700; cursor:pointer; margin-bottom:6px; transition:background 0.2s; line-height:130%; }
         .aa-accept-btn:hover { background:#ffb300; }
@@ -705,7 +751,8 @@ this._resultsClickHandler = async (e) => {
         this._rollbackRevisionKey = result.rollback_revision_key || null;
         aiTextDiv.innerHTML = `
            <strong>AI CHANGE MADE SUCCESSFULLY</strong>
-           <span>Preview ready. Review the proposed change and accept or reject it before saving.</span>
+           <span>Preview ready. Nothing has been saved yet. Check the exact proposed edits below before you accept them.</span>
+           ${this._buildAiPreviewHtml(result)}
         `;
         if (aiActions) aiActions.style.display = "flex";
       } else {
