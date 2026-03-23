@@ -271,7 +271,8 @@ class SeedFixturesAdmin {
     private static function strategy_options( array $fixtures ): array {
         $options = [];
         foreach ( $fixtures as $fixture ) {
-            $options[ $fixture['strategy'] ] = $fixture['strategy'];
+            $strategy = (string) $fixture['strategy'];
+            $options[ $strategy ] = self::strategy_label( $strategy );
         }
         ksort( $options );
         return $options;
