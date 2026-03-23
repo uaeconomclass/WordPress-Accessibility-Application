@@ -69,6 +69,7 @@ The codebase is functional and demonstrates reasonable WordPress development pra
 - Grades in the JS component match the spec (A≥95, B≥85, C≥70, D≥50) ✅
 - `calculate_score()` counts only `violations` — `incomplete` (needs-review) items do **not** reduce the score. ✅
 - Page-level filtering now excludes template/global/header/footer noise before score persistence ✅
+- Page-level filtering now correctly preserves nested page-owned targets found by axe (for example nested links and iframes) instead of dropping them as false negatives ✅
 
 ### API Key Handling — `Settings.php`
 
@@ -108,6 +109,7 @@ The asset enqueue guard was recently fixed (current engagement). Now correctly h
 - `LlmAuditLogger.php` + `LlmCallsAdmin.php` give real visibility into prompt volume, token usage, latency, and failures.
 - Admin IA is now more coherent: top-level `Accessibility Auditor` menu with `Overview`, `Reports`, `Settings`, `Seed Fixtures`, and `LLM Calls`.
 - `Seed Fixtures` is dev-gated and gives a practical path to repeatable Bricks regression work.
+- Bricks smoke harness is now stable enough to prove visible end-to-end auto-fix on at least two seeded scenarios: `link-name-inline` and `image-alt-basic`.
 
 ---
 
@@ -179,6 +181,7 @@ A realistic next scope would be: auto-fix covering the current high-confidence p
 - [x] Template/global issues no longer pollute page-level scan results
 - [x] LLM audit logging + admin visibility added
 - [x] Real Bricks fixture sweep now covers `35/37` scenarios (`11/37` auto-fix-ready)
+- [x] Bricks panel smoke harness stabilized enough for visible proof runs on `link-name-inline` and `image-alt-basic`
 
 ### Critical (must fix before Phase 2)
 - [ ] Synchronous Claude calls — will time out on real pages

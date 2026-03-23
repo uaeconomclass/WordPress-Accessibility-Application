@@ -29,6 +29,9 @@ Last updated: 2026-03-23
 - Current observed result: `103/103` unit tests passed
 - Integration suite now also passes locally: `33/33`
 - Seed detectability sweep now passes at `35/37` page-level scan-ready and `11/37` auto-fix-ready
+- Bricks smoke harness now has 2 confirmed visible end-to-end auto-fix proofs:
+  - `link-name-inline` (`#1319`)
+  - `image-alt-basic` (`#1317`)
 
 ## What Still Looks Risky
 
@@ -36,7 +39,8 @@ Last updated: 2026-03-23
 - No obvious CI pipeline is present in the repo root
 - AI flow still remains synchronous from the current docs/code surface
 - Spec alignment docs are older than the extracted-class state now visible in `classes/`
-- There is still no full automated before/after proof suite for the seeded auto-fix scenarios
+- There is still no broad automated before/after proof suite for all seeded auto-fix scenarios
+- Some seeded cases remain flaky in the real Bricks panel runtime even if frontend detectability looked good earlier
 
 ## Working Tree Note
 
@@ -77,4 +81,4 @@ Best next doc improvements:
 
 1. Keep `README.md` and `docs/onboarding/local-development.md` in sync with the actual `wp-whittemore-lab` workflow.
 2. Refresh spec/status docs whenever fixture coverage or auto-fix readiness numbers move.
-3. Add a short before/after proof section once the automated seeded auto-fix suite exists.
+3. Expand the current 2-case Bricks smoke proof into a wider seeded auto-fix suite.

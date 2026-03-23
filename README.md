@@ -15,8 +15,12 @@ This repo is the plugin code. The local WordPress lab lives in the sibling repo 
 ## Current State
 
 - Page-level scan filtering is in place: header/footer/template noise is excluded from page scoring
+- Page-level filtering now correctly keeps nested preview targets that belong to current-page Bricks elements
 - LLM audit logging is in place, including raw request/response payloads with API key redacted
 - `Seed Fixtures` exists in wp-admin for local/dev environments
+- Bricks smoke coverage now has 2 confirmed visible proof cases:
+  - `link-name-inline` (`#1319`)
+  - `image-alt-basic` (`#1317`)
 - Fixture detectability currently sits at:
   - `35/37` page-level `scan-ready`
   - `11/37` page-level `auto-fix-ready`
@@ -127,6 +131,14 @@ cd tests/e2e
 npm install
 npm run install:browsers
 npm run test:headed
+```
+
+Targeted visible smoke examples:
+
+```powershell
+cd tests/e2e
+npx playwright test tests/autofix-flow.smoke.spec.js --project=chromium --headed --no-deps --grep "Link Name fixture"
+npx playwright test tests/autofix-flow.smoke.spec.js --project=chromium --headed --no-deps --grep "Image Alt fixture"
 ```
 
 ## Debugging and Observability
