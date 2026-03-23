@@ -29,13 +29,13 @@ Strategy values:
 | `Form` | seeded | guided-only | `label-missing`, `form-label-required` | Good starting point, still light on real Bricks form field variants |
 | `Map` | seeded | guided-only | `map-frame-title` | Starter fixture added via embedded map iframe |
 | `Alert` | seeded | guided-only | `alert-live-region` | Starter fixture added for live-region semantics |
-| `Countdown` | planned | guided-only | none | Time-sensitive announcements and pause/stop guidance |
-| `Counter` | planned | guided-only | none | Likely semantic/meaningful text guidance |
+| `Countdown` | seeded | guided-only | `countdown-announcement` | Starter fixture added for time-based announcements |
+| `Counter` | seeded | guided-only | `counter-meaning` | Starter fixture added for meaningful metric labeling |
 | `Pricing Tables` | seeded | guided-only | `pricing-table-structure` | Starter fixture added for heading/list semantics |
 | `Progress Bar` | seeded | guided-only | `progressbar-name` | Initial progress semantics fixture added; still needs real re-scan validation |
-| `Pie Chart` | planned | guided-only | none | Needs text alternative / data summary coverage |
-| `Team Members` | planned | guided-only | none | Mostly image alt + heading/link semantics combinations |
-| `Testimonials` | planned | guided-only | none | Usually quote/citation structure and image alt combinations |
+| `Pie Chart` | seeded | guided-only | `piechart-summary` | Starter fixture added for chart alternative text guidance |
+| `Team Members` | seeded | guided-only | `team-members-profile` | Starter fixture added for profile image and heading semantics |
+| `Testimonials` | seeded | guided-only | `testimonials-quote` | Starter fixture added for quote/citation structure |
 | `Logo` | seeded | auto-fix | `logo-image-alt` | Safe starter coverage via image-alt branding scenario |
 | `Gallery` | seeded | auto-fix | `gallery-image-alt-grid` | Good initial image-heavy coverage |
 | `Audio` | seeded | guided-only | `audio-controls` | Starter fixture added for transcript/control guidance |
@@ -47,13 +47,13 @@ Strategy values:
 
 ## Next Component Families To Seed
 
-1. `Pie Chart`
-2. `Team Members`
-3. `Testimonials`
-4. `Countdown`
-5. `Counter`
-6. `Label-heavy Form Variants`
-7. `Advanced Carousel States`
+1. `Label-heavy Form Variants`
+2. `Advanced Carousel States`
+3. `Real Bricks Native Variants Per Family`
+4. `Safe Auto-Fix Eligibility By Component`
+5. `Scenario Re-Scan Assertions`
+6. `Component-Specific Claude Prompt Packs`
+7. `Noise/False-Positive Fixtures`
 
 ## Acceptance Criteria For A Component Family
 

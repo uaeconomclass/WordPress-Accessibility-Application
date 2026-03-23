@@ -844,6 +844,110 @@ function aa_seed_fixture_catalog(): array {
     ];
 
     $catalog[] = [
+        'slug'       => 'aa-fixture-piechart-summary',
+        'title'      => 'AA Fixture - Pie Chart Summary',
+        'scenario'   => 'piechart-summary',
+        'rule_ids'   => [ 'svg-img-alt', 'aria-label' ],
+        'components' => [ 'pie-chart' ],
+        'strategy'   => 'guided-only',
+        'notes'      => 'Pie-chart family fixture for text-alternative and data-summary guidance.',
+        'post_html'  => '<p>Fixture page for pie chart component coverage.</p>',
+        'bricks'     => aa_seed_add_to_root_container(
+            aa_seed_page_shell( 'piechartfx', 'Pie Chart Fixture', $placeholder_hero ),
+            [
+                aa_seed_text_basic(
+                    'txt_piechart_01',
+                    'piechartfx_cnt_01',
+                    '<svg role="img" aria-label="" width="180" height="180" viewBox="0 0 180 180"><circle cx="90" cy="90" r="70" fill="#e5e7eb"></circle><path d="M90 90 L90 20 A70 70 0 0 1 155 120 Z" fill="#f59e0b"></path></svg>'
+                ),
+            ]
+        ),
+    ];
+
+    $catalog[] = [
+        'slug'       => 'aa-fixture-team-members-profile',
+        'title'      => 'AA Fixture - Team Members Profile',
+        'scenario'   => 'team-members-profile',
+        'rule_ids'   => [ 'image-alt', 'heading-order' ],
+        'components' => [ 'team-members', 'image', 'heading' ],
+        'strategy'   => 'guided-only',
+        'notes'      => 'Team-member family fixture for profile image and heading semantics.',
+        'post_html'  => '<p>Fixture page for team members component coverage.</p>',
+        'bricks'     => aa_seed_add_to_root_container(
+            aa_seed_page_shell( 'teamfx', 'Team Member Fixture', $placeholder_hero ),
+            [
+                aa_seed_image( 'team_img_01', 'teamfx_cnt_01', 'https://via.placeholder.com/260x260?text=Profile' ),
+                aa_seed_heading( 'team_heading_01', 'teamfx_cnt_01', 'Operations Lead', 'h4' ),
+                aa_seed_text_basic( 'team_text_01', 'teamfx_cnt_01', '<p>Builds strong systems and supports delivery.</p>' ),
+            ]
+        ),
+    ];
+
+    $catalog[] = [
+        'slug'       => 'aa-fixture-testimonials-quote',
+        'title'      => 'AA Fixture - Testimonials Quote',
+        'scenario'   => 'testimonials-quote',
+        'rule_ids'   => [ 'image-alt', 'blockquote' ],
+        'components' => [ 'testimonials', 'image' ],
+        'strategy'   => 'guided-only',
+        'notes'      => 'Testimonials family fixture for quote/citation structure and author image semantics.',
+        'post_html'  => '<p>Fixture page for testimonials component coverage.</p>',
+        'bricks'     => aa_seed_add_to_root_container(
+            aa_seed_page_shell( 'testimonialfx', 'Testimonial Fixture', $placeholder_hero ),
+            [
+                aa_seed_image( 'testimonial_img_01', 'testimonialfx_cnt_01', 'https://via.placeholder.com/180x180?text=Author' ),
+                aa_seed_text_basic(
+                    'testimonial_text_01',
+                    'testimonialfx_cnt_01',
+                    '<div>"The support team moved incredibly fast."</div><div>Jordan, Product Lead</div>'
+                ),
+            ]
+        ),
+    ];
+
+    $catalog[] = [
+        'slug'       => 'aa-fixture-countdown-announcement',
+        'title'      => 'AA Fixture - Countdown Announcement',
+        'scenario'   => 'countdown-announcement',
+        'rule_ids'   => [ 'aria-live-region', 'aria-valid-attr-value' ],
+        'components' => [ 'countdown' ],
+        'strategy'   => 'guided-only',
+        'notes'      => 'Countdown family fixture for time-based announcement guidance.',
+        'post_html'  => '<p>Fixture page for countdown component coverage.</p>',
+        'bricks'     => aa_seed_add_to_root_container(
+            aa_seed_page_shell( 'countdownfx', 'Countdown Fixture', $placeholder_hero ),
+            [
+                aa_seed_text_basic(
+                    'countdown_text_01',
+                    'countdownfx_cnt_01',
+                    '<div role="timer" aria-live="">03:59:54</div>'
+                ),
+            ]
+        ),
+    ];
+
+    $catalog[] = [
+        'slug'       => 'aa-fixture-counter-meaning',
+        'title'      => 'AA Fixture - Counter Meaning',
+        'scenario'   => 'counter-meaning',
+        'rule_ids'   => [ 'aria-label', 'color-contrast' ],
+        'components' => [ 'counter' ],
+        'strategy'   => 'guided-only',
+        'notes'      => 'Counter family fixture for meaningful label and readable metric presentation.',
+        'post_html'  => '<p>Fixture page for counter component coverage.</p>',
+        'bricks'     => aa_seed_add_to_root_container(
+            aa_seed_page_shell( 'counterfx', 'Counter Fixture', $placeholder_hero ),
+            [
+                aa_seed_text_basic(
+                    'counter_text_01',
+                    'counterfx_cnt_01',
+                    '<div aria-label=""><span style="color:#d1d5db">250</span><span>Projects delivered</span></div>'
+                ),
+            ]
+        ),
+    ];
+
+    $catalog[] = [
         'slug'       => 'aa-fixture-code-embed-frame',
         'title'      => 'AA Fixture - Code Embed Frame',
         'scenario'   => 'code-embed-frame-title',
