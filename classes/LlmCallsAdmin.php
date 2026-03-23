@@ -41,6 +41,7 @@ class LlmCallsAdmin {
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__( 'LLM Calls', 'accessibility-auditor' ) . '</h1>';
         echo '<p style="max-width:920px;">' . esc_html__( 'Review Claude usage, latency, token counts, cost estimates, and failure patterns for guided and auto-fix flows.', 'accessibility-auditor' ) . '</p>';
+        echo '<p style="max-width:920px;color:#50575e;">' . esc_html__( 'Prompt/Response preview fields are shortened for scanning. Use Full Prompt / Full Response or Raw Request / Raw Response for the complete payload.', 'accessibility-auditor' ) . '</p>';
 
         if ( $table_exists !== $table ) {
             echo '<div class="notice notice-warning"><p>' . esc_html__( 'The LLM audit table has not been created yet. Trigger the plugin installer or make one Claude call to initialize logging.', 'accessibility-auditor' ) . '</p></div>';
@@ -138,14 +139,27 @@ class LlmCallsAdmin {
             echo '<td>in: ' . esc_html( (string) (int) $row['input_tokens'] ) . '<br>out: ' . esc_html( (string) (int) $row['output_tokens'] ) . '<br><span style="color:#50575e;">chars: ' . esc_html( (string) (int) $row['prompt_chars'] ) . ' / ' . esc_html( (string) (int) $row['response_chars'] ) . '</span></td>';
             echo '<td>' . esc_html( (string) (int) $row['latency_ms'] ) . ' ms</td>';
             echo '<td>$' . esc_html( number_format( (float) $row['estimated_cost_usd'], 6 ) ) . '</td>';
-            echo '<td style="max-width:380px;">';
-            echo '<details><summary>' . esc_html__( 'Prompt', 'accessibility-auditor' ) . '</summary><pre style="white-space:pre-wrap;">' . esc_html( (string) $row['prompt_preview'] ) . '</pre></details>';
-            echo '<details><summary>' . esc_html__( 'Response', 'accessibility-auditor' ) . '</summary><pre style="white-space:pre-wrap;">' . esc_html( (string) $row['response_preview'] ) . '</pre></details>';
+            $full_prompt   = self::extract_full_prompt( (string) $row['request_payload'] );
+            $system_prompt = self::extract_system_prompt( (string) $row['request_payload'] );
+            $full_response = self::extract_full_response( (string) $row['response_payload'] );
+
+            echo '<td style="max-width:420px;">';
+            echo '<details><summary>' . esc_html__( 'Prompt Preview', 'accessibility-auditor' ) . '</summary><pre style="white-space:pre-wrap;max-height:180px;overflow:auto;">' . esc_html( (string) $row['prompt_preview'] ) . '</pre></details>';
+            if ( $full_prompt !== '' ) {
+                echo '<details><summary>' . esc_html__( 'Full Prompt', 'accessibility-auditor' ) . '</summary><pre style="white-space:pre-wrap;max-height:420px;overflow:auto;">' . esc_html( $full_prompt ) . '</pre></details>';
+            }
+            if ( $system_prompt !== '' ) {
+                echo '<details><summary>' . esc_html__( 'System Prompt', 'accessibility-auditor' ) . '</summary><pre style="white-space:pre-wrap;max-height:260px;overflow:auto;">' . esc_html( $system_prompt ) . '</pre></details>';
+            }
+            echo '<details><summary>' . esc_html__( 'Response Preview', 'accessibility-auditor' ) . '</summary><pre style="white-space:pre-wrap;max-height:180px;overflow:auto;">' . esc_html( (string) $row['response_preview'] ) . '</pre></details>';
+            if ( $full_response !== '' ) {
+                echo '<details><summary>' . esc_html__( 'Full Response', 'accessibility-auditor' ) . '</summary><pre style="white-space:pre-wrap;max-height:420px;overflow:auto;">' . esc_html( $full_response ) . '</pre></details>';
+            }
             if ( ! empty( $row['request_payload'] ) ) {
-                echo '<details><summary>' . esc_html__( 'Raw Request', 'accessibility-auditor' ) . '</summary><pre style="white-space:pre-wrap;max-height:320px;overflow:auto;">' . esc_html( (string) $row['request_payload'] ) . '</pre></details>';
+                echo '<details><summary>' . esc_html__( 'Raw Request', 'accessibility-auditor' ) . '</summary><pre style="white-space:pre-wrap;max-height:520px;overflow:auto;">' . esc_html( (string) $row['request_payload'] ) . '</pre></details>';
             }
             if ( ! empty( $row['response_payload'] ) ) {
-                echo '<details><summary>' . esc_html__( 'Raw Response', 'accessibility-auditor' ) . '</summary><pre style="white-space:pre-wrap;max-height:320px;overflow:auto;">' . esc_html( (string) $row['response_payload'] ) . '</pre></details>';
+                echo '<details><summary>' . esc_html__( 'Raw Response', 'accessibility-auditor' ) . '</summary><pre style="white-space:pre-wrap;max-height:520px;overflow:auto;">' . esc_html( (string) $row['response_payload'] ) . '</pre></details>';
             }
             echo '</td>';
             echo '</tr>';
@@ -223,5 +237,46 @@ class LlmCallsAdmin {
             echo '</div>';
         }
         echo '</div>';
+    }
+
+    private static function extract_full_prompt( string $request_payload ): string {
+        $decoded = json_decode( $request_payload, true );
+        if ( ! is_array( $decoded ) ) {
+            return '';
+        }
+
+        $message_content = $decoded['body']['messages'][0]['content'] ?? '';
+        return is_string( $message_content ) ? trim( $message_content ) : '';
+    }
+
+    private static function extract_system_prompt( string $request_payload ): string {
+        $decoded = json_decode( $request_payload, true );
+        if ( ! is_array( $decoded ) ) {
+            return '';
+        }
+
+        $system_prompt = $decoded['body']['system'] ?? '';
+        return is_string( $system_prompt ) ? trim( $system_prompt ) : '';
+    }
+
+    private static function extract_full_response( string $response_payload ): string {
+        $decoded = json_decode( $response_payload, true );
+        if ( ! is_array( $decoded ) ) {
+            return '';
+        }
+
+        $content = $decoded['content'] ?? null;
+        if ( ! is_array( $content ) ) {
+            return '';
+        }
+
+        $text = '';
+        foreach ( $content as $block ) {
+            if ( is_array( $block ) && isset( $block['text'] ) && is_string( $block['text'] ) ) {
+                $text .= $block['text'];
+            }
+        }
+
+        return trim( $text );
     }
 }
