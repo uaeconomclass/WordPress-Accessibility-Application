@@ -104,7 +104,7 @@ class LlmAuditLogger {
                 'finished_at'        => current_time( 'mysql' ),
             ],
             [ 'id' => $audit_id ],
-            [ '%s', '%s', '%d', '%d', '%f', '%d', '%s', '%s', '%s' ],
+            [ '%s', '%s', '%d', '%d', '%d', '%f', '%d', '%s', '%s', '%s' ],
             [ '%d' ]
         );
     }
