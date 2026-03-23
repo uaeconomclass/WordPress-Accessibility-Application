@@ -152,10 +152,16 @@ class ScanManager {
     }
 
     private static function calculate_score( $results ) {
-        // Count violations only (not incomplete — those need manual review, not automatic penalty).
-        // Match JS formula: 5 points per violation rule, not per node.
-        $violations = count( $results['violations'] ?? [] );
-        $score = max( 0, 100 - $violations * 5 );
+        // Count each violation instance (node), not just each rule group.
+        // Incomplete/manual-review items do not reduce the score.
+        $issue_instances = 0;
+
+        foreach ( $results['violations'] ?? [] as $violation ) {
+            $nodes = $violation['nodes'] ?? [];
+            $issue_instances += ! empty( $nodes ) && is_array( $nodes ) ? count( $nodes ) : 1;
+        }
+
+        $score = max( 0, 100 - $issue_instances * 5 );
         return $score;
     }
 }

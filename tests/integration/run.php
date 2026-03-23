@@ -61,7 +61,7 @@ function aa_test_bricks_tree(): array {
     ];
 }
 
-/** Mock axe violations array (2 violations = score 90). */
+/** Mock axe violations array (2 rule groups, 2 issue instances = score 90). */
 function aa_test_axe_violations(): array {
     return [
         'violations' => [
@@ -133,8 +133,8 @@ $t->assert_equals( $scan_id, $stored_scan_id, '_aa_last_scan_id meta written cor
 $t->assert_true( is_string( $stored_status ) && $stored_status !== '', '_aa_scan_status meta is non-empty string' );
 $t->assert_true( is_string( $stored_summary ) && $stored_summary !== '', '_aa_scan_summary meta is non-empty string' );
 
-// Score formula: 100 - (violations * 5) = 100 - (2 * 5) = 90.
-$t->assert_equals( 90.0, $stored_score, 'score = 100 - (violations * 5)' );
+// Score formula: 100 - (issue instances * 5) = 100 - (2 * 5) = 90.
+$t->assert_equals( 90.0, $stored_score, 'score = 100 - (issue instances * 5)' );
 
 // Status: 2 violations (each has 1 node) = 2 errors = 'minor' (>0 and ≤5).
 $t->assert_equals( 'minor', $stored_status, 'status is "minor" for 2 violation nodes' );
@@ -167,14 +167,39 @@ ScanManager::save_scan( $page_id2, [ 'violations' => [], 'passes' => [], 'incomp
 $t->assert_equals( 100.0, (float) get_post_meta( $page_id2, '_aa_scan_score', true ), 'no violations → score 100' );
 $t->assert_equals( 'ok', get_post_meta( $page_id2, '_aa_scan_status', true ), 'no violations → status ok' );
 
-// 20 violations → score clamped to 0.
+// 20 issue instances → score clamped to 0.
 $many_violations = [];
 for ( $i = 0; $i < 20; $i++ ) {
-    $many_violations[] = [ 'id' => "rule-{$i}", 'help' => "Issue {$i}", 'nodes' => [] ];
+    $many_violations[] = [
+        'id'    => "rule-{$i}",
+        'help'  => "Issue {$i}",
+        'nodes' => [
+            [ 'target' => [ "#brxe-{$i}" ] ],
+        ],
+    ];
 }
 ScanManager::save_scan( $page_id2, [ 'violations' => $many_violations, 'passes' => [], 'incomplete' => [] ] );
-$t->assert_equals( 0.0, (float) get_post_meta( $page_id2, '_aa_scan_score', true ), '20 violations → score clamped to 0' );
-$t->assert_equals( 'major', get_post_meta( $page_id2, '_aa_scan_status', true ), '20 violations → status major' );
+$t->assert_equals( 0.0, (float) get_post_meta( $page_id2, '_aa_scan_score', true ), '20 issue instances → score clamped to 0' );
+$t->assert_equals( 'major', get_post_meta( $page_id2, '_aa_scan_status', true ), '20 issue instances → status major' );
+
+// A single rule with multiple nodes should deduct per node, not per rule group.
+$multi_node = [
+    'violations' => [
+        [
+            'id'    => 'image-alt',
+            'help'  => 'Images must have alternate text',
+            'nodes' => [
+                [ 'target' => [ '#brxe-a' ] ],
+                [ 'target' => [ '#brxe-b' ] ],
+                [ 'target' => [ '#brxe-c' ] ],
+            ],
+        ],
+    ],
+    'passes'     => [],
+    'incomplete' => [],
+];
+ScanManager::save_scan( $page_id2, $multi_node );
+$t->assert_equals( 85.0, (float) get_post_meta( $page_id2, '_aa_scan_score', true ), '3 nodes in one violation group → score 85' );
 
 wp_delete_post( $page_id2, true );
 
