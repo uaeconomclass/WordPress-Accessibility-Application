@@ -2,6 +2,8 @@
 
 Use this file to track which Bricks component families have deterministic fixture coverage and whether they are currently intended for `auto-fix`, `guided`, or future work.
 
+Detailed next-wave scenario planning lives in `tests/coverage/seed-scenario-backlog.md`.
+
 Status values:
 
 - `seeded`
