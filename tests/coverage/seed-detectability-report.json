@@ -655,6 +655,8 @@
     "title": "AA Fixture - Tabs Structure",
     "strategy": "guided-only",
     "expected_rule_ids": [
+      "color-contrast",
+      "button-name",
       "aria-required-children",
       "aria-required-parent"
     ],
@@ -663,48 +665,60 @@
     ],
     "post_id": 1340,
     "slug": "aa-fixture-tabs-structure",
-    "detectable": false,
-    "scan_test_ready": false,
+    "detectable": true,
+    "scan_test_ready": true,
     "autofix_test_ready": false,
-    "matched_expected_rule_ids": [],
-    "found_rule_ids": [],
-    "note": "Expected rule did not appear inside #brx-content.",
-    "panel_state": "no-issues",
+    "matched_expected_rule_ids": [
+      "color-contrast"
+    ],
+    "found_rule_ids": [
+      "color-contrast"
+    ],
+    "note": "Detected inside page-level content.",
+    "panel_state": "issues",
     "score": 0,
     "grade": "",
     "issue_titles": [],
-    "violation_ids": [],
+    "violation_ids": [
+      "color-contrast"
+    ],
     "incomplete_ids": [],
-    "html_preview": "<section id=\"brxe-tabsfixture_sec_01\" class=\"brxe-section\"><div id=\"brxe-tabsfixture_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Tabs Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><!--?xml encoding=\"UTF-8\"--><div data-script-id=\"tabs_01\" class=\"brxe-tabs-nested\" data-open-tab=\"0\"></div>\n</div></section>",
-    "text_preview": "Tabs Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+    "html_preview": "<section id=\"brxe-tabsfixture_sec_01\" class=\"brxe-section\"><div id=\"brxe-tabsfixture_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Tabs Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><!--?xml encoding=\"UTF-8\"--><div id=\"brxe-tabs_01\" data-script-id=\"tabs_01\" class=\"brxe-tabs-nested\" data-open-tab=\"0\"><div class=\"brxe-block tab-menu\" role=\"tablist\"><div class=\"brxe-div tab-title brx-open\" role=\"tab\" aria-selected=\"true\" tabindex=\"0\" id=\"brx-tab-title-tabs_01-0\" aria-controls=\"brx-tab-pane-tabs_01-0\"></div><div class=\"brxe-div tab-title\" role=\"tab\" aria-selected=\"false\" tabindex=\"-1\" id=\"brx-tab-title-tabs_01-1\" aria-controls=\"brx-tab-pane-tabs_01-1\"><div class=\"brxe-text-basic\">Specifications</div></div></div><div class=\"brxe-block tab-content\"><div class=\"brxe-block tab-pane brx-open\" id=\"brx-tab-pane-tabs_01-0\" role=\"tabpanel\" aria-labelledby=\"brx-tab-title-tabs_01-0\" tabindex=\"0\"><div class=\"brxe-text-basic\">Unnamed tab panel content.</div></div><div class=\"brxe-block tab-pane\" id=\"brx-tab-pane-tabs_01-1\" role=\"tabpanel\" aria-labelledby=\"brx-tab-title-tabs_01-1\" tabindex=\"0\"><div class=\"brxe-text-",
+    "text_preview": "Tabs Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing.\n\nSpecifications\nUnnamed tab panel content.\nSpecifications\nSpecifications\nSpecifications\nUnnamed tab panel content.\nTab panel content.\nUnnamed tab panel content.\nUnnamed tab panel content.\nTab panel content.\nTab panel content."
   },
   {
     "scenario": "progressbar-name",
     "title": "AA Fixture - Progress Bar Name",
     "strategy": "guided-only",
     "expected_rule_ids": [
-      "aria-progressbar-name",
-      "color-contrast"
+      "color-contrast",
+      "aria-progressbar-name"
     ],
     "components": [
       "progress-bar"
     ],
     "post_id": 1341,
     "slug": "aa-fixture-progressbar-name",
-    "detectable": false,
-    "scan_test_ready": false,
+    "detectable": true,
+    "scan_test_ready": true,
     "autofix_test_ready": false,
-    "matched_expected_rule_ids": [],
-    "found_rule_ids": [],
-    "note": "Expected rule did not appear inside #brx-content.",
-    "panel_state": "no-issues",
+    "matched_expected_rule_ids": [
+      "color-contrast"
+    ],
+    "found_rule_ids": [
+      "color-contrast"
+    ],
+    "note": "Detected inside page-level content.",
+    "panel_state": "issues",
     "score": 0,
     "grade": "",
     "issue_titles": [],
-    "violation_ids": [],
+    "violation_ids": [
+      "color-contrast"
+    ],
     "incomplete_ids": [],
-    "html_preview": "<section id=\"brxe-progressbar_sec_01\" class=\"brxe-section\"><div id=\"brxe-progressbar_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Progress Bar Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div data-script-id=\"progress_01\" class=\"brxe-progress-bar\"><div class=\"bar-wrapper\"><label><span class=\"label\"></span></label><div class=\"bar\"><span data-width=\"62%\" style=\"width: 62%;\"></span></div></div></div></div></section>",
-    "text_preview": "Progress Bar Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing."
+    "html_preview": "<section id=\"brxe-progressbar_sec_01\" class=\"brxe-section\"><div id=\"brxe-progressbar_cnt_01\" class=\"brxe-container\"><h1 class=\"brxe-heading\">Progress Bar Fixture</h1><div class=\"brxe-text-basic\"><p>Seeded fixture page for deterministic Bricks accessibility testing.</p></div><div id=\"brxe-progress_01\" data-script-id=\"progress_01\" class=\"brxe-progress-bar\"><div class=\"bar-wrapper\"><label><span class=\"label\">Completion</span></label><div class=\"bar\"><span data-width=\"62%\" style=\"width: 62%;\"></span></div></div></div></div></section>",
+    "text_preview": "Progress Bar Fixture\n\nSeeded fixture page for deterministic Bricks accessibility testing.\n\nCompletion"
   },
   {
     "scenario": "carousel-structure",

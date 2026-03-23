@@ -1,6 +1,6 @@
 # Seed Detectability Report
 
-Generated: 2026-03-23T16:01:17.357Z
+Generated: 2026-03-23T16:10:41.274Z
 
 | Scenario | Strategy | Expected Rules | Found Rules | Detectable | Scan Ready | Auto-fix Ready | Note |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -24,8 +24,8 @@ Generated: 2026-03-23T16:01:17.357Z
 | form-checkbox-group | guided-only | label, fieldset | label | yes | yes | no | Detected inside page-level content. |
 | form-radio-group | guided-only | label, radiogroup | color-contrast | no | no | no | Expected rule did not appear inside #brx-content. |
 | accordion-structure | guided-only | aria-required-children, heading-order | heading-order | yes | yes | no | Detected inside page-level content. |
-| tabs-structure | guided-only | aria-required-children, aria-required-parent | — | no | no | no | Expected rule did not appear inside #brx-content. |
-| progressbar-name | guided-only | aria-progressbar-name, color-contrast | — | no | no | no | Expected rule did not appear inside #brx-content. |
+| tabs-structure | guided-only | color-contrast, button-name, aria-required-children, aria-required-parent | color-contrast | yes | yes | no | Detected inside page-level content. |
+| progressbar-name | guided-only | color-contrast, aria-progressbar-name | color-contrast | yes | yes | no | Detected inside page-level content. |
 | carousel-structure | guided-only | aria-required-children, scrollable-region-focusable | — | no | no | no | Expected rule did not appear inside #brx-content. |
 | carousel-controls | guided-only | button-name, aria-label | button-name | yes | yes | no | Detected inside page-level content. |
 | svg-accessible-name | flagged | svg-img-alt, aria-label | svg-img-alt | yes | yes | no | Detected inside page-level content. |
@@ -42,6 +42,6 @@ Generated: 2026-03-23T16:01:17.357Z
 | counter-meaning | guided-only | aria-label, color-contrast | color-contrast | yes | yes | no | Detected inside page-level content. |
 | code-embed-frame-title | guided-only | frame-title | — | no | no | no | Expected rule did not appear inside #brx-content. |
 
-Scan-ready: 25/37
+Scan-ready: 27/37
 Auto-fix-ready: 9/37
 

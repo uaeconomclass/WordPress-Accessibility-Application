@@ -204,6 +204,10 @@ function aa_seed_block( string $id, string $parent, array $children = [], array 
     return aa_seed_element( 'block', $settings, $children, $parent, $id );
 }
 
+function aa_seed_div( string $id, string $parent, array $children = [], array $settings = [] ): array {
+    return aa_seed_element( 'div', $settings, $children, $parent, $id );
+}
+
 function aa_seed_form( string $id, string $parent, array $settings = [] ): array {
     return aa_seed_element(
         'form',
@@ -713,10 +717,10 @@ function aa_seed_fixture_catalog(): array {
         'slug'       => 'aa-fixture-tabs-structure',
         'title'      => 'AA Fixture - Tabs Structure',
         'scenario'   => 'tabs-structure',
-        'rule_ids'   => [ 'aria-required-children', 'aria-required-parent' ],
+        'rule_ids'   => [ 'color-contrast', 'button-name', 'aria-required-children', 'aria-required-parent' ],
         'components' => [ 'tabs' ],
         'strategy'   => 'guided-only',
-        'notes'      => 'Tabs-family fixture for future roles, states, and keyboard guidance coverage.',
+        'notes'      => 'Real Bricks tabs-nested tree with a low-contrast tab title plus an empty first title for additional a11y pressure.',
         'post_html'  => '<p>Fixture page for tabs component coverage.</p>',
         'bricks'     => aa_seed_add_to_root_container(
             aa_seed_page_shell( 'tabsfixture', 'Tabs Fixture', $placeholder_hero ),
@@ -725,11 +729,80 @@ function aa_seed_fixture_catalog(): array {
                     'tabs-nested',
                     [
                         'openTab' => 0,
+                        'titleTypography' => [
+                            'color' => [
+                                'hex' => '#d0d0d0',
+                            ],
+                        ],
                     ],
-                    [],
+                    [ 'tabs_menu_01', 'tabs_content_01' ],
                     'tabsfixture_cnt_01',
                     'tabs_01'
                 ),
+                aa_seed_block(
+                    'tabs_menu_01',
+                    'tabs_01',
+                    [ 'tabs_title_01', 'tabs_title_02' ],
+                    [
+                        '_hidden' => [
+                            '_cssClasses' => 'tab-menu',
+                        ],
+                    ]
+                ),
+                aa_seed_div(
+                    'tabs_title_01',
+                    'tabs_menu_01',
+                    [ 'tabs_title_txt_01' ],
+                    [
+                        '_hidden' => [
+                            '_cssClasses' => 'tab-title',
+                        ],
+                    ]
+                ),
+                aa_seed_text_basic( 'tabs_title_txt_01', 'tabs_title_01', '' ),
+                aa_seed_div(
+                    'tabs_title_02',
+                    'tabs_menu_01',
+                    [ 'tabs_title_txt_02' ],
+                    [
+                        '_hidden' => [
+                            '_cssClasses' => 'tab-title',
+                        ],
+                    ]
+                ),
+                aa_seed_text_basic( 'tabs_title_txt_02', 'tabs_title_02', 'Specifications' ),
+                aa_seed_block(
+                    'tabs_content_01',
+                    'tabs_01',
+                    [ 'tabs_pane_01', 'tabs_pane_02' ],
+                    [
+                        '_hidden' => [
+                            '_cssClasses' => 'tab-content',
+                        ],
+                    ]
+                ),
+                aa_seed_block(
+                    'tabs_pane_01',
+                    'tabs_content_01',
+                    [ 'tabs_pane_txt_01' ],
+                    [
+                        '_hidden' => [
+                            '_cssClasses' => 'tab-pane',
+                        ],
+                    ]
+                ),
+                aa_seed_text_basic( 'tabs_pane_txt_01', 'tabs_pane_01', 'Unnamed tab panel content.' ),
+                aa_seed_block(
+                    'tabs_pane_02',
+                    'tabs_content_01',
+                    [ 'tabs_pane_txt_02' ],
+                    [
+                        '_hidden' => [
+                            '_cssClasses' => 'tab-pane',
+                        ],
+                    ]
+                ),
+                aa_seed_text_basic( 'tabs_pane_txt_02', 'tabs_pane_02', 'Tab panel content.' ),
             ]
         ),
     ];
@@ -738,10 +811,10 @@ function aa_seed_fixture_catalog(): array {
         'slug'       => 'aa-fixture-progressbar-name',
         'title'      => 'AA Fixture - Progress Bar Name',
         'scenario'   => 'progressbar-name',
-        'rule_ids'   => [ 'aria-progressbar-name', 'color-contrast' ],
+        'rule_ids'   => [ 'color-contrast', 'aria-progressbar-name' ],
         'components' => [ 'progress-bar' ],
         'strategy'   => 'guided-only',
-        'notes'      => 'Progress bar component fixture for label/value semantics and contrast follow-up.',
+        'notes'      => 'Real Bricks progress-bar with intentionally low-contrast label text. Bricks does not emit role=progressbar by default, so contrast is the live detector target.',
         'post_html'  => '<p>Fixture page for progress bar component coverage.</p>',
         'bricks'     => aa_seed_add_to_root_container(
             aa_seed_page_shell( 'progressbar', 'Progress Bar Fixture', $placeholder_hero ),
@@ -751,8 +824,13 @@ function aa_seed_fixture_catalog(): array {
                     [
                         'bars' => [
                             [
-                                'title'      => '',
+                                'title'      => 'Completion',
                                 'percentage' => 62,
+                            ],
+                        ],
+                        'labelTypography' => [
+                            'color' => [
+                                'hex' => '#d0d0d0',
                             ],
                         ],
                     ],

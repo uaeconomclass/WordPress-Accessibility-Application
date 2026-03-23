@@ -20,7 +20,7 @@ Strategy values:
 
 Current detectability snapshot from `tests/coverage/seed-detectability-report.md`:
 
-- `25/37` scenarios are `scan-ready`
+- `27/37` scenarios are `scan-ready`
 - `9/37` scenarios are `auto-fix-ready`
 - strongest current auto-fix set: `image-alt-basic`, `link-name-inline`, `link-name-button`, `frame-title-inline`, `button-name-empty`, `button-icon-only`, `aria-label-icon`, `logo-image-alt`, `logo-linked-image`
 
@@ -33,14 +33,14 @@ Current detectability snapshot from `tests/coverage/seed-detectability-report.md
 | `Image` | partial | auto-fix | `image-alt-basic`, `input-image-alt-banner`, `gallery-image-alt-grid` | `image-alt-basic` works; real Bricks image/gallery variants currently normalize to decorative `alt=\"\"` and do not trigger expected rules |
 | `Video / Embed` | seeded | auto-fix, guided-only | `frame-title-inline`, `code-embed-frame-title` | Embed/code edge cases still need noise control |
 | `Accordion` | partial | guided-only | `accordion-structure` | Real Bricks accordion now renders and is scan-ready via `heading-order`; still needs a stronger structural failure case |
-| `Tabs` | partial | guided-only | `tabs-structure` | Real tabs container now renders, but current seed does not generate a detectable rule yet |
+| `Tabs` | seeded | guided-only | `tabs-structure` | Real tabs-nested tree now renders and is scan-ready through a live color-contrast issue in the tab menu |
 | `Form` | partial | guided-only | `label-missing`, `form-label-required`, `form-checkbox-group`, `form-radio-group` | Three scenarios are scan-ready; `form-radio-group` still needs a real failing radiogroup case |
 | `Map` | seeded | guided-only | `map-frame-title` | Starter fixture added via embedded map iframe |
 | `Alert` | seeded | guided-only | `alert-live-region` | Starter fixture added for live-region semantics |
 | `Countdown` | seeded | guided-only | `countdown-announcement` | Starter fixture added for time-based announcements |
 | `Counter` | seeded | guided-only | `counter-meaning` | Starter fixture added for meaningful metric labeling |
 | `Pricing Tables` | seeded | guided-only | `pricing-table-structure` | Starter fixture added for heading/list semantics |
-| `Progress Bar` | partial | guided-only | `progressbar-name` | Real Bricks progress-bar now renders, but current blank-label setup still does not trigger expected axe output |
+| `Progress Bar` | seeded | guided-only | `progressbar-name` | Real Bricks progress-bar now renders and is scan-ready through a live color-contrast issue on the label |
 | `Pie Chart` | seeded | guided-only | `piechart-summary` | Starter fixture added for chart alternative text guidance |
 | `Team Members` | partial | guided-only | `team-members-profile` | Current team-member seed is scan-ready via heading structure, but not yet via image-alt |
 | `Testimonials` | partial | guided-only | `testimonials-quote` | Seed exists, but current render does not yet produce the expected blockquote/image rule pair |
